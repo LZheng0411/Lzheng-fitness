@@ -1,0 +1,188 @@
+{
+  "plan_meta": {
+    "plan_id": "example-p0-20260803",
+    "title": "P0 全身启动训练计划",
+    "subtitle": "先建立稳定出勤与可重复动作",
+    "generated_at": "2026-08-03T20:00:00+08:00",
+    "timezone": "Asia/Shanghai",
+    "subject_mode": "personal",
+    "subject_id": "example-user",
+    "phase_goal": "4 周内稳定完成每周 2 次全身训练",
+    "frequency": "每周 2 练",
+    "weeks": 4,
+    "next_training_day_id": "day-a"
+  },
+  "profile_snapshot": {
+    "snapshot_id": "example-user-20260803T200000+0800",
+    "generated_at": "2026-08-03T20:00:00+08:00",
+    "readiness": "conservative",
+    "overall_stage": "P0",
+    "confirmed": ["每周可训练两次", "可使用商业健身房固定器械"],
+    "inferred": ["动作学习成本应保持较低"],
+    "unknown": ["近 8 周实际训练量"]
+  },
+  "safety_status": {
+    "status": "caution",
+    "limitations": ["仅用于验证 Skill 输出，不是实际用户处方"],
+    "stop_signals": ["胸痛、晕厥、异常气短", "疼痛明显或持续加重"]
+  },
+  "goals": {
+    "primary": "建立训练习惯与基础动作能力",
+    "secondary": ["覆盖主要动作模式"],
+    "success_criteria": ["连续 4 周完成率不低于 75%"]
+  },
+  "equipment": {
+    "location": "商业健身房",
+    "available": ["腿举机", "坐姿推胸机", "坐姿划船机", "绳索器械"],
+    "unavailable": [],
+    "minimum_increment": "器械最小插片"
+  },
+  "movement_profile": [
+    {"movement": "膝主导", "stage": "P0", "evidence": "尚未建立稳定训练记录", "role": "学习与基础容量"},
+    {"movement": "髋铰链", "stage": "P0", "evidence": "尚未确认地面硬拉准入", "role": "先学习无痛髋铰链"}
+  ],
+  "weekly_schedule": [
+    {"day_index": 1, "label": "周一", "day_id": "day-a", "theme": "全身 A"},
+    {"day_index": 2, "label": "周二", "day_id": null, "theme": "休息/轻活动"},
+    {"day_index": 4, "label": "周四", "day_id": "day-b", "theme": "全身 B"}
+  ],
+  "training_days": [
+    {
+      "id": "day-a",
+      "title": "全身 A",
+      "theme": "膝主导、水平推拉",
+      "duration": "45—55 分钟",
+      "role": "建立可重复动作和基础容量",
+      "exercises": [
+        {
+          "id": "a-leg-press",
+          "name": "腿举",
+          "pattern": "膝主导",
+          "modality": "固定器械",
+          "equipment": "腿举机",
+          "prescription": {"sets": "3", "reps": "8—12", "intensity": "RPE 6—7", "rest": "90—120 秒"},
+          "purpose": "建立下肢基础训练量",
+          "priority": "main",
+          "selection_reason": "P0 优先使用稳定且容易调整重量的膝主导动作",
+          "alternatives": ["哈克深蹲", "箱式杯式深蹲"],
+          "technique_checks": ["全脚掌稳定", "膝盖跟随脚尖"]
+        },
+        {
+          "id": "a-chest-press",
+          "name": "坐姿推胸",
+          "pattern": "水平推",
+          "modality": "固定器械",
+          "equipment": "推胸机",
+          "prescription": {"sets": "3", "reps": "8—12", "intensity": "RPE 6—7", "rest": "75—90 秒"},
+          "purpose": "建立胸、肩、肱三头基础容量",
+          "priority": "key",
+          "selection_reason": "靠背提供稳定，便于学习推的路径",
+          "alternatives": ["上斜俯卧撑"],
+          "technique_checks": ["肩胛稳定", "手腕中立"]
+        },
+        {
+          "id": "a-row",
+          "name": "坐姿划船",
+          "pattern": "水平拉",
+          "modality": "固定器械",
+          "equipment": "划船机",
+          "prescription": {"sets": "3", "reps": "10—12", "intensity": "RPE 6—7", "rest": "75—90 秒"},
+          "purpose": "建立背部基础训练量",
+          "priority": "key",
+          "selection_reason": "支撑条件稳定，易于保持躯干位置",
+          "alternatives": ["胸托哑铃划船"],
+          "technique_checks": ["不耸肩", "不借力后仰"]
+        }
+      ],
+      "minimum_versions": {
+        "minutes_30": {"exercise_ids": ["a-leg-press", "a-chest-press", "a-row"], "note": "每个动作做 2 组"},
+        "minutes_20": {"exercise_ids": ["a-leg-press", "a-row"], "note": "每个动作做 2 组，不追重量"},
+        "minutes_10": {"exercise_ids": ["a-leg-press"], "note": "热身后完成 2 组，保留余量"}
+      }
+    },
+    {
+      "id": "day-b",
+      "title": "全身 B",
+      "theme": "髋铰链学习、垂直推拉",
+      "duration": "40—50 分钟",
+      "role": "学习髋铰链，不默认传统硬拉",
+      "exercises": [
+        {
+          "id": "b-hip-hinge",
+          "name": "绳索髋铰链",
+          "pattern": "髋主导",
+          "modality": "绳索",
+          "equipment": "绳索机",
+          "prescription": {"sets": "3", "reps": "10—12", "intensity": "RPE 5—6", "rest": "75—90 秒"},
+          "purpose": "建立无痛髋铰链和躯干固定",
+          "priority": "main",
+          "selection_reason": "当前未确认传统硬拉准入，先选低学习成本变式",
+          "alternatives": ["垫高壶铃硬拉", "臀推"],
+          "technique_checks": ["髋向后移", "躯干保持稳定"]
+        },
+        {
+          "id": "b-pulldown",
+          "name": "高位下拉",
+          "pattern": "垂直拉",
+          "modality": "固定器械",
+          "equipment": "高位下拉机",
+          "prescription": {"sets": "3", "reps": "8—12", "intensity": "RPE 6—7", "rest": "75—90 秒"},
+          "purpose": "建立垂直拉基础能力",
+          "priority": "key",
+          "selection_reason": "负重可调，适合当前力量水平",
+          "alternatives": ["弹力带下拉"],
+          "technique_checks": ["不甩动", "肩胛自然上回旋"]
+        }
+      ],
+      "minimum_versions": {
+        "minutes_30": {"exercise_ids": ["b-hip-hinge", "b-pulldown"], "note": "按标准组数完成"},
+        "minutes_20": {"exercise_ids": ["b-hip-hinge", "b-pulldown"], "note": "每个动作做 2 组"},
+        "minutes_10": {"exercise_ids": ["b-hip-hinge"], "note": "完成动作练习，不追重量"}
+      }
+    }
+  ],
+  "movement_coverage": [
+    {"pattern": "膝主导", "days": ["全身 A"], "evidence": "腿举", "adequate": true},
+    {"pattern": "髋主导", "days": ["全身 B"], "evidence": "绳索髋铰链", "adequate": true},
+    {"pattern": "推与拉", "days": ["全身 A", "全身 B"], "evidence": "推胸、划船、下拉", "adequate": true}
+  ],
+  "progression_rules": [
+    {"scope": "所有动作", "when": "所有工作组达到次数上限且末组不超过 RPE 7", "action": "下次增加一个最小重量单位或先增加 1 次重复"}
+  ],
+  "minimum_versions": [
+    {"name": "30 分钟", "rule": "保留主项和关键推拉"},
+    {"name": "20 分钟", "rule": "保留两个动作，每个两组"},
+    {"name": "10 分钟", "rule": "只完成热身与一个主要动作"}
+  ],
+  "short_interruption_rules": {
+    "miss_one": "不补课，按原顺序继续",
+    "miss_two": "下一次使用 30 分钟版或状态差版",
+    "route_to_return_skill": "停训达到7天、连续漏练3次或条件明显变化时调用 lzheng-training-return"
+  },
+  "cycle_links": [],
+  "review_checkpoints": [
+    {"timing": "第 2 周末", "collect": "完成率、RPE偏差、动作稳定性", "decision": "维持、微调或降级"},
+    {"timing": "第 4 周末", "collect": "完成率、恢复、动作通过标准", "decision": "决定是否进入 L1"}
+  ],
+  "knowledge_sources": [
+    {
+      "source_type": "local_rule",
+      "source_title": "训练计划生成规则",
+      "local_path_or_url": "references/program-design.md",
+      "chapter_or_section": "计划结构与最低执行版",
+      "rule_used": "完整计划与短版从同一主线生成",
+      "accessed_at": "2026-08-03T20:00:00+08:00",
+      "evidence_role": "program_structure"
+    },
+    {
+      "source_type": "user_fact",
+      "source_title": "示例用户当前确认",
+      "local_path_or_url": "user_current_confirmation",
+      "chapter_or_section": "器械与时间",
+      "rule_used": "每周两练且使用商业健身房器械",
+      "accessed_at": "2026-08-03T20:00:00+08:00",
+      "evidence_role": "current_user_state"
+    }
+  ],
+  "assumptions": ["这是验证渲染器的虚构示例，不可直接作为真实用户训练处方"]
+}

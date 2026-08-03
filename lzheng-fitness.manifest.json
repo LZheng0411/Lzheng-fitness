@@ -1,0 +1,34 @@
+{
+  "name": "Lzheng-fitness",
+  "version": "1.0.0",
+  "license": "MIT",
+  "language": "zh-CN",
+  "skills": [
+    {
+      "name": "lzheng-fitness-plan",
+      "path": "skills/lzheng-fitness-plan",
+      "standalone": true
+    },
+    {
+      "name": "lzheng-training-return",
+      "path": "skills/lzheng-training-return",
+      "standalone": true
+    },
+    {
+      "name": "lzheng-strength-cycle-planner",
+      "path": "skills/lzheng-strength-cycle-planner",
+      "standalone": true
+    },
+    {
+      "name": "lzheng-strength-training-review",
+      "path": "skills/lzheng-strength-training-review",
+      "standalone": true
+    }
+  ],
+  "runtime": {
+    "python": ">=3.10",
+    "third_party_dependencies": []
+  },
+  "knowledge": "knowledge/00-lzheng-knowledge-map.md",
+  "validator": "tools/validate_bundle.py"
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lzheng—个性化健身计划"
+  short_description: "基于内置知识分层设计训练计划并交付移动端友好 HTML"
+  default_prompt: "使用 $lzheng-fitness-plan 评估我的当前训练状态，制定分层健身计划并生成可本地打开的 HTML。"

@@ -1,0 +1,67 @@
+{
+  "plan": {
+    "title": "Lzheng 8周卧推力量周期示例",
+    "subtitle": "虚构数据，仅用于渲染与安装验证",
+    "weeks": 8,
+    "athlete": "示例训练者",
+    "goal": "完成八周暴露并在第八周建立新基准",
+    "frequency": "卧推每周2次",
+    "constraints": "所有重量按当日RPE校准；非真实训练处方"
+  },
+  "phases": [
+    {"label": "积累", "start_week": 1, "end_week": 3},
+    {"label": "强度", "start_week": 4, "end_week": 6},
+    {"label": "减量与验证", "start_week": 7, "end_week": 8}
+  ],
+  "schedule": [
+    {"day": "上肢A", "role": "卧推强度", "detail": "顶组后完成回退组"},
+    {"day": "上肢B", "role": "卧推容量", "detail": "控制动作质量与疲劳"}
+  ],
+  "cycles": [
+    {
+      "id": "lzheng-bench-example",
+      "title": "卧推：每周强度与容量",
+      "headers": ["周次 / 阶段", "强度职责", "容量职责", "完成标准"],
+      "rows": [
+        ["W1 积累", "70kg×6 @7", "57.5kg 4×8 @6→7", "动作标准完整"],
+        ["W2 积累", "72.5kg×6 @7.5", "60kg 4×8 @6→7.5", "末组不超过目标RPE"],
+        ["W3 积累", "75kg×5 @8", "62.5kg 4×7 @6.5→8", "无明显技术退化"],
+        ["W4 强度", "77.5kg×4 @8", "65kg 4×6 @6.5→8", "完成全部正式组"],
+        ["W5 强度", "80kg×3 @8", "67.5kg 4×5 @7→8", "顶组速度可接受"],
+        ["W6 强度", "82.5kg×2 @8.5", "70kg 3×4 @7→8", "不出现力竭"],
+        ["W7 减量", "72.5kg×3 @6", "57.5kg 2×5 @5→6", "主动降低疲劳"],
+        ["W8 验证", "按热身与RPE建立新基准", "50kg 2×5 @5→6", "验证后停止追加高强度组"]
+      ],
+      "chart": {
+        "strength_label": "强度（kg）",
+        "volume_label": "容量（kg）",
+        "strength": [
+          {"week": 1, "value": 70, "label": "70"},
+          {"week": 2, "value": 72.5, "label": "72.5"},
+          {"week": 3, "value": 75, "label": "75"},
+          {"week": 4, "value": 77.5, "label": "77.5"},
+          {"week": 5, "value": 80, "label": "80"},
+          {"week": 6, "value": 82.5, "label": "82.5"},
+          {"week": 7, "value": 72.5, "label": "72.5"},
+          {"week": 8, "value": 85, "label": "示例验证"}
+        ],
+        "volume": [
+          {"week": 1, "load": 57.5, "sets": 4, "reps": 8, "label": "1840"},
+          {"week": 2, "load": 60, "sets": 4, "reps": 8, "label": "1920"},
+          {"week": 3, "load": 62.5, "sets": 4, "reps": 7, "label": "1750"},
+          {"week": 4, "load": 65, "sets": 4, "reps": 6, "label": "1560"},
+          {"week": 5, "load": 67.5, "sets": 4, "reps": 5, "label": "1350"},
+          {"week": 6, "load": 70, "sets": 3, "reps": 4, "label": "840"},
+          {"week": 7, "load": 57.5, "sets": 2, "reps": 5, "label": "575"},
+          {"week": 8, "load": 50, "sets": 2, "reps": 5, "label": "500"}
+        ],
+        "footnote": "容量 = 容量职责日重量 × 组数 × 次数；全部为虚构示例数据"
+      }
+    }
+  ],
+  "rules": [
+    {"title": "进阶", "body": "达到目标且RPE不超标时按计划推进；只改变一个主要变量。"},
+    {"title": "未完成", "body": "热身异常、动作明显变形或RPE超标时，未完成分支替代原处方，不追加惩罚训练。"},
+    {"title": "安全", "body": "出现异常疼痛或神经症状时停止高强度推进并寻求适当评估。"}
+  ]
+}

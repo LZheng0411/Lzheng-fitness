@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lzheng—力量训练周期规划"
+  short_description: "制定八至十二周力量周期并生成带渐进曲线的训练计划网页"
+  default_prompt: "使用 $lzheng-strength-cycle-planner 为我的训练主项制定完整的8至12周周期，并生成带强度与容量渐进曲线的本地 HTML 训练计划页面。"

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lzheng—训练中断恢复"
+  short_description: "判断中断后的恢复条件，生成七天接回路径和三档任务"
+  default_prompt: "使用 $lzheng-training-return 帮我评估训练中断后的当前状态，生成安全、可执行的七天接回路径。"
