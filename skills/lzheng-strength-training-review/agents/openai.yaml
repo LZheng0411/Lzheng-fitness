@@ -1,4 +1,4 @@
 interface:
   display_name: "Lzheng—力量训练复盘"
-  short_description: "按周期或滚动渐进复盘训练，给出下次处方并沉淀记录"
-  default_prompt: "使用 $lzheng-strength-training-review 复盘我本次力量训练；有周期时按计划推进，无周期时审核我的渐进方式并给出下一次处方，同时保存本地复盘记录。"
+  short_description: "支持单练与周训练复盘，先问体感，再给明确处方与关键决策。"
+  default_prompt: "使用 $lzheng-strength-training-review 复盘我这次训练或这周训练；先问我的体感，再给出处方或周度决策并沉淀。"

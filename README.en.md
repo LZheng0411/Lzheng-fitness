@@ -1,6 +1,6 @@
 # Lzheng Fitness Skills
 
-Four portable Agent Skills for personalized fitness planning, return-to-training, strength-cycle design, and strength-training review. Every Skill uses the `lzheng-` namespace and includes the references required for standalone use.
+Four portable Agent Skills for personalized fitness planning, return-to-training, strength-cycle design, and strength-training review. Version 1.1.0 adds weekly training reviews with a required subjective-feedback gate. Every Skill uses the `lzheng-` namespace and includes the references required for standalone use.
 
 ## Install
 
@@ -19,7 +19,7 @@ The installer refuses to overwrite an existing Skill unless `--force` is explici
 - `lzheng-fitness-plan`: intake, safety routing, P0–L3 classification, exercise selection, programming, and standalone HTML output.
 - `lzheng-training-return`: a seven-day return path after a meaningful interruption.
 - `lzheng-strength-cycle-planner`: an 8–12 week cycle for one strength lift with a standalone charted HTML plan.
-- `lzheng-strength-training-review`: cycle, rolling-progression, or baseline review with a concrete next prescription.
+- `lzheng-strength-training-review`: cycle, rolling-progression, baseline, or weekly review with a concrete next prescription or weekly decision.
 
 Use `LZHENG_FITNESS_HOME` to choose a persistent output directory. Otherwise outputs are stored in `lzheng-fitness-output/` under the current working directory. Obsidian, Notion, and cloud connectors are optional, not dependencies.
 

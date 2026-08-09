@@ -1,6 +1,6 @@
 # Lzheng Fitness Skills
 
-一套可独立下载、可追溯、无私人知识库依赖的健身 Agent Skills。四个 Skill 均以 `lzheng-` 命名，并携带完成任务所需的参考资料。
+一套可独立下载、可追溯、无私人知识库依赖的健身 Agent Skills。四个 Skill 均以 `lzheng-` 命名，并携带完成任务所需的参考资料。v1.1.0 新增周训练阶段复盘与个人体感追问机制。
 
 ## 包含内容
 
@@ -9,7 +9,7 @@
 | `lzheng-fitness-plan` | 问诊、安全筛查、P0—L3 分层、动作选择、完整计划与 HTML | 是 |
 | `lzheng-training-return` | 停训 7 天、连续漏练 3 次或条件变化后的训练接回 | 是 |
 | `lzheng-strength-cycle-planner` | 单个力量主项的 8—12 周周期和渐进曲线 HTML | 是 |
-| `lzheng-strength-training-review` | 周期、滚动渐进或基准模式的单次训练复盘 | 是 |
+| `lzheng-strength-training-review` | 单练周期/滚动/基准复盘，以及周训练阶段复盘 | 是 |
 
 `knowledge/` 保存经过重新组织的开源训练规则和来源登记。它不包含私人训练数据，也不复制整本版权书籍。
 
@@ -54,6 +54,7 @@ python tools/install.py --target-root ./test-agent --all
 使用 $lzheng-training-return 帮我在停训两周后重新开始。
 使用 $lzheng-strength-cycle-planner 为卧推制定 8 周周期。
 使用 $lzheng-strength-training-review 复盘我今天的训练并给出下一次处方。
+使用 $lzheng-strength-training-review 总结我这周训练；先问个人体感，再给出周度关键决策。
 ```
 
 四个 Skill 可以协作，但不会把其他 Skill 视为必装依赖：
