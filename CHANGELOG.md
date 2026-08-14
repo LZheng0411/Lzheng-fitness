@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.1 — 2026-08-14
+
+- Added fixed goal-data cards to the workbench: hypertrophy distinguishes planned muscle-group sets from completed work, while fat loss tracks only recorded bodyweight, steps, and cardio data.
+- Added `tracking_targets` to the plan contract and guided intake so target-specific metrics, their sources, and missing baselines are explicit rather than invented.
+- Added optional activity records (`steps`, `cardio_minutes`) to the portable Notion input contract.
+
 ## 2.1.0 — 2026-08-14
 
 - Made AI-led onboarding the primary first-use path for users starting hypertrophy, fat-loss, strength, or general-fitness systems; README and command lookup are no longer the required entry point.

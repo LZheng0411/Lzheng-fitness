@@ -110,6 +110,29 @@ def validate_plan(plan: dict[str, Any]) -> tuple[list[str], list[str]]:
     if not isinstance(safety, dict) or safety.get("status") not in {"clear", "caution", "blocked"}:
         errors.append("safety_status.status must be clear, caution, or blocked")
 
+    tracking_targets = plan.get("tracking_targets")
+    if tracking_targets is None:
+        warnings.append("tracking_targets is absent; legacy plan will show only generic workbench signals")
+    elif not isinstance(tracking_targets, list):
+        errors.append("tracking_targets must be an array when provided")
+    else:
+        seen_tracking_ids: set[str] = set()
+        for index, target in enumerate(tracking_targets):
+            prefix = f"tracking_targets[{index}]"
+            if not isinstance(target, dict):
+                errors.append(f"{prefix} must be an object")
+                continue
+            for key in ("id", "label", "kind", "source", "status", "next_action"):
+                if not nonempty_string(target.get(key)):
+                    errors.append(f"{prefix}.{key} must be a non-empty string")
+            target_id = target.get("id")
+            if nonempty_string(target_id):
+                if target_id in seen_tracking_ids:
+                    errors.append(f"duplicate tracking target id: {target_id}")
+                seen_tracking_ids.add(target_id)
+            if target.get("status") not in {"confirmed", "needs_baseline"}:
+                errors.append(f"{prefix}.status must be confirmed or needs_baseline")
+
     schedule = plan["weekly_schedule"]
     days = plan["training_days"]
     if not isinstance(schedule, list):

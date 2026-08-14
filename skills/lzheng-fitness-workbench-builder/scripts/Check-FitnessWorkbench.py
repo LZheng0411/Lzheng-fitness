@@ -223,9 +223,12 @@ def check_html(project, notion=None, restore_notion_from_html=None):
     knowledge = data.get("knowledge", {})
     status = data.get("status", {})
     provenance = data.get("provenance", {})
+    goal_metrics = data.get("goal_metrics")
     for key, value in (("onboarding", onboarding), ("system", system), ("knowledge", knowledge), ("status", status), ("provenance", provenance)):
         if not isinstance(value, dict) or not value:
             problems.append("schema 6 缺少对象: " + key)
+    if not isinstance(goal_metrics, list):
+        problems.append("schema 6 缺少目标数据列表: goal_metrics")
     if onboarding.get("completed") is False and any(exercise.get("w") for day in data.get("days", {}).values() for exercise in day.get("exercises", [])):
         problems.append("待建档状态不应出现正式训练重量")
     if status.get("state") == "stale" and not status.get("reason"):

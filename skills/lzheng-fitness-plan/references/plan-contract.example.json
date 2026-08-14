@@ -169,6 +169,24 @@
     {"timing": "第 2 周末", "collect": "完成率、RPE偏差、动作稳定性", "decision": "维持、微调或降级"},
     {"timing": "第 4 周末", "collect": "完成率、恢复、动作通过标准", "decision": "决定是否进入 L1"}
   ],
+  "tracking_targets": [
+    {
+      "id": "training_completion",
+      "label": "本周训练完成",
+      "kind": "training_completion",
+      "source": "timeline",
+      "status": "confirmed",
+      "next_action": "每次训练后写入复盘，核对是否按计划完成。"
+    },
+    {
+      "id": "progression_log",
+      "label": "重量、次数与余力",
+      "kind": "progression_log",
+      "source": "training_review",
+      "status": "needs_baseline",
+      "next_action": "先完成动作重量校准，再连续记录每个动作的实际重量、次数和余力。"
+    }
+  ],
   "knowledge_sources": [
     {
       "source_type": "local_rule",

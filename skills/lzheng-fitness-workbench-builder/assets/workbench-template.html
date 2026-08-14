@@ -411,6 +411,15 @@
   .insight-point{padding:11px 12px;border-left:1px solid rgba(255,255,255,.18);font-size:11px;color:rgba(255,255,255,.72);line-height:1.55}
   .insight-point b{display:block;margin-bottom:3px;color:#fff;font-size:11px}
 
+  #goalMetricBox{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;padding:1px;background:rgba(0,0,0,.13);overflow:hidden}
+  .goal-metric{position:relative;min-height:142px;padding:19px;background:rgba(249,249,247,.88)}
+  .goal-metric:before{content:attr(data-state);position:absolute;right:13px;top:13px;padding:4px 7px;border:1px solid rgba(0,0,0,.12);border-radius:999px;color:#777;font-size:8px;font-weight:720;letter-spacing:.08em}
+  .goal-metric .gm-label{max-width:74%;font-size:10px;font-weight:720;letter-spacing:.06em;color:#666}
+  .goal-metric .gm-value{margin-top:17px;font-size:19px;font-weight:780;line-height:1.18;letter-spacing:-.035em;color:#111;overflow-wrap:anywhere}
+  .goal-metric .gm-detail{margin-top:9px;font-size:10px;line-height:1.5;color:#666}
+  .goal-metric .gm-next{margin-top:10px;padding-top:9px;border-top:1px solid rgba(0,0,0,.1);font-size:9px;line-height:1.45;color:#444}
+  .goal-metric.planned{background:rgba(238,238,235,.88)}.goal-metric.needs-data{border-top:3px solid #111}
+
   #weekMain{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:rgba(0,0,0,.14);border-color:rgba(0,0,0,.18)}
   .wk .row{display:block;min-height:188px;padding:21px;background:rgba(249,249,247,.88)}
   .wk .row .k{display:block;font-size:16px}.wk .row .v{display:block;max-width:none;text-align:left}
@@ -449,12 +458,12 @@
     .hero:before{right:17px;bottom:14px}.hero .pill{padding:7px 11px;font-size:10px}
     .ringwrap{padding:24px;gap:22px}.ring{width:112px;height:112px}.ring svg{width:112px;height:112px}
     .insight-points{grid-template-columns:1fr}.insight-point{border-left:none;border-top:1px solid rgba(255,255,255,.15)}
-    #weekNote{grid-template-columns:1fr}.rv{grid-template-columns:1fr}.rv .row{min-height:auto}
+    #weekNote{grid-template-columns:1fr}.rv{grid-template-columns:1fr}.rv .row{min-height:auto}#goalMetricBox{grid-template-columns:1fr 1fr}
     #setBox,#ruleBox{grid-template-columns:1fr 1fr}#howNote{grid-template-columns:1fr 1fr}
   }
   @media (max-width:520px){
     .ringwrap{display:block}.ring{margin:0 auto}.ringinfo{margin-top:22px}.stages{padding-left:20px;padding-right:20px}
-    #weekMain{grid-template-columns:1fr}.wk .row{min-height:auto}.day{min-height:166px}
+    #weekMain{grid-template-columns:1fr}.wk .row{min-height:auto}.day{min-height:166px}#goalMetricBox{grid-template-columns:1fr}
     .chartcard{padding:15px}.chartcard svg{height:160px}
     #setBox,#ruleBox,#howNote{grid-template-columns:1fr}.how-step,#setBox .setrow{min-height:auto}
   }
@@ -564,6 +573,8 @@
     <h2 id="weekDaysHeading">本周训练日</h2>
     <div class="days" id="dayGrid"></div>
     <div class="note" id="weekNote"></div>
+    <h2 id="goalMetricsHeading">目标数据</h2>
+    <div class="card" id="goalMetricBox"></div>
     <h2 id="weekFocusHeading">本周重点 · <span id="weekMainLabel">W2</span></h2>
     <div class="card wk" id="weekMain"></div>
   </section>
@@ -883,6 +894,24 @@
   });
   weekNote.innerHTML='<div><div class="insight-label">W'+m.current_week+' / '+objectiveLabel.toUpperCase()+'</div><div class="insight-lead">本周已完成 '+weekDone+' / '+weekTotal+'，'+(hasStrengthCharts?'继续按门槛验证':'先建立本目标的执行基线')+'</div></div><div class="insight-points">'+
     signalCards.map(function(item){return '<div class="insight-point"><b>'+esc(item[0])+'</b>'+esc(item[1])+'</div>';}).join('')+'</div>';
+
+  var goalMetricBox = document.getElementById('goalMetricBox');
+  var goalMetrics = D.goal_metrics || [];
+  document.getElementById('goalMetricsHeading').textContent = objectiveLabel + '目标数据';
+  if(!goalMetrics.length){
+    goalMetricBox.innerHTML = '<div class="goal-metric needs-data" data-state="待记录"><div class="gm-label">目标数据</div><div class="gm-value">待建立</div><div class="gm-detail">当前计划还没有定义专属追踪指标。</div><div class="gm-next">下一步：告诉 AI 你希望长期追踪什么，它会写入计划与工作台。</div></div>';
+  } else {
+    goalMetrics.forEach(function(metric){
+      var stateText = metric.state === 'current' ? '已记录' : (metric.state === 'planned' ? '计划量' : '待记录');
+      var card = el('div','goal-metric ' + (metric.state === 'planned' ? 'planned' : (metric.state === 'needs_data' ? 'needs-data' : '')));
+      card.dataset.state = stateText;
+      card.innerHTML = '<div class="gm-label">'+esc(metric.label || '目标数据')+'</div>'+
+        '<div class="gm-value">'+esc(metric.value || '待记录')+'</div>'+
+        '<div class="gm-detail">'+esc(metric.detail || '无可核验详情')+'</div>'+
+        '<div class="gm-next">下一步：'+esc(metric.next_action || '训练后把实际结果告诉 AI。')+'</div>';
+      goalMetricBox.appendChild(card);
+    });
+  }
 
   var weekMain = document.getElementById('weekMain');
   var weeklyFocus = D.week || [];

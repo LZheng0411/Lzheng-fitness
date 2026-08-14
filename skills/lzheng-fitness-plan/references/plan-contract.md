@@ -20,6 +20,7 @@ JSON 是状态、文字计划和 HTML 的唯一数据源。先验证 JSON，再�
 | `short_interruption_rules` | object | 漏练 1—2 次和转恢复 Skill 阈值 |
 | `cycle_links` | array | 经用户明确确认的单项周期引用 |
 | `review_checkpoints` | array | 复盘时间、数据和决策 |
+| `tracking_targets` | array | 目标专属的长期追踪指标；无基线时明确标记待记录 |
 | `knowledge_sources` | array | 实际读取和使用的来源 |
 | `assumptions` | array | 估算、未知和待确认项 |
 
@@ -50,6 +51,8 @@ JSON 是状态、文字计划和 HTML 的唯一数据源。先验证 JSON，再�
 
 `priority` 使用 `main`、`key` 或 `optional`。P0 计划若安排地面传统/杠铃硬拉，必须额外写 `admission_confirmed: true` 和非空 `admission_evidence`，并在 `movement_profile` 中保存同一动作或髋铰链的 `admission_confirmed: true` 记录与明确证据。
 
+增肌计划的 `main` / `key` 动作还应写入 `muscle_groups`，例如 `["胸", "肱三头肌"]`。它用于工作台展示计划组数和覆盖；计划组数绝不等同于已经完成的训练量。
+
 ## 负荷与校准
 
 每个 `training_days[].exercises[]` 必须包含 `load`，不允许把“自行选择重量”留给使用者：
@@ -65,6 +68,25 @@ JSON 是状态、文字计划和 HTML 的唯一数据源。先验证 JSON，再�
 ```
 
 未知重量使用 `calibration_required`，必须给出 `starting_instruction` 和 `decision_rule`。无公斤数的自重、有氧或时间动作使用 `not_weight_based`，必须给出 `progression_metric`。校准结果写回后才可替换为 `verified`；疼痛、异常或动作变形不进入普通加重。
+
+## 目标追踪
+
+`tracking_targets` 只保存用户已经确认、可被记录的目标数据；没有基线或目标值时不编造数字，应写入 `status: "needs_baseline"` 和下一步收集动作。每一项至少包含：
+
+```json
+{
+  "id": "daily_steps",
+  "label": "日均步数",
+  "kind": "daily_steps",
+  "source": "notion.activity.steps",
+  "status": "needs_baseline",
+  "next_action": "先记录 7 天步数，再由 AI 确认下一阶段目标。"
+}
+```
+
+- 增肌：至少追踪训练完成、重点肌群计划组数、每个重点动作的重量／次数／余力；工作台把计划组数标成“计划量”，只有复盘结果才是完成量。
+- 减脂：至少追踪力量训练完成、体重趋势、日均步数和有氧时长。步数、有氧与体重目标必须来自用户记录或本次确认，不能默认填一个漂亮数字。
+- 力量：追踪训练完成、关键动作实际表现与周期判定；有专项周期时继续使用对应曲线。
 
 客户模式的 `plan_meta.subject_id` 只允许脱敏代号，不得出现 `real_name`、`full_name`、`phone`、`email`、`contact` 或 `medical_history_raw` 字段。`safety_status.status` 为 `blocked` 时，`weekly_schedule` 和 `training_days` 可以为空，但不得含普通训练处方。
 

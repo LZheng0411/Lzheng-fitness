@@ -75,8 +75,9 @@ Notion 不是构建依赖。提供时使用：
   "sessions": [{"date": "01-05", "day": "上肢A"}],
   "latest_by_exercise": {},
   "main_lifts": [{"name": "卧推", "week": 1, "value": 50, "detail": "50kg 4×5 @7", "date": "01-05"}],
+  "activity": [{"date": "2026-01-05", "steps": 8000, "cardio_minutes": 25}],
   "note": "数据来源说明"
 }
 ```
 
-缺失、过期或解析失败时，页面必须显示待同步状态，不得把旧记录冒充当前事实。
+`activity` 是可选字段，仅在减脂或用户主动追踪活动量时使用；每条记录可含 `date`、`steps`、`cardio_minutes`，缺失即显示待记录。缺失、过期或解析失败时，页面必须显示待同步状态，不得把旧记录冒充当前事实。

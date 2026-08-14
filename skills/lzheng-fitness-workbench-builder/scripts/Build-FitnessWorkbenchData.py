@@ -511,6 +511,8 @@ def build_days(plan_json, current_week, plan_start, notion=None):
                 "d": d,
                 "rpe": rpe,
                 "main": main,
+                "muscle_groups": e.get("muscle_groups", []),
+                "planned_sets": e.get("planned_sets"),
                 "weight_source": observed.get("source") if observed else e.get("load_source"),
             })
         item = {"role": role, "exercises": exercises, "date": parse_schedule_date(s.get("day", ""), plan_start), "label": s.get("label"), "title": s.get("title")}
@@ -608,6 +610,142 @@ def build_charts(plan_json, notion=None):
     return charts
 
 
+def exercise_set_count(exercise):
+    """Best-effort extraction of planned working sets; never turns it into completed volume."""
+    match = re.match(r"\s*(\d+)", str(exercise.get("planned_sets") or exercise.get("d") or ""))
+    return int(match.group(1)) if match else 0
+
+
+def current_week_dates(timeline):
+    dates = []
+    for item in timeline:
+        try:
+            dates.append(dt.date.fromisoformat(item.get("date", "")))
+        except (TypeError, ValueError):
+            continue
+    if not dates:
+        return None, None
+    start = min(dates)
+    return start - dt.timedelta(days=start.weekday()), start - dt.timedelta(days=start.weekday()) + dt.timedelta(days=6)
+
+
+def activity_rows_for_week(notion, timeline):
+    start, end = current_week_dates(timeline)
+    rows = []
+    for item in (notion or {}).get("activity", []):
+        try:
+            date = dt.date.fromisoformat(str(item.get("date", ""))[:10])
+        except (TypeError, ValueError):
+            continue
+        if start and end and not (start <= date <= end):
+            continue
+        rows.append(item)
+    return rows
+
+
+def build_goal_metrics(plan_json, days, timeline, notion):
+    """Build goal-specific cards without inventing personal activity or body-composition facts."""
+    plan = plan_json.get("plan", {})
+    mode = plan.get("objective_mode", "general_fitness")
+    targets = plan.get("tracking_targets") if isinstance(plan.get("tracking_targets"), list) else []
+    by_id = {item.get("id"): item for item in targets if isinstance(item, dict) and item.get("id")}
+    training_events = [item for item in timeline if item.get("type") == "training"]
+    done = len([item for item in training_events if item.get("status") == "done"])
+    metrics = [{
+        "id": "training_completion",
+        "label": by_id.get("training_completion", {}).get("label", "本周训练完成"),
+        "value": "%d/%d 次" % (done, len(training_events)),
+        "detail": "来自当前训练日时间线",
+        "state": "current",
+        "source": "timeline",
+        "next_action": by_id.get("training_completion", {}).get("next_action", "完成训练后写入复盘。"),
+    }]
+
+    if mode == "hypertrophy":
+        group_sets = {}
+        for day in days.values():
+            for exercise in day.get("exercises", []):
+                if not exercise.get("main"):
+                    continue
+                groups = exercise.get("muscle_groups") or []
+                if not groups:
+                    groups = ["重点动作"]
+                for group in groups:
+                    group_sets[group] = group_sets.get(group, 0) + exercise_set_count(exercise)
+        if group_sets:
+            summary = " · ".join("%s %d 组" % item for item in list(group_sets.items())[:4])
+            metrics.append({
+                "id": "planned_sets",
+                "label": by_id.get("planned_sets", {}).get("label", "重点肌群计划组数"),
+                "value": summary,
+                "detail": "这是计划量，不等于已完成训练量",
+                "state": "planned",
+                "source": "plan",
+                "next_action": by_id.get("planned_sets", {}).get("next_action", "完成训练后记录实际组数、重量、次数与余力。"),
+            })
+        metrics.append({
+            "id": "progression_log",
+            "label": by_id.get("progression_log", {}).get("label", "双重渐进记录"),
+            "value": "重量 · 次数 · 余力",
+            "detail": "由每次训练实际记录驱动，不用主观猜测替代",
+            "state": "needs_data",
+            "source": "training_review",
+            "next_action": by_id.get("progression_log", {}).get("next_action", "训练后把每个动作的实际重量、次数和 RIR 告诉 AI。"),
+        })
+
+    if mode == "fat_loss":
+        weights = [item for item in (notion or {}).get("bodyweight", []) if item.get("kg") is not None]
+        if weights:
+            latest = weights[-1]
+            change = ""
+            if len(weights) >= 2:
+                delta = float(latest["kg"]) - float(weights[0]["kg"])
+                change = " · 较首条 %+.1f kg" % delta
+            metrics.append({
+                "id": "bodyweight_trend",
+                "label": by_id.get("bodyweight_trend", {}).get("label", "体重趋势"),
+                "value": "%.1f kg" % float(latest["kg"]),
+                "detail": (str(latest.get("date", "")) + change).strip(),
+                "state": "current",
+                "source": "notion.bodyweight",
+                "next_action": by_id.get("bodyweight_trend", {}).get("next_action", "按固定条件继续记录体重，再结合趋势调整。"),
+            })
+        else:
+            metrics.append({
+                "id": "bodyweight_trend",
+                "label": by_id.get("bodyweight_trend", {}).get("label", "体重趋势"),
+                "value": "待记录",
+                "detail": "没有可核验的体重数据",
+                "state": "needs_data",
+                "source": "notion.bodyweight",
+                "next_action": by_id.get("bodyweight_trend", {}).get("next_action", "先连续记录 3—7 天晨起体重，建立趋势基线。"),
+            })
+        activity = activity_rows_for_week(notion, timeline)
+        step_values = [float(item["steps"]) for item in activity if item.get("steps") is not None]
+        cardio_values = [float(item["cardio_minutes"]) for item in activity if item.get("cardio_minutes") is not None]
+        metrics.extend([
+            {
+                "id": "daily_steps",
+                "label": by_id.get("daily_steps", {}).get("label", "日均步数"),
+                "value": ("%d 步" % round(sum(step_values) / len(step_values))) if step_values else "待记录",
+                "detail": "本周 %d 天活动记录" % len(step_values) if step_values else "尚未接入活动记录",
+                "state": "current" if step_values else "needs_data",
+                "source": "notion.activity.steps",
+                "next_action": by_id.get("daily_steps", {}).get("next_action", "记录每日步数；目标由 AI 根据你的当前基线确认。"),
+            },
+            {
+                "id": "cardio_minutes",
+                "label": by_id.get("cardio_minutes", {}).get("label", "本周有氧"),
+                "value": ("%d 分钟" % round(sum(cardio_values))) if cardio_values else "待记录",
+                "detail": "本周已记录的低冲击有氧" if cardio_values else "尚未接入有氧记录",
+                "state": "current" if cardio_values else "needs_data",
+                "source": "notion.activity.cardio_minutes",
+                "next_action": by_id.get("cardio_minutes", {}).get("next_action", "记录有氧时长和主观恢复，不做惩罚性加量。"),
+            },
+        ])
+    return metrics
+
+
 def build_reviews(review_rows, project_root):
     review_dir = os.path.join("训练复盘与状态", "训练复盘")
     out = []
@@ -675,7 +813,7 @@ def load_notion(notion_file):
         return {
             "last_sync": None, "bodyweight": [], "baseline_kg": None,
             "baseline_note": None, "sessions": [], "note": "Notion 数据文件解析失败。",
-            "latest_by_exercise": {}, "main_lifts": [], "notion_url": None, "_load_error": str(exc),
+            "latest_by_exercise": {}, "main_lifts": [], "activity": [], "notion_url": None, "_load_error": str(exc),
         }
     return {
         "last_sync": data.get("last_sync"),
@@ -686,6 +824,7 @@ def load_notion(notion_file):
         "note": data.get("note"),
         "latest_by_exercise": data.get("latest_by_exercise", {}),
         "main_lifts": data.get("main_lifts", []),
+        "activity": data.get("activity", []),
         "notion_url": data.get("notion_url"),
     }
 
@@ -832,7 +971,7 @@ def validate(data, plan_json):
         if not any(x.get("date") == summary.get("date") and x.get("day") == summary.get("day") and x.get("status") == "done" for x in data.get("timeline", [])):
             problems.append("今日复盘与今日时间线不一致")
     # 必填字段
-    for f in ("days", "reviews", "rules", "onboarding", "system", "knowledge", "status", "provenance"):
+    for f in ("days", "reviews", "rules", "onboarding", "system", "knowledge", "status", "provenance", "goal_metrics"):
         if f not in data:
             problems.append("缺少必填字段: " + f)
     if data.get("schema") != SCHEMA_VERSION:
@@ -954,6 +1093,7 @@ def main():
         "week": build_week(plan_json, current_week),
         "phases": plan_json.get("phases", []),
         "charts": build_charts(plan_json, notion),
+        "goal_metrics": build_goal_metrics(plan_json, days, timeline, notion),
         "reviews": build_reviews(review_rows, project),
         "rules": ["%s：%s" % (r.get("title"), r.get("body")) for r in plan_json.get("rules", [])],
         "advice": prev.get("advice") or "按复盘索引的最近一次判定准备下一次训练。",
@@ -965,6 +1105,7 @@ def main():
             "baseline_kg": None,
             "baseline_note": None,
             "sessions": [],
+            "activity": [],
             "note": "Notion 数据未提供；页面将显示待同步状态。",
         },
         "sync": sync,

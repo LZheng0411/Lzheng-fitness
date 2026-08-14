@@ -15,5 +15,8 @@
   "main_lifts": [
     {"name": "卧推", "week": 1, "value": 40, "detail": "40kg 4×5 @7（示例）", "date": "__DATE_MON__"}
   ],
+  "activity": [
+    {"date": "__TODAY_ISO__", "steps": 8000, "cardio_minutes": 25}
+  ],
   "note": "匿名示例数据，仅用于测试界面。正式使用前替换为本人可核验记录。"
 }
