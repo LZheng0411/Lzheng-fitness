@@ -70,6 +70,20 @@ def install_skill(name: str, skills_root: Path, force: bool) -> Path:
     return destination
 
 
+def print_ai_onboarding(agent_root: Path) -> None:
+    """Print an explicit next reply for an Agent that just performed installation."""
+    print("\nLZHENG_FITNESS_AI_ONBOARDING:")
+    print("安装已完成。请直接告诉用户：不要先看 README；现在只需选一个新的空文件夹作为系统根目录。")
+    print("建议用户下一句对 AI 说：")
+    print('使用 $lzheng-training-system 帮我在 "<空文件夹路径>" 从零搭建我的 AI 健身系统。')
+    print("随后 AI 应依次完成：")
+    print("1. 初始化个人训练系统和离线工作台；")
+    print("2. 询问建档所需的目标、近期训练、时间、器械、恢复与限制；")
+    print("3. 生成第一版正式计划，再由每次训练复盘持续更新工作台。")
+    print("如当前聊天未识别新 Skill，请新开一个聊天后发送上面的固定句。")
+    print("安装位置：" + str(agent_root / "skills"))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Install portable Lzheng Fitness Skills.")
     parser.add_argument("--platform", choices=("codex", "claude", "agents"), default="codex")
@@ -99,6 +113,7 @@ def main() -> None:
     print("Installed Lzheng Fitness Skills:")
     for path in installed:
         print(f"- {path}")
+    print_ai_onboarding(agent_root)
 
 
 if __name__ == "__main__":

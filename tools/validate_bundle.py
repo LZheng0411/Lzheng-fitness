@@ -223,7 +223,10 @@ def tree_hash(root: Path) -> dict[str, str]:
 
 def validate_install(temp: Path) -> None:
     target = temp / "test-agent"
-    run([sys.executable, str(ROOT / "tools" / "install.py"), "--target-root", str(target), "--all"])
+    install_output = run([sys.executable, str(ROOT / "tools" / "install.py"), "--target-root", str(target), "--all"])
+    for required in ("LZHENG_FITNESS_AI_ONBOARDING:", "$lzheng-training-system", "不要先看 README"):
+        if required not in install_output:
+            fail(f"Installer is missing required AI onboarding text: {required}")
     for name in EXPECTED:
         source = SKILLS_ROOT / name
         installed = target / "skills" / name
