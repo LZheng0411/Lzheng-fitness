@@ -11,6 +11,9 @@ from pathlib import Path
 from typing import Any
 
 
+ALLOWED_GOAL_MODES = {"strength", "hypertrophy", "fat_loss", "general_fitness"}
+
+
 def is_plan_contract(value: Any) -> bool:
     return isinstance(value, dict) and isinstance(value.get("plan_meta"), dict) and isinstance(value.get("training_days"), list)
 
@@ -67,6 +70,8 @@ def adapt(contract: dict[str, Any], start_date: str | None = None) -> dict[str, 
             "exercises": exercises,
         })
     mode = str(meta.get("goal_mode") or "general_fitness")
+    if mode not in ALLOWED_GOAL_MODES:
+        raise ValueError("plan_meta.goal_mode must be strength, hypertrophy, fat_loss, or general_fitness")
     rules = [{"title": item.get("scope", "渐进规则"), "body": item.get("action", "按动作质量与目标次数推进")} for item in contract.get("progression_rules", [])]
     rules.append({"title": "负荷校准", "body": "待校准动作按页面引导确定重量；完成后写入实际重量、次数、余力和动作质量。"})
     return {

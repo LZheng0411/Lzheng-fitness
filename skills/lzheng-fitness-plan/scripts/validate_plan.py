@@ -30,6 +30,14 @@ REQUIRED_TOP = [
     "assumptions",
 ]
 
+ALLOWED_GOAL_MODES = {"strength", "hypertrophy", "fat_loss", "general_fitness"}
+REQUIRED_TRACKING_TARGETS = {
+    "strength": {"training_completion", "key_lift_performance", "cycle_decision"},
+    "hypertrophy": {"training_completion", "planned_sets", "progression_log"},
+    "fat_loss": {"training_completion", "bodyweight_trend", "daily_steps", "cardio_minutes"},
+    "general_fitness": {"training_completion"},
+}
+
 
 def load_plan(path: Path) -> dict[str, Any]:
     try:
@@ -73,6 +81,7 @@ def validate_plan(plan: dict[str, Any]) -> tuple[list[str], list[str]]:
         return errors, warnings
 
     meta = plan["plan_meta"]
+    goal_mode = None
     if not isinstance(meta, dict):
         errors.append("plan_meta must be an object")
     else:
@@ -91,6 +100,11 @@ def validate_plan(plan: dict[str, Any]) -> tuple[list[str], list[str]]:
                 errors.append(f"client plan contains forbidden identifying fields: {leaked}")
         if not isinstance(meta.get("weeks"), int) or meta.get("weeks", 0) < 1:
             errors.append("plan_meta.weeks must be a positive integer")
+        goal_mode = meta.get("goal_mode")
+        if goal_mode is None:
+            warnings.append("plan_meta.goal_mode is absent; treating this as a legacy generic plan")
+        elif goal_mode not in ALLOWED_GOAL_MODES:
+            errors.append("plan_meta.goal_mode must be strength, hypertrophy, fat_loss, or general_fitness")
 
     snapshot = plan["profile_snapshot"]
     if not isinstance(snapshot, dict):
@@ -112,7 +126,10 @@ def validate_plan(plan: dict[str, Any]) -> tuple[list[str], list[str]]:
 
     tracking_targets = plan.get("tracking_targets")
     if tracking_targets is None:
-        warnings.append("tracking_targets is absent; legacy plan will show only generic workbench signals")
+        if goal_mode in ALLOWED_GOAL_MODES:
+            errors.append(f"tracking_targets is required for goal_mode={goal_mode}")
+        else:
+            warnings.append("tracking_targets is absent; legacy plan will show only generic workbench signals")
     elif not isinstance(tracking_targets, list):
         errors.append("tracking_targets must be an array when provided")
     else:
@@ -132,6 +149,13 @@ def validate_plan(plan: dict[str, Any]) -> tuple[list[str], list[str]]:
                 seen_tracking_ids.add(target_id)
             if target.get("status") not in {"confirmed", "needs_baseline"}:
                 errors.append(f"{prefix}.status must be confirmed or needs_baseline")
+        if goal_mode in REQUIRED_TRACKING_TARGETS:
+            missing_targets = REQUIRED_TRACKING_TARGETS[goal_mode] - seen_tracking_ids
+            if missing_targets:
+                errors.append(
+                    "tracking_targets is missing required ids for goal_mode=%s: %s"
+                    % (goal_mode, ", ".join(sorted(missing_targets)))
+                )
 
     schedule = plan["weekly_schedule"]
     days = plan["training_days"]

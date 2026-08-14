@@ -8,6 +8,7 @@
     "subject_mode": "personal",
     "subject_id": "example-user",
     "phase_goal": "4 周内稳定完成每周 2 次全身训练",
+    "goal_mode": "general_fitness",
     "frequency": "每周 2 练",
     "weeks": 4,
     "next_training_day_id": "day-a"

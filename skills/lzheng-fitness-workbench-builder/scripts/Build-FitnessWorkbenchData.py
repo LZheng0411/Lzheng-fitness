@@ -20,6 +20,7 @@ Build-FitnessWorkbenchData.py — 健身工作台 workbench-data 生成器与校
 import argparse
 import datetime as dt
 import json
+import math
 import os
 import re
 import sys
@@ -616,6 +617,17 @@ def exercise_set_count(exercise):
     return int(match.group(1)) if match else 0
 
 
+def safe_nonnegative_number(value):
+    """Return a finite non-negative number, or None for an unverified input."""
+    if isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) and number >= 0 else None
+
+
 def current_week_dates(timeline):
     dates = []
     for item in timeline:
@@ -633,6 +645,8 @@ def activity_rows_for_week(notion, timeline):
     start, end = current_week_dates(timeline)
     rows = []
     for item in (notion or {}).get("activity", []):
+        if not isinstance(item, dict):
+            continue
         try:
             date = dt.date.fromisoformat(str(item.get("date", ""))[:10])
         except (TypeError, ValueError):
@@ -694,8 +708,18 @@ def build_goal_metrics(plan_json, days, timeline, notion):
         })
 
     if mode == "fat_loss":
-        weights = [item for item in (notion or {}).get("bodyweight", []) if item.get("kg") is not None]
-        if weights:
+        raw_weights = (notion or {}).get("bodyweight", [])
+        raw_weights = raw_weights if isinstance(raw_weights, list) else []
+        weights = []
+        for item in raw_weights:
+            if not isinstance(item, dict):
+                continue
+            kg = safe_nonnegative_number(item.get("kg"))
+            if kg is not None:
+                weights.append({**item, "kg": kg})
+        latest_raw_weight = raw_weights[-1] if raw_weights else None
+        latest_is_verified = isinstance(latest_raw_weight, dict) and safe_nonnegative_number(latest_raw_weight.get("kg")) is not None
+        if weights and latest_is_verified:
             latest = weights[-1]
             change = ""
             if len(weights) >= 2:
@@ -721,8 +745,8 @@ def build_goal_metrics(plan_json, days, timeline, notion):
                 "next_action": by_id.get("bodyweight_trend", {}).get("next_action", "先连续记录 3—7 天晨起体重，建立趋势基线。"),
             })
         activity = activity_rows_for_week(notion, timeline)
-        step_values = [float(item["steps"]) for item in activity if item.get("steps") is not None]
-        cardio_values = [float(item["cardio_minutes"]) for item in activity if item.get("cardio_minutes") is not None]
+        step_values = [value for item in activity if (value := safe_nonnegative_number(item.get("steps"))) is not None]
+        cardio_values = [value for item in activity if (value := safe_nonnegative_number(item.get("cardio_minutes"))) is not None]
         metrics.extend([
             {
                 "id": "daily_steps",

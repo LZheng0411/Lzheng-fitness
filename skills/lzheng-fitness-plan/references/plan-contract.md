@@ -71,6 +71,8 @@ JSON 是状态、文字计划和 HTML 的唯一数据源。先验证 JSON，再�
 
 ## 目标追踪
 
+`plan_meta.goal_mode` 必须是 `strength`、`hypertrophy`、`fat_loss` 或 `general_fitness`。只要计划声明了目标类型，`tracking_targets` 就是必填项：力量至少包含 `training_completion`、`key_lift_performance`、`cycle_decision`；增肌至少包含 `training_completion`、`planned_sets`、`progression_log`；减脂至少包含 `training_completion`、`bodyweight_trend`、`daily_steps`、`cardio_minutes`；综合健身至少包含 `training_completion`。旧计划缺少目标类型时仅按兼容模式展示，不能作为新计划模板。
+
 `tracking_targets` 只保存用户已经确认、可被记录的目标数据；没有基线或目标值时不编造数字，应写入 `status: "needs_baseline"` 和下一步收集动作。每一项至少包含：
 
 ```json
