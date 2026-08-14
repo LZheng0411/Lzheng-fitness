@@ -17,6 +17,8 @@ SKILLS = (
     "lzheng-training-return",
     "lzheng-strength-cycle-planner",
     "lzheng-strength-training-review",
+    "lzheng-training-system",
+    "lzheng-fitness-workbench-builder",
 )
 
 

@@ -1,0 +1,19 @@
+{
+  "last_sync": "__TODAY_ISO__T22:30:00+08:00",
+  "bodyweight": [
+    {"date": "__TODAY_ISO__", "kg": 70.0, "note": "匿名示例实测"}
+  ],
+  "baseline_kg": 70.0,
+  "baseline_note": "匿名示例周期基线",
+  "sessions": [
+    {"date": "__DATE_MON__", "day": "上肢A"}
+  ],
+  "latest_by_exercise": {
+    "上斜哑铃卧推": {"weight": 10, "source": "匿名示例", "per_hand": true},
+    "胸托划船": {"weight": 20, "source": "匿名示例", "per_hand": false}
+  },
+  "main_lifts": [
+    {"name": "卧推", "week": 1, "value": 40, "detail": "40kg 4×5 @7（示例）", "date": "__DATE_MON__"}
+  ],
+  "note": "匿名示例数据，仅用于测试界面。正式使用前替换为本人可核验记录。"
+}

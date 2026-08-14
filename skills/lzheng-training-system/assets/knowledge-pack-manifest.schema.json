@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "required": ["name", "version", "scope", "sources"],
+  "scopes": ["public", "private"],
+  "public_rules": [
+    "只包含原创总结、协议、模板与来源登记",
+    "不得包含原书 PDF、OCR 全文、付费课程原文或私人训练数据"
+  ],
+  "private_rules": [
+    "默认仅本地使用",
+    "默认排除公开导出"
+  ]
+}

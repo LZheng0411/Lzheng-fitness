@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lzheng 健身工作台构建器"
+  short_description: "从计划、复盘、训练数据和素材构建可迁移的本地健身工作台"
+  default_prompt: "使用 $lzheng-fitness-workbench-builder 为我从零搭建并校验个人健身工作台。"

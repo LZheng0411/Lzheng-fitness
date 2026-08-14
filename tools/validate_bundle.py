@@ -20,19 +20,19 @@ EXPECTED = (
     "lzheng-training-return",
     "lzheng-strength-cycle-planner",
     "lzheng-strength-training-review",
+    "lzheng-training-system",
+    "lzheng-fitness-workbench-builder",
 )
 TEXT_SUFFIXES = {".md", ".json", ".yaml", ".yml", ".py", ".txt"}
 BLOCKED = {
-    "private Windows absolute path": re.compile(r"[A-Za-z]:\\"),
+    "private Windows absolute path": re.compile(r"\b[A-Za-z]:\\(?:[^\\/:*?\"<>|\r\n]+\\)+"),
     "private macOS home": re.compile(r"/Users/[^/\s]+/"),
     "private Linux home": re.compile(r"/home/[^/\s]+/"),
-    "private Obsidian dependency": re.compile(r"obsidian", re.IGNORECASE),
-    "private Notion dependency": re.compile(r"notion", re.IGNORECASE),
     "private project name": re.compile(r"lz政系统健身|个人健身知识库|李政"),
 }
 LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 REPOSITORY_BLOCKED = {
-    "private Windows absolute path": re.compile(r"[A-Za-z]:\\"),
+    "private Windows absolute path": re.compile(r"\b[A-Za-z]:\\(?:[^\\/:*?\"<>|\r\n]+\\)+"),
     "private macOS home": re.compile(r"/Users/[^/\s]+/"),
     "private Linux home": re.compile(r"/home/[^/\s]+/"),
     "private project identity": re.compile(r"lz政系统健身|个人健身知识库|李政"),
@@ -122,7 +122,7 @@ def validate_skill(skill: Path) -> None:
                     fail(f"Broken local link in {path.relative_to(ROOT)}: {target}")
 
     for script in skill.rglob("*.py"):
-        source = read_text(script)
+        source = read_text(script).lstrip("\ufeff")
         try:
             compile(source, str(script), "exec")
         except SyntaxError as exc:
@@ -201,6 +201,14 @@ def validate_renderers(temp: Path) -> None:
             fail(f"Rendered HTML is missing the mobile overflow guard: {html}")
         if re.search(r"(?:src|href)=[\"']https?://", text, re.IGNORECASE):
             fail(f"Rendered HTML has an external runtime dependency: {html}")
+
+    workbench = SKILLS_ROOT / "lzheng-fitness-workbench-builder"
+    run([sys.executable, str(workbench / "scripts" / "Validate-FitnessWorkbenchSkill.py"), "--skill", str(workbench)])
+
+    system = SKILLS_ROOT / "lzheng-training-system"
+    portable_root = temp / "portable-training-system"
+    run([sys.executable, str(system / "scripts" / "lzheng_training_system.py"), "bootstrap", "--target", str(portable_root)])
+    run([sys.executable, str(system / "scripts" / "lzheng_training_system.py"), "doctor", "--root", str(portable_root)])
 
 
 def tree_hash(root: Path) -> dict[str, str]:

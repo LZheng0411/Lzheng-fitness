@@ -1,36 +1,39 @@
 # Lzheng Fitness Skills
 
-Four portable Agent Skills for personalized fitness planning, return-to-training, strength-cycle design, and strength-training review. Version 1.1.0 adds weekly training reviews with a required subjective-feedback gate. Every Skill uses the `lzheng-` namespace and includes the references required for standalone use.
+Portable, offline-first Agent Skills for a personal training system. Version 2.0 adds a system controller and a responsive local workbench to the existing planning, return-to-training, cycle-design, and review Skills.
 
-## Install
-
-Python 3.10 or newer is required. No third-party Python package is needed.
-
-```bash
-python tools/install.py --platform codex --all
-python tools/install.py --platform claude --skill lzheng-fitness-plan
-python tools/install.py --target-root ./test-agent --all
-```
-
-The installer refuses to overwrite an existing Skill unless `--force` is explicitly supplied. A Skill can also be installed by copying its whole folder from `skills/` into a compatible Agent skills directory.
+The public bundle contains no personal training records, account data, or fixed machine paths. It includes the Garou workbench artwork with authorization from this repository's maintainer, so a new computer can run the workbench fully offline.
 
 ## Skills
 
-- `lzheng-fitness-plan`: intake, safety routing, P0–L3 classification, exercise selection, programming, and standalone HTML output.
-- `lzheng-training-return`: a seven-day return path after a meaningful interruption.
-- `lzheng-strength-cycle-planner`: an 8–12 week cycle for one strength lift with a standalone charted HTML plan.
-- `lzheng-strength-training-review`: cycle, rolling-progression, baseline, or weekly review with a concrete next prescription or weekly decision.
+- `lzheng-fitness-plan`: intake, safety routing, programming, and standalone plan HTML.
+- `lzheng-training-return`: return-to-training after interruption or changed conditions.
+- `lzheng-strength-cycle-planner`: an 8–12 week cycle for one strength lift.
+- `lzheng-strength-training-review`: single-session, rolling, baseline, and weekly training review.
+- `lzheng-training-system`: bootstrap, migration, diagnostics, protected upgrades, and suite validation.
+- `lzheng-fitness-workbench-builder`: builds a responsive offline workbench from plans, reviews, and optional dynamic-data input.
 
-Use `LZHENG_FITNESS_HOME` to choose a persistent output directory. Otherwise outputs are stored in `lzheng-fitness-output/` under the current working directory. Obsidian, Notion, and cloud connectors are optional, not dependencies.
+Python 3.10+ is required; no third-party Python package is needed.
 
-## Validate
+## Install and verify
 
 ```bash
+python tools/install.py --platform codex --all
 python tools/validate_bundle.py
 ```
 
-The validator checks Skill metadata, local links, portable paths, script syntax, HTML generation, data consistency, and a clean installation into a temporary Agent directory.
+For an isolated target:
 
-This project provides general training-planning support, not medical diagnosis or rehabilitation. See `knowledge/06-lzheng-source-register.md` for evidence provenance.
+```bash
+python tools/install.py --target-root ./test-agent --all
+python <skills-dir>/lzheng-training-system/scripts/lzheng_training_system.py bootstrap --target "<empty-folder>"
+python <skills-dir>/lzheng-training-system/scripts/lzheng_training_system.py doctor --root "<empty-folder>"
+```
+
+`bootstrap` only accepts an empty directory and creates an anonymous demonstration system. Replace its example plan with a confirmed plan before real training. The resulting `个人训练系统/健身工作台.html` is responsive and has no online runtime dependency.
+
+The installer refuses to overwrite an existing Skill unless `--force` is supplied; it creates a backup before replacement.
+
+This project supports general training planning and record keeping. It is not medical diagnosis or rehabilitation advice. See [the evidence register](knowledge/06-lzheng-source-register.md) and [asset notice](ASSET-NOTICE.md).
 
 MIT © 2026 Lzheng
