@@ -412,6 +412,7 @@
   .insight-point b{display:block;margin-bottom:3px;color:#fff;font-size:11px}
 
   #goalMetricBox{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;padding:1px;background:rgba(0,0,0,.13);overflow:hidden}
+  #goalMetricBox.has-four{grid-template-columns:repeat(4,minmax(0,1fr))}
   .goal-metric{position:relative;min-height:142px;padding:19px;background:rgba(249,249,247,.88)}
   .goal-metric:before{content:attr(data-state);position:absolute;right:13px;top:13px;padding:4px 7px;border:1px solid rgba(0,0,0,.12);border-radius:999px;color:#777;font-size:8px;font-weight:720;letter-spacing:.08em}
   .goal-metric .gm-label{max-width:74%;font-size:10px;font-weight:720;letter-spacing:.06em;color:#666}
@@ -458,12 +459,12 @@
     .hero:before{right:17px;bottom:14px}.hero .pill{padding:7px 11px;font-size:10px}
     .ringwrap{padding:24px;gap:22px}.ring{width:112px;height:112px}.ring svg{width:112px;height:112px}
     .insight-points{grid-template-columns:1fr}.insight-point{border-left:none;border-top:1px solid rgba(255,255,255,.15)}
-    #weekNote{grid-template-columns:1fr}.rv{grid-template-columns:1fr}.rv .row{min-height:auto}#goalMetricBox{grid-template-columns:1fr 1fr}
+    #weekNote{grid-template-columns:1fr}.rv{grid-template-columns:1fr}.rv .row{min-height:auto}#goalMetricBox,#goalMetricBox.has-four{grid-template-columns:1fr 1fr}
     #setBox,#ruleBox{grid-template-columns:1fr 1fr}#howNote{grid-template-columns:1fr 1fr}
   }
   @media (max-width:520px){
     .ringwrap{display:block}.ring{margin:0 auto}.ringinfo{margin-top:22px}.stages{padding-left:20px;padding-right:20px}
-    #weekMain{grid-template-columns:1fr}.wk .row{min-height:auto}.day{min-height:166px}#goalMetricBox{grid-template-columns:1fr}
+    #weekMain{grid-template-columns:1fr}.wk .row{min-height:auto}.day{min-height:166px}#goalMetricBox,#goalMetricBox.has-four{grid-template-columns:1fr}
     .chartcard{padding:15px}.chartcard svg{height:160px}
     #setBox,#ruleBox,#howNote{grid-template-columns:1fr}.how-step,#setBox .setrow{min-height:auto}
   }
@@ -897,6 +898,7 @@
 
   var goalMetricBox = document.getElementById('goalMetricBox');
   var goalMetrics = D.goal_metrics || [];
+  goalMetricBox.classList.toggle('has-four', goalMetrics.length === 4);
   document.getElementById('goalMetricsHeading').textContent = objectiveLabel + '目标数据';
   if(!goalMetrics.length){
     goalMetricBox.innerHTML = '<div class="goal-metric needs-data" data-state="待记录"><div class="gm-label">目标数据</div><div class="gm-value">待建立</div><div class="gm-detail">当前计划还没有定义专属追踪指标。</div><div class="gm-next">下一步：告诉 AI 你希望长期追踪什么，它会写入计划与工作台。</div></div>';

@@ -858,7 +858,7 @@ def parse_sync_date(value):
             return None
 
 
-def notion_sync_state(notion):
+def notion_sync_state(notion, objective_mode="general_fitness"):
     if not notion:
         return "stale", "Notion 数据文件缺失，使用本地复盘与计划数据", ["notion.bodyweight", "notion.sessions"]
     if notion.get("_load_error"):
@@ -871,10 +871,15 @@ def notion_sync_state(notion):
         stale.append("notion.last_sync")
     if not isinstance(notion.get("sessions"), list) or not notion.get("sessions"):
         stale.append("notion.sessions")
-    if not isinstance(notion.get("main_lifts"), list) or not notion.get("main_lifts"):
-        stale.append("notion.main_lifts")
-    if not isinstance(notion.get("latest_by_exercise"), dict) or not notion.get("latest_by_exercise"):
-        stale.append("notion.latest_by_exercise")
+    if objective_mode == "strength":
+        if not isinstance(notion.get("main_lifts"), list) or not notion.get("main_lifts"):
+            stale.append("notion.main_lifts")
+    elif objective_mode == "hypertrophy":
+        if not isinstance(notion.get("latest_by_exercise"), dict) or not notion.get("latest_by_exercise"):
+            stale.append("notion.latest_by_exercise")
+    elif objective_mode == "fat_loss":
+        if not isinstance(notion.get("bodyweight"), list) or not notion.get("bodyweight"):
+            stale.append("notion.bodyweight")
     if stale:
         return "stale", "Notion 数据不完整或已过期", stale
     return "ok", None, []
@@ -1065,7 +1070,7 @@ def main():
     prior_notion = prev.get("notion") if isinstance(prev.get("notion"), dict) else None
     retained_notion = prior_notion if prior_notion and prior_notion.get("last_sync") else None
     notion = load_notion(args.notion) if args.notion else (load_notion_from_workbench(args.restore_notion_from_html) if args.restore_notion_from_html else retained_notion)
-    sync_status, sync_reason, stale_fields = notion_sync_state(notion)
+    sync_status, sync_reason, stale_fields = notion_sync_state(notion, plan_json.get("plan", {}).get("objective_mode", "general_fitness"))
     sync = {
         "status": sync_status,
         "last_success": (notion or {}).get("last_sync") or prev.get("sync", {}).get("last_success"),
