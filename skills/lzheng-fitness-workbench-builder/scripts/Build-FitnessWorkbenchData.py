@@ -974,7 +974,11 @@ def main():
         for day in data["days"].values():
             for exercise in day.get("exercises", []):
                 exercise["w"] = None
-                exercise["weight_source"] = "待建档：示例重量不可作为处方"
+                exercise["weight_source"] = (
+                    "待校准：首练试组后确认工作重量"
+                    if onboarding["mode"] == "needs_calibration"
+                    else "待建档：示例重量不可作为处方"
+                )
     problems = validate(data, plan_json)
     if problems:
         fail("；".join(problems))

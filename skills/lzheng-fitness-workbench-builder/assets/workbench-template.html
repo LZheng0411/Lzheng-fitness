@@ -561,15 +561,15 @@
       </div>
       <div class="stages" id="stageBar"></div>
     </div>
-    <h2>本周四练日</h2>
+    <h2 id="weekDaysHeading">本周训练日</h2>
     <div class="days" id="dayGrid"></div>
     <div class="note" id="weekNote"></div>
-    <h2>本周主项 · <span id="weekMainLabel">W2</span></h2>
+    <h2 id="weekFocusHeading">本周重点 · <span id="weekMainLabel">W2</span></h2>
     <div class="card wk" id="weekMain"></div>
   </section>
 
   <section id="m-trend">
-    <h2>主项 8 周负荷</h2>
+    <h2 id="trendHeading">训练进展</h2>
     <div class="card" id="chartBox"></div>
     <h2>体重趋势</h2>
     <div class="card" id="bwBox"></div>
@@ -612,10 +612,45 @@
   var systemInfo = D.system || {};
   var trainingStatus = D.status || {};
   var knowledge = D.knowledge || {};
+  var objectiveLabels = {
+    strength: '力量',
+    hypertrophy: '增肌',
+    fat_loss: '减脂',
+    general_fitness: '综合健身'
+  };
+  var objectiveLabel = objectiveLabels[m.objective_mode] || '训练计划';
+  var objectiveSignals = {
+    strength: ['动作质量与完成标准', '关键动作的重量、次数与余力', '阶段测试或复盘结论'],
+    hypertrophy: ['动作质量与目标次数', '重量、次数与余力', '肌群训练完成情况'],
+    fat_loss: ['力量训练完成情况', '体重或围度趋势', '步数、有氧与恢复'],
+    general_fitness: ['训练完成情况', '重量、次数与动作质量', '恢复与日常活动']
+  };
+  var activeSignals = objectiveSignals[m.objective_mode] || objectiveSignals.general_fitness;
 
   function el(tag, cls, html){ var n=document.createElement(tag); if(cls)n.className=cls; if(html!=null)n.innerHTML=html; return n; }
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function pad(n){ return n<10?'0'+n:''+n; }
+
+  function displayDayDate(day){
+    if(!day) return '待排期';
+    return day.date ? day.date.slice(5) : (D.weekday[day.title] || '待排期');
+  }
+
+  function trainingDayOrder(){
+    var defaults = ['上肢A','腿A','上肢B','腿B'];
+    if(defaults.every(function(name){ return D.days[name]; })) return defaults;
+    return Object.keys(D.days || {}).sort(function(a,b){
+      var ad = (D.days[a] && D.days[a].date) || '';
+      var bd = (D.days[b] && D.days[b].date) || '';
+      return ad.localeCompare(bd) || a.localeCompare(b);
+    });
+  }
+
+  function prescriptionLabel(exercise){
+    if(exercise && exercise.w) return exercise.w;
+    if(exercise && String(exercise.d || '').indexOf('待校准') >= 0) return '待校准';
+    return '见计划';
+  }
 
   document.getElementById('verChip').textContent = '来源 v' + m.source_version.replace('v','') + ' · 更新于 ' + m.updated_at;
 
@@ -708,7 +743,7 @@
     var reviewedToday = completedToday && summary && summary.date===todayIso && summary.day===name;
     var upcoming = nextEvent();
     if(name){
-      heroHi.textContent = completedToday ? '今日已完成 · ' + name : (isDefault ? '今日训练 · ' + name : name + ' · ' + (D.days[name].date||D.weekday[name]));
+      heroHi.textContent = completedToday ? '今日已完成 · ' + name : (isDefault ? '今日训练 · ' + name : name + ' · ' + displayDayDate(D.days[name]));
       heroSub.textContent = 'W' + m.current_week + ' / ' + m.phase + '期 · ' + D.days[name].role;
     } else {
       heroHi.textContent = '今日恢复';
@@ -717,8 +752,9 @@
     function pill(t){ pills.appendChild(el('span','pill',t)); }
     var dt = daysToTest();
     pill('W' + m.current_week + ' / ' + m.total_weeks + ' · ' + m.phase + '期');
-    pill(dt>0 ? '验证倒计时 ' + dt + ' 天' : '验证周');
-    if(name && !isDefault) pill(D.weekday[name] + ' · ' + ((D.days[name] && D.days[name].date)||'待排期'));
+    pill(objectiveLabel + '计划');
+    pill(dt>0 ? '本阶段剩余 ' + dt + ' 天' : '本阶段复盘');
+    if(name && !isDefault) pill(displayDayDate(D.days[name]));
     var adv = el('div',null);
     if(reviewedToday){
       adv.innerHTML = '<div class="today-status"><div><div class="eyebrow">今日关键结果</div><div class="result">' +
@@ -764,6 +800,9 @@
   var weekLabel = document.getElementById('weekLabel');
   weekLabel.textContent = 'W' + m.current_week + ' / ' + m.total_weeks;
   document.getElementById('weekMainLabel').textContent = 'W' + m.current_week;
+  document.getElementById('weekDaysHeading').textContent = '本周训练日 · ' + objectiveLabel;
+  document.getElementById('weekFocusHeading').innerHTML = '本周重点 · <span id="weekMainLabel">W' + m.current_week + '</span>';
+  document.getElementById('trendHeading').textContent = Object.keys(D.charts || {}).length ? '训练进展' : objectiveLabel + '执行信号';
 
   var ringBox = document.getElementById('ringBox');
   var completedWeeks = Math.max(0,m.current_week-1);
@@ -783,11 +822,11 @@
     if(!x||!x.day||!D.days[x.day]) return x ? x.date.slice(5)+' '+(x.title||'待安排') : '等待下一次安排';
     var mains=D.days[x.day].exercises.filter(function(e){return e.main;});
     if(!mains.length) mains=D.days[x.day].exercises.filter(function(e){return e.w;}).slice(0,1);
-    var brief=mains.slice(0,2).map(function(e){return e.name.replace('杠铃','').replace('（容量）','')+' '+(e.w||'见计划');}).join(' / ');
+    var brief=mains.slice(0,2).map(function(e){return e.name.replace('杠铃','').replace('（容量）','')+' '+prescriptionLabel(e);}).join(' / ');
     return x.date.slice(5)+' '+x.day+(brief?' · '+brief:'');
   }
   var nextGates=timeline.filter(function(x){return x.type==='training'&&x.status!=='done'&&x.date>=todayIso;}).slice(0,2);
-  [['当前阶段', m.phase + '期（W' + m.current_week + '）'],['本周进度',weekDone + '/' + weekTotal + ' 次已完成'],['本周下一关',nextGates.length?nextGates.map(eventPrescription).join(' → '):'本周处方已完成']].forEach(function(x){
+  [['当前阶段', m.phase + '期（W' + m.current_week + '）'],['本周进度',weekDone + '/' + weekTotal + ' 次已完成'],['执行重点', activeSignals[0]],['本周下一关',nextGates.length?nextGates.map(eventPrescription).join(' → '):'本周处方已完成']].forEach(function(x){
     var r = el('div','row'); r.appendChild(el('span','k',x[0])); r.appendChild(el('span','v',x[1])); ringInfo.appendChild(r);
   });
   var stageBar = document.getElementById('stageBar');
@@ -799,12 +838,12 @@
   });
 
   var dayGrid = document.getElementById('dayGrid');
-  var order = ['上肢A','腿B','上肢B','腿A'];
+  var order = trainingDayOrder();
   function daySummary(name){
     var d = D.days[name];
     var mains = d.exercises.filter(function(e){return e.main;});
     if(!mains.length){ mains=d.exercises.filter(function(e){return e.w;}).slice(0,2); }
-    return mains.map(function(e){return '<span class="day-main"><b>'+esc(e.name.replace('杠铃','').replace('（容量）',''))+'</b><strong>'+esc(e.w||'见计划')+'</strong></span>';}).join('');
+    return mains.map(function(e){return '<span class="day-main"><b>'+esc(e.name.replace('杠铃','').replace('（容量）',''))+'</b><strong>'+esc(prescriptionLabel(e))+'</strong></span>';}).join('');
   }
   order.forEach(function(name,index){
     var dayEvent=timelineTraining(name);
@@ -812,9 +851,9 @@
     var day = el('div','day ' + (done?'done':'planned') + (name===todayName?' on':''));
     day.dataset.index='0'+(index+1);
     var dn = el('div','dn'); dn.appendChild(el('span',null,name));
-    dn.appendChild(el('span','st',(done?'已执行 ':'待执行 ')+(D.days[name].date||D.weekday[name]).slice(-5)));
+    dn.appendChild(el('span','st',(done?'已执行 ':'待执行 ') + displayDayDate(D.days[name])));
     day.appendChild(dn);
-    day.appendChild(el('div','dd',(D.days[name].date ? D.days[name].date.slice(5) : D.weekday[name]) + ' · ' + D.days[name].role));
+    day.appendChild(el('div','dd',displayDayDate(D.days[name]) + ' · ' + D.days[name].role));
     day.appendChild(el('div','m',daySummary(name)));
     day.onclick = function(){
       document.querySelectorAll('.day').forEach(function(x){x.classList.remove('on');});
@@ -829,22 +868,44 @@
   });
   var weekNote=document.getElementById('weekNote');
   function latestActual(name){
-    var rows=(D.charts[name]&&D.charts[name].actual)||[];
+    var rows=((D.charts||{})[name]&&D.charts[name].actual)||[];
     if(!rows.length) return '尚无可核验记录';
     var a=rows[rows.length-1];
     return (a.detail||((a.value!=null?a.value:'—')+'kg'))+(a.date?' · '+a.date:'');
   }
-  weekNote.innerHTML='<div><div class="insight-label">W'+m.current_week+' / WEEK SIGNAL</div><div class="insight-lead">本周已完成 '+weekDone+' / '+weekTotal+'，继续按门槛验证</div></div><div class="insight-points">'+
-    '<div class="insight-point"><b>引体 · 最近记录</b>'+esc(latestActual('负重引体'))+'</div>'+
-    '<div class="insight-point"><b>卧推 · 最近记录</b>'+esc(latestActual('卧推'))+'</div>'+
-    '<div class="insight-point"><b>深蹲 · 最近记录</b>'+esc(latestActual('深蹲'))+'</div></div>';
+  var hasStrengthCharts = Object.keys(D.charts || {}).length > 0;
+  var signalCards = hasStrengthCharts ? [
+    ['引体 · 最近记录', latestActual('负重引体')],
+    ['卧推 · 最近记录', latestActual('卧推')],
+    ['深蹲 · 最近记录', latestActual('深蹲')]
+  ] : activeSignals.map(function(signal, index){
+    return [signal, index === 0 ? '按训练日完成处方并记录实际结果' : '复盘时写入可验证的实际数据'];
+  });
+  weekNote.innerHTML='<div><div class="insight-label">W'+m.current_week+' / '+objectiveLabel.toUpperCase()+'</div><div class="insight-lead">本周已完成 '+weekDone+' / '+weekTotal+'，'+(hasStrengthCharts?'继续按门槛验证':'先建立本目标的执行基线')+'</div></div><div class="insight-points">'+
+    signalCards.map(function(item){return '<div class="insight-point"><b>'+esc(item[0])+'</b>'+esc(item[1])+'</div>';}).join('')+'</div>';
 
   var weekMain = document.getElementById('weekMain');
-  D.week.forEach(function(w){
+  var weeklyFocus = D.week || [];
+  if(!weeklyFocus.length){
+    var seenFocus = {};
+    order.forEach(function(dayName){
+      (D.days[dayName].exercises || []).forEach(function(exercise){
+        if((exercise.main || exercise.w) && !seenFocus[exercise.name] && weeklyFocus.length < 4){
+          seenFocus[exercise.name] = true;
+          weeklyFocus.push({
+            k: exercise.name,
+            v: [exercise.w || '', exercise.d || '按处方执行', exercise.rpe || ''].filter(Boolean).join(' · '),
+            generic: true
+          });
+        }
+      });
+    });
+  }
+  weeklyFocus.forEach(function(w){
     var parts=w.v.split('；');
     var prescription=parts.slice(0,2).join('；');
     var criterion=parts.slice(2).join('；');
-    var role=w.k==='硬拉'?'低频暴露':(w.k==='深蹲'?'强度 / 技术':'强度 / 容量');
+    var role=w.generic ? objectiveLabel + '重点' : (w.k==='硬拉'?'低频暴露':(w.k==='深蹲'?'强度 / 技术':'强度 / 容量'));
     var r = el('div','row');
     r.appendChild(el('span','k',w.k));
     r.appendChild(el('div','plan-meta','<span class="plan-tag">'+role+'</span><span class="plan-tag">W'+m.current_week+'</span>'));
@@ -903,7 +964,7 @@
     return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'+currentBand+vgrid+grid+futurePath+executedPath+planDots+actualDots+valueLabels+labels+'</svg>';
   }
   var chartBox = document.getElementById('chartBox');
-  Object.keys(D.charts).forEach(function(name){
+  Object.keys(D.charts || {}).forEach(function(name){
     var c = el('div','chartcard');
     var t = el('div','ttl'); t.appendChild(el('span','n',name)); t.appendChild(el('span','cap',D.charts[name].cap));
     c.appendChild(t);
@@ -917,6 +978,13 @@
     c.appendChild(actuals);
     chartBox.appendChild(c);
   });
+  if(!Object.keys(D.charts || {}).length){
+    var progress = el('div','chartcard');
+    progress.innerHTML = '<div class="ttl"><span class="n">'+esc(objectiveLabel)+'执行信号</span><span class="cap">先记录，再判断</span></div>' +
+      '<div class="plan-prescription">此计划不强行套用四大项力量曲线。每次训练记录实际重量、次数、余力或对应的非重量指标；完成一周后，AI 根据这些真实数据安排下一周。</div>' +
+      '<div class="actuals">'+activeSignals.map(function(signal){return '<span class="actual">'+esc(signal)+'</span>';}).join('')+'</div>';
+    chartBox.appendChild(progress);
+  }
 
   var bwBox = document.getElementById('bwBox');
   var bw = D.notion.bodyweight;
