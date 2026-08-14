@@ -12,17 +12,17 @@
 
 ## 本地学习来源的角色
 
-| 来源 | 本知识包吸收的角色 |
-| --- | --- |
-| ACSM《运动测试与运动处方指南》第 12 版 | 运动前筛查、安全边界、FITT 和特殊状态路由 |
-| NSCA《Essentials of Personal Training》 | 首次问诊、需求分析、频率、动作选择、顺序、负荷与休息 |
-| NSCA《Exercise Technique Manual for Resistance Training》 | 主要力量动作的技术与学习前提 |
-| 《The Muscle and Strength Training Pyramid: Training》v2.0 | 训练量、强度、频率、渐进和训练年龄 |
-| 《Science and Development of Muscle Hypertrophy》第 2 版 | 增肌训练量、频率和疲劳管理 |
-| 《Biomechanics of Sport and Exercise》 | 力矩、杠杆、重心和个体动作差异 |
-| 《Physiology of Sport and Exercise》第 7 版 | 有氧、恢复和生理适应 |
-| 《力量训练基础 + 力量训练计划》 | 新手线性推进与力量计划结构 |
-| 《周期训练理论与方法》第 6 版 | 阶段化、专项性与疲劳管理 |
+| 来源                                                       | 本知识包吸收的角色                  |
+| -------------------------------------------------------- | -------------------------- |
+| ACSM《运动测试与运动处方指南》第 12 版                                  | 运动前筛查、安全边界、FITT 和特殊状态路由    |
+| NSCA《Essentials of Personal Training》                    | 首次问诊、需求分析、频率、动作选择、顺序、负荷与休息 |
+| NSCA《Exercise Technique Manual for Resistance Training》  | 主要力量动作的技术与学习前提             |
+| 《The Muscle and Strength Training Pyramid: Training》v2.0 | 训练量、强度、频率、渐进和训练年龄          |
+| 《Science and Development of Muscle Hypertrophy》第 2 版     | 增肌训练量、频率和疲劳管理              |
+| 《Biomechanics of Sport and Exercise》                     | 力矩、杠杆、重心和个体动作差异            |
+| 《Physiology of Sport and Exercise》第 7 版                  | 有氧、恢复和生理适应                 |
+| 《力量训练基础 + 力量训练计划》                                        | 新手线性推进与力量计划结构              |
+| 《周期训练理论与方法》第 6 版                                         | 阶段化、专项性与疲劳管理               |
 
 ## 使用限制
 
