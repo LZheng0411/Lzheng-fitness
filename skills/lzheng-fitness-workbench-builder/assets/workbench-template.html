@@ -680,6 +680,21 @@
   function renderToday(name){
     pills.innerHTML=''; advice.innerHTML=''; todayList.innerHTML='';
     if(!onboarding.completed){
+      if(onboarding.mode==='needs_calibration'){
+        var calibrationName=Object.keys(D.days||{})[0];
+        var calibrationDay=calibrationName ? D.days[calibrationName] : null;
+        heroHi.textContent = '先完成重量校准';
+        heroSub.textContent = onboarding.message || '按每个动作的引导确定今天的工作重量。';
+        pills.appendChild(el('span','pill','不猜重量 · 逐步校准'));
+        advice.innerHTML = '<b>今天怎么做</b><div>从轻重量试组开始；每次小幅增加。完成目标次数后仍保留约 2—4 次余力、动作稳定时，记录为工作重量。</div>';
+        if(calibrationDay){
+          Object.keys(D.days).forEach(function(key){
+            if(key===calibrationName){ D.days[key].exercises.forEach(function(e){ todayList.appendChild(renderExCard(e)); }); }
+          });
+          todayNote.textContent = '先校准 ' + calibrationName + '；完成后把重量、次数、余力和动作感受告诉 AI，它会写入下一次明确处方。';
+        }
+        return;
+      }
       heroHi.textContent = '待建档';
       heroSub.textContent = onboarding.message || '先确认目标、训练频率、器械与当前状态。';
       pills.appendChild(el('span','pill','未显示正式训练重量'));

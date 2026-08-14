@@ -1,4 +1,4 @@
 interface:
   display_name: "Lzheng 训练系统总控与迁移助手"
-  short_description: "用于初始化升级诊断迁移和校验本地健身训练系统完整套件"
-  default_prompt: "使用 $lzheng-training-system 帮我初始化、升级或诊断我的 Lzheng 本地训练系统，并检查工作台与训练主源。"
+  short_description: "从零建立并维护增肌、减脂或力量训练系统与工作台"
+  default_prompt: "使用 $lzheng-training-system 帮我从零建立个人健身系统：先引导建档和动作重量校准，再制作计划、工作台与后续复盘流程。"

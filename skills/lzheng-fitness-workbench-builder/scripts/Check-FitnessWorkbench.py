@@ -31,6 +31,12 @@ WHITELIST_FILES = {"AGENTS.md", "README.md"}
 WHITELIST_DIR_NAMES = ("训练与周期", "知识库入口", "训练复盘与状态", "工作台与工具", "历史与治理")
 
 
+def run_utf8(command):
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
+    return subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace", env=env)
+
+
 def fail(msg):
     print("FITNESS_WORKBENCH_CHECK: FAIL")
     print("- " + msg)
@@ -88,7 +94,7 @@ def run_builder(project, notion, restore_notion_from_html=None):
         cmd += ["--notion", notion]
     if restore_notion_from_html and os.path.isfile(restore_notion_from_html):
         cmd += ["--restore-notion-from-html", restore_notion_from_html]
-    out = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+    out = run_utf8(cmd)
     if out.returncode != 0 or "FITNESS_WORKBENCH_DATA: PASS" not in out.stdout:
         return "数据校验未通过:\n" + (out.stdout + out.stderr).strip()
     return None
@@ -100,7 +106,7 @@ def load_generated_data(project, notion, restore_notion_from_html=None):
         cmd += ["--notion", notion]
     if restore_notion_from_html and os.path.isfile(restore_notion_from_html):
         cmd += ["--restore-notion-from-html", restore_notion_from_html]
-    out = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+    out = run_utf8(cmd)
     if out.returncode != 0:
         return None
     for line in out.stdout.splitlines():

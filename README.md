@@ -33,6 +33,16 @@ python tools/install.py --target-root ./test-agent --all
 
 安装器默认拒绝覆盖已有 Skill。确认替换时才添加 `--force`；原目录会先备份。
 
+## 安装后直接开始
+
+不要先阅读 README 或寻找命令。新开一个 AI 对话后，只需说：
+
+```text
+开始建立我的健身系统。
+```
+
+AI 会先问你想增肌、减脂、提升力量还是综合改善；再完成建档、动作重量校准、正式计划、工作台和后续复盘。没有训练记录时，AI 会逐步指导你为每个动作选出安全的工作重量，不会要求你自行猜测。
+
 ## 新电脑快速验证
 
 完成安装后，在一个新的空文件夹运行：
@@ -42,7 +52,7 @@ python <skills目录>/lzheng-training-system/scripts/lzheng_training_system.py b
 python <skills目录>/lzheng-training-system/scripts/lzheng_training_system.py doctor --root "<空目录>"
 ```
 
-`bootstrap` 会生成匿名示例工作台、示例计划、复盘索引和全部本地图片。它不会生成真实重量；把示例计划替换为你确认过的计划、完成首练复盘后，再作为正式训练系统使用。
+`bootstrap` 会生成匿名示例工作台、示例计划、复盘索引和全部本地图片。它不会生成真实重量；完成建档与动作重量校准后，AI 会接入正式计划并把下一次明确处方写回工作台。
 
 可直接打开新目录中的 `个人训练系统/健身工作台.html`。页面支持桌面、平板和手机，不依赖在线资源。
 

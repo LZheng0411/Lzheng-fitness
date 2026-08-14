@@ -27,11 +27,14 @@ def main() -> int:
         "viewport": r'<meta\s+name="viewport"',
         "plan id": r'data-plan-id="[^"]+"',
         "snapshot id": r'data-snapshot-id="[^"]+"',
+        "UI contract": r'data-ui-contract="lzheng-plan-v2"',
         "quick start": r'id="start"',
+        "training section": r'id="training"',
         "movement stages": r'id="stages"',
         "fallback rules": r'id="fallback"',
         "knowledge sources": r'id="sources"',
         "print styles": r'@media\s+print',
+        "fixed primary navigation": r'\.sticky\{position:fixed;',
     }
     for label, pattern in checks.items():
         if not re.search(pattern, text, flags=re.I):
@@ -47,6 +50,12 @@ def main() -> int:
     for label, pattern in forbidden.items():
         if re.search(pattern, text, flags=re.I):
             errors.append(f"contains forbidden {label}")
+
+    nav = re.search(r'<nav class="sticky"[^>]*>([\s\S]*?)</nav>', text)
+    if not nav:
+        errors.append("missing primary navigation")
+    elif len(re.findall(r'<a\s+href=', nav.group(1))) != 5:
+        errors.append("primary navigation must contain exactly five execution entries")
 
     if args.plan:
         try:

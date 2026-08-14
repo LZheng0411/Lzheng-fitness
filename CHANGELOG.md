@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.0 — 2026-08-14
+
+- Made AI-led onboarding the primary first-use path for users starting hypertrophy, fat-loss, strength, or general-fitness systems; README and command lookup are no longer the required entry point.
+- Added per-exercise verified-load, calibration, and non-weight progression states so unknown weights become guided calibration rather than user guesswork.
+- Added a `plan_contract` adapter so complete plans can initialize the workbench without a separately hand-authored four-lift plan format.
+- Rebuilt the complete-plan navigation around five fixed execution entries and added an HTML audit for the fixed navigation contract.
+- Standardized the workbench’s offline Garou visual requirement while keeping standalone plan pages on their separate fixed plan visual contract.
+
 ## 2.0.0 — 2026-08-14
 
 - Added `lzheng-training-system` for portable bootstrap, diagnosis, protected upgrades, handoff processing, and suite-level validation.

@@ -5,16 +5,20 @@
 import argparse
 import datetime as dt
 import json
+import os
 import re
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+from importlib.machinery import SourceFileLoader
+
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 SKILL_DIR = SCRIPT_DIR.parent
 ASSET_DIR = SKILL_DIR / "assets"
+ADAPTER = SourceFileLoader("plan_contract_adapter", str(SCRIPT_DIR / "Adapt-PlanContract.py")).load_module()
 
 
 def fail(message):
@@ -45,7 +49,9 @@ def safe_brand(value):
 
 
 def run_checked(command):
-    result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8")
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
+    result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace", env=env)
     if result.stdout:
         print(result.stdout.rstrip())
     if result.returncode != 0:
@@ -141,9 +147,12 @@ def main():
         fail("计划 JSON 不存在: " + str(supplied_plan))
     if supplied_plan:
         plan = json.loads(supplied_plan.read_text(encoding="utf-8-sig"))
+        if ADAPTER.is_plan_contract(plan):
+            plan = ADAPTER.adapt(plan, selected.isoformat())
     else:
         plan = json.loads((ASSET_DIR / "examples/plan-template-v01.json").read_text(encoding="utf-8"))
         plan = replace_tokens(plan, tokens)
+    period_end = week_start + dt.timedelta(days=int(plan.get("plan", {}).get("weeks", 8)) * 7 - 1)
     filename = plan_filename(supplied_plan)
     plan_path = target / "训练与周期/当前周期" / filename
     write_text(plan_path, json.dumps(plan, ensure_ascii=False, indent=2))
@@ -219,7 +228,7 @@ workbench_decision: 完成首练后用真实复盘替换初始化记录
 
 本目录由 `lzheng-fitness-workbench-builder` 创建。日常只打开 `健身工作台.html`；计划、复盘和执行基准是页面事实来源。
 
-内置匿名数据只用于验证系统。正式使用前应替换当前计划，并在首练后写入真实复盘。
+内置匿名数据只用于验证系统。正式使用前应完成建档和动作重量校准；正式计划可以直接使用 lzheng-fitness-plan 生成的 plan_contract，由构建器自动接入。
 """
     route = """# 健身工作台
 

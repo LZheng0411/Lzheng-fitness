@@ -175,6 +175,23 @@ def validate_plan(plan: dict[str, Any]) -> tuple[list[str], list[str]]:
                 for key in ("sets", "reps", "intensity", "rest"):
                     if not nonempty_string(prescription.get(key)):
                         errors.append(f"{ex_prefix}.prescription.{key} must be a non-empty string")
+            load = exercise.get("load")
+            if not isinstance(load, dict):
+                errors.append(f"{ex_prefix}.load must be an object; use verified, calibration_required, or not_weight_based")
+            else:
+                status = load.get("status")
+                if status not in {"verified", "calibration_required", "not_weight_based"}:
+                    errors.append(f"{ex_prefix}.load.status must be verified, calibration_required, or not_weight_based")
+                elif status == "verified":
+                    for key in ("working_weight", "unit", "next_rule", "source"):
+                        if not nonempty_string(load.get(key)):
+                            errors.append(f"{ex_prefix}.load.{key} must be a non-empty string when status is verified")
+                elif status == "calibration_required":
+                    for key in ("starting_instruction", "decision_rule"):
+                        if not nonempty_string(load.get(key)):
+                            errors.append(f"{ex_prefix}.load.{key} must be a non-empty string when calibration is required")
+                elif status == "not_weight_based" and not nonempty_string(load.get("progression_metric")):
+                    errors.append(f"{ex_prefix}.load.progression_metric must be a non-empty string when not weight based")
             name = str(exercise.get("name", ""))
             if overall_stage == "P0" and any(term in name for term in ("传统硬拉", "杠铃硬拉")):
                 has_p0_deadlift = True

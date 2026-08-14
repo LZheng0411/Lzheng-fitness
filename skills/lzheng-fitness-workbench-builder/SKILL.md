@@ -5,7 +5,7 @@ description: 将训练计划 JSON、执行基准、训练复盘、可选 Notion 
 
 # Lzheng 健身工作台构建器
 
-把工作台视为“稳定界面模板 + 用户事实文件 + 可重复构建脚本”。不把训练重量写死在页面视图，不复制其他人的个人记录。
+把工作台视为“稳定界面模板 + 用户事实文件 + 可重复构建脚本”。不把训练重量写死在页面视图，不复制其他人的个人记录。工作台必须适配增肌、减脂、力量和综合健身，四个力量主项只属于力量模式，不能作为其他目标的前提。
 
 读取 `../lzheng-training-system/references/system-contract.md`；如果存在交接记录，读取 `../lzheng-training-system/references/handoff-schema.md`，只消费其中已确认产物。系统根目录优先使用本次用户指定路径，其次使用套件配置；视图代码不得包含固定磁盘路径。
 
@@ -13,6 +13,7 @@ description: 将训练计划 JSON、执行基准、训练复盘、可选 Notion 
 
 - **从零构建 / 新电脑迁移**：读取 [输入契约](references/input-contract.md)，使用初始化脚本创建完整目录和可运行页面。
 - **刷新数据**：保留正式 HTML 视图，只运行数据生成器更新唯一 `workbench-data` 数据块；schema 6 必须包含建档、系统、知识包、状态和来源核验信息。
+- **接入完整计划**：完整计划使用 `plan_contract` 时，先运行 `Adapt-PlanContract.py` 适配为工作台主源；不得要求用户手工重写第二份计划 JSON。
 - **修改界面或更换背景**：读取 [视觉契约](references/visual-contract.md)，修改源工作台后用模板刷新脚本生成脱敏模板。
 - **制作发布副本**：读取 [迁移与发布](references/migration-and-release.md)，先校验，再复制 HTML 和全部本地素材。
 - **制定计划或训练复盘**：转交对应训练 Skill；本 Skill 只消费结果，不凭空生成个人处方。
@@ -40,6 +41,12 @@ python "<skill>/scripts/Initialize-FitnessWorkbench.py" --target "<新项目目�
 python "<skill>/scripts/Build-FitnessWorkbenchData.py" --project "<项目根目录>" [--notion "<notion-data.json>"] --check-only
 python "<skill>/scripts/Build-FitnessWorkbenchData.py" --project "<项目根目录>" [--notion "<notion-data.json>"] --apply --backup-dir "<项目外临时备份目录>"
 python "<skill>/scripts/Check-FitnessWorkbench.py" --project "<项目根目录>" [--notion "<notion-data.json>"]
+```
+
+完整计划自动接入时使用：
+
+```powershell
+python "<skill>/scripts/Adapt-PlanContract.py" "<完整计划.json>" "<当前周期/个人训练计划-v01.json>"
 ```
 
 若一次 schema 或视图升级误将已有 Notion 动态数据降级为空态，可使用已知本地备份执行 `--restore-notion-from-html <backup.html>`；此动作只恢复 `notion` 数据，再由当前计划、执行基准和复盘重新生成 schema 6，不能直接把旧 HTML 整页覆盖回来。
@@ -81,6 +88,7 @@ python "<skill>/scripts/Validate-FitnessWorkbenchSkill.py" --skill "<skill>"
 
 - `scripts/Initialize-FitnessWorkbench.py`：从模板和输入文件创建新工作台。
 - `scripts/Build-FitnessWorkbenchData.py`：从计划、复盘、执行基准和 Notion JSON 生成数据块。
+- `scripts/Adapt-PlanContract.py`：将完整计划 Skill 的统一 `plan_contract` 适配为工作台主源。
 - `scripts/Check-FitnessWorkbench.py`：检查结构、事实一致性、资源和发布副本。
 - `scripts/Refresh-FitnessWorkbenchTemplate.py`：从正式页面刷新脱敏模板。
 - `scripts/Validate-FitnessWorkbenchSkill.py`：检查 Skill 包完整性与可迁移性。

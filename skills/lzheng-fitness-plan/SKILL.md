@@ -17,8 +17,9 @@ description: 基于用户当前状态、Skill 内置健身知识和最新官方�
 4. [动作适配](references/exercise-selection.md)：选择固定器械、自由重量、自重或绳索动作。
 5. [计划设计](references/program-design.md)：确定目标、频率、分化、训练量、渐进和短期降级。
 6. [计划数据协议](references/plan-contract.md)：建立唯一 `plan_contract`。
-7. [HTML 输出规范](references/html-output-spec.md)：生成和审计最终页面。
-8. [证据基础](references/evidence-base.md)：核验安全、训练频率、器械选择和公共活动量的来源边界。
+7. [计划页面视觉契约](references/fitness-ui-contract.md)：固定页面结构、导航和设计边界。
+8. [HTML 输出规范](references/html-output-spec.md)：生成和审计最终页面。
+9. [证据基础](references/evidence-base.md)：核验安全、训练频率、器械选择和公共活动量的来源边界。
 
 不要凭模型记忆代替 Skill 内置资料。只读取知识路由为当前问题指定的参考文件；涉及容易变化的安全或公共指南时再联网核验官方来源。
 
@@ -78,6 +79,8 @@ description: 基于用户当前状态、Skill 内置健身知识和最新官方�
 ### 6. 生成计划主体
 
 写清：阶段目标、周期长度、每周频率、训练分化、休息日、每个动作的顺序、组次、RPE/RIR、休息、目的、替代动作、渐进方式和复盘节点。
+
+每个动作都必须给出明确的负荷状态。已有记录时写入工作重量、来源和下一次加重/保持/回退规则；没有记录时写入现场校准步骤和判断规则。禁止只写“按 RPE 自行选重量”。
 
 同时生成：
 

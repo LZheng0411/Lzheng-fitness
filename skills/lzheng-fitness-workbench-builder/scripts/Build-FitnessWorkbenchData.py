@@ -180,6 +180,7 @@ def build_meta(plan_json, plan_file_name, current_week, baseline, project_root):
         "baseline_version": baseline.get("source_version"),
         "week_note": (plan.get("baseline") or plan.get("constraints") or "")[:180],
         "goal": plan.get("goal"),
+        "objective_mode": plan.get("objective_mode", "general_fitness"),
     }
 
 
@@ -196,11 +197,18 @@ def build_onboarding(plan_json, baseline, review_rows):
         missing.append("执行基准")
     if demo:
         missing.append("已确认的真实训练计划")
+    calibration_needed = any(
+        exercise.get("load_status") == "calibration_required"
+        for item in plan_json.get("schedule", [])
+        for exercise in item.get("exercises", [])
+    )
+    if calibration_needed:
+        missing.append("动作重量校准")
     return {
         "completed": not missing,
-        "mode": "ready" if not missing else "needs_intake",
+        "mode": "ready" if not missing else ("needs_calibration" if calibration_needed and set(missing) == {"动作重量校准"} else "needs_intake"),
         "missing": list(dict.fromkeys(missing)),
-        "message": "已完成建档，可按当前计划执行。" if not missing else "待建档：补齐必要信息前不显示正式训练重量。",
+        "message": "已完成建档，可按当前计划执行。" if not missing else ("待校准：按训练日中的逐步引导确定未知动作重量。" if calibration_needed else "待建档：补齐必要信息前不显示正式训练重量。"),
         "review_count": len(review_rows),
     }
 
@@ -463,7 +471,7 @@ def build_days(plan_json, current_week, plan_start, notion=None):
                 day_key = k
                 break
         if not day_key:
-            continue
+            day_key = str(s.get("day_key") or s.get("title") or s.get("theme") or "训练日")
         role = s.get("role", "")
         exercises = []
         for e in s.get("exercises", []):
@@ -474,7 +482,7 @@ def build_days(plan_json, current_week, plan_start, notion=None):
             if inactive:
                 continue
             main_key = conditional_key or canonical.get(ex_name, ex_name)
-            main = main_key in cyc_by_name
+            main = main_key in cyc_by_name or e.get("priority") in ("main", "key")
             w, d, rpe = None, None, None
             if main:
                 if str(sets).startswith("实际："):
@@ -503,7 +511,7 @@ def build_days(plan_json, current_week, plan_start, notion=None):
                 "d": d,
                 "rpe": rpe,
                 "main": main,
-                "weight_source": observed.get("source") if observed else None,
+                "weight_source": observed.get("source") if observed else e.get("load_source"),
             })
         item = {"role": role, "exercises": exercises, "date": parse_schedule_date(s.get("day", ""), plan_start), "label": s.get("label"), "title": s.get("title")}
         days[day_key] = item

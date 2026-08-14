@@ -50,6 +50,22 @@ JSON 是状态、文字计划和 HTML 的唯一数据源。先验证 JSON，再�
 
 `priority` 使用 `main`、`key` 或 `optional`。P0 计划若安排地面传统/杠铃硬拉，必须额外写 `admission_confirmed: true` 和非空 `admission_evidence`，并在 `movement_profile` 中保存同一动作或髋铰链的 `admission_confirmed: true` 记录与明确证据。
 
+## 负荷与校准
+
+每个 `training_days[].exercises[]` 必须包含 `load`，不允许把“自行选择重量”留给使用者：
+
+```json
+{
+  "status": "verified",
+  "working_weight": "40",
+  "unit": "kg",
+  "source": "2026-08-14 卧推 40kg 4×6，末组 RIR 2",
+  "next_rule": "四组均完成 6 次且末组保留至少 2 次余力，下次 42.5kg；否则保持。"
+}
+```
+
+未知重量使用 `calibration_required`，必须给出 `starting_instruction` 和 `decision_rule`。无公斤数的自重、有氧或时间动作使用 `not_weight_based`，必须给出 `progression_metric`。校准结果写回后才可替换为 `verified`；疼痛、异常或动作变形不进入普通加重。
+
 客户模式的 `plan_meta.subject_id` 只允许脱敏代号，不得出现 `real_name`、`full_name`、`phone`、`email`、`contact` 或 `medical_history_raw` 字段。`safety_status.status` 为 `blocked` 时，`weekly_schedule` 和 `training_days` 可以为空，但不得含普通训练处方。
 
 ## 训练日短版

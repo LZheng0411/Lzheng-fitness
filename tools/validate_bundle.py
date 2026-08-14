@@ -151,6 +151,7 @@ def validate_repository_hygiene() -> None:
 def run(command: list[str], cwd: Path | None = None) -> str:
     env = os.environ.copy()
     env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["PYTHONUTF8"] = "1"
     completed = subprocess.run(
         command,
         cwd=str(cwd or ROOT),
@@ -210,6 +211,32 @@ def validate_renderers(temp: Path) -> None:
     run([sys.executable, str(system / "scripts" / "lzheng_training_system.py"), "bootstrap", "--target", str(portable_root)])
     run([sys.executable, str(system / "scripts" / "lzheng_training_system.py"), "doctor", "--root", str(portable_root)])
 
+    adapted_plan = temp / "个人训练计划-v01.json"
+    run([
+        sys.executable,
+        str(workbench / "scripts" / "Adapt-PlanContract.py"),
+        str(plan_json),
+        str(adapted_plan),
+        "--start-date",
+        "2026-08-17",
+    ])
+    universal_root = temp / "universal-plan-system"
+    run([
+        sys.executable,
+        str(workbench / "scripts" / "Initialize-FitnessWorkbench.py"),
+        "--target",
+        str(universal_root),
+        "--brand",
+        "TRAIN",
+        "--athlete",
+        "使用者",
+        "--start-date",
+        "2026-08-17",
+        "--plan",
+        str(plan_json),
+    ])
+    run([sys.executable, str(workbench / "scripts" / "Check-FitnessWorkbench.py"), "--project", str(universal_root)])
+
 
 def tree_hash(root: Path) -> dict[str, str]:
     result: dict[str, str] = {}
@@ -224,7 +251,7 @@ def tree_hash(root: Path) -> dict[str, str]:
 def validate_install(temp: Path) -> None:
     target = temp / "test-agent"
     install_output = run([sys.executable, str(ROOT / "tools" / "install.py"), "--target-root", str(target), "--all"])
-    for required in ("LZHENG_FITNESS_AI_ONBOARDING:", "$lzheng-training-system", "不要先看 README"):
+    for required in ("LZHENG_FITNESS_AI_ONBOARDING:", "开始建立我的健身系统", "不要让用户先看 README"):
         if required not in install_output:
             fail(f"Installer is missing required AI onboarding text: {required}")
     for name in EXPECTED:
