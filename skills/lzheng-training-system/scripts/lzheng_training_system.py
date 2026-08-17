@@ -12,12 +12,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-SUITE_VERSION = "2.0.0"
+SUITE_VERSION = "2.2.0"
 CORE_SKILLS = (
     "lzheng-fitness-plan",
     "lzheng-strength-cycle-planner",
     "lzheng-strength-training-review",
     "lzheng-training-return",
+    "lzheng-training-expert-library",
     "lzheng-fitness-workbench-builder",
 )
 HERE = Path(__file__).resolve().parent
@@ -158,7 +159,7 @@ def install_skill(args: argparse.Namespace) -> None:
     config = load_config(root)
     name = args.name
     if name not in CORE_SKILLS:
-        stop("仅允许安装五个专业 Skill：" + ", ".join(CORE_SKILLS))
+        stop("仅允许安装六个运行依赖 Skill：" + ", ".join(CORE_SKILLS))
     source = skill_paths(config) / name / "SKILL.md"
     if not source.is_file():
         stop("本机未发现请求的 Skill：" + name)

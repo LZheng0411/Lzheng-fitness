@@ -6,6 +6,8 @@ import argparse
 import json
 import re
 import struct
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -15,8 +17,10 @@ REQUIRED = [
     "scripts/Initialize-FitnessWorkbench.py",
     "scripts/Build-FitnessWorkbenchData.py",
     "scripts/Check-FitnessWorkbench.py",
+    "scripts/Prepare-FitnessWorkbenchRelease.py",
     "scripts/Refresh-FitnessWorkbenchTemplate.py",
     "scripts/Validate-FitnessWorkbenchSkill.py",
+    "scripts/Test-FitnessWorkbenchWeekTransition.py",
     "scripts/Migrate-FitnessWorkbenchSchema.py",
     "../lzheng-training-system/scripts/Process-LzhengHandoffs.py",
     "references/input-contract.md",
@@ -62,6 +66,8 @@ def main():
                 problems.append("模板数据块不是合法 JSON")
         if "__FWB_BRAND__" not in html:
             problems.append("模板缺少品牌占位符")
+        if 'data-ui-template="lzheng-fitness-workbench-v1"' not in html:
+            problems.append("模板缺少固定 UI 模板版本")
         if "garou-cosmic-crouch.png" not in html:
             problems.append("模板没有引用正式背景图")
         if "onboarding" not in html or "trainingStatus" not in html:
@@ -74,6 +80,22 @@ def main():
             problems.append("刷新未保留最近一次已核验的 Notion 数据")
         if "find_latest_status_artifact" not in builder:
             problems.append("构建器未读取状态档案/接回状态")
+        for marker in ("schedule_contract_snapshot", "current_week_from_schedule", "validate_week_transition_contract", "declared_training_frequency"):
+            if marker not in builder:
+                problems.append("构建器缺少周切换契约: " + marker)
+
+    transition_test = root / "scripts" / "Test-FitnessWorkbenchWeekTransition.py"
+    if transition_test.is_file():
+        completed = subprocess.run(
+            [sys.executable, str(transition_test)],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        if completed.returncode != 0 or "FITNESS_WORKBENCH_WEEK_TRANSITION: PASS" not in completed.stdout:
+            detail = (completed.stdout + completed.stderr).strip()
+            problems.append("周切换回归未通过" + (": " + detail if detail else ""))
 
     text_suffixes = {".md", ".py", ".json", ".html", ".yaml", ".yml"}
     for path in root.rglob("*"):

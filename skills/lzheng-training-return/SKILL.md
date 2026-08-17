@@ -37,8 +37,11 @@ description: 处理停训达到7天、连续漏练3次、生病或伤病评估�
 2. `references/return-workflow.md`
 3. `references/return-card-spec.md`
 4. `references/evidence-base.md`
+5. `../lzheng-training-expert-library/references/expert-selection-contract.md`（仅在独立专家变量会改变接回路径时）
 
 再按知识路由读取与当前情况相关的内置资料；容易变化的恢复安全标准应联网核验官方来源。不得仅凭模型记忆作出处方。
+
+目标含糊、反复中断或“回到基础”是关键变量时可读取 Dan John；只有用户已经获得合格专业人员评估并允许活动，且问题是功能进阶、返场验证或二级预防时才读取 Brukner 与 Khan。未评估疼痛、急性创伤、术后未获许可、疾病或红旗症状先走安全分流，不进入专家讨论。专家不能批准恢复训练，也不能覆盖医疗限制、当前事实和本 Skill 的最终接回决定。
 
 ## 工作流
 

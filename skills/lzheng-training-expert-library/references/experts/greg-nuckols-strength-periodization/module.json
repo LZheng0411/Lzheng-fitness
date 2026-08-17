@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "id": "greg-nuckols-strength-periodization",
+  "display_name": "Greg Nuckols 增力与力量周期专家",
+  "source": "Stronger by Science public articles, cutoff 2026-08-10",
+  "status": "content_ready_entry_acceptance_pending",
+  "entry": "README.md",
+  "source_boundary": "PUBLIC-SOURCE-BOUNDARY.md",
+  "variables": [
+    "strength_stall",
+    "specificity",
+    "volume",
+    "frequency",
+    "periodization",
+    "autoregulation",
+    "peaking",
+    "technique_hypothesis"
+  ],
+  "excluded": [
+    "complete plan ownership",
+    "medical decisions",
+    "post-cutoff positions",
+    "current user facts"
+  ],
+  "distilled_markdown_files": 23,
+  "knowledge_files": 13,
+  "raw_sources_included": false
+}

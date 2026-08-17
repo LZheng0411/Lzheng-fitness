@@ -5,7 +5,7 @@ description: 初始化、升级、诊断、校验和迁移 Lzheng 本地训练�
 
 # Lzheng 本地训练系统
 
-把本 Skill 当作套件总控层：它只做安装、配置、路由、升级保护和验收；训练处方仍分别由五个专业 Skill 生成。
+把本 Skill 当作套件总控层：它只做安装、配置、路由、升级保护和验收；训练处方仍由四个处方 Skill 生成，专家库只作为共享知识层，工作台只负责展示。
 
 ## 首次使用者引导
 
@@ -36,7 +36,7 @@ description: 初始化、升级、诊断、校验和迁移 Lzheng 本地训练�
 | 升级后或发布前做完整回归 | `validate` |
 | 日常训练任务 | 按下方路由转交专业 Skill |
 
-运行前读取 [系统契约](references/system-contract.md)。涉及交接时读取 [交接契约](references/handoff-schema.md)。
+运行前读取 [系统契约](references/system-contract.md)。涉及交接时读取 [交接契约](references/handoff-schema.md)。涉及完整计划、力量周期或工作台 HTML 时读取 [单文件 HTML 模板总契约](references/html-template-contract.md)，只允许使用其中登记的三套固定模板。
 
 ## 日常路由
 
@@ -45,6 +45,8 @@ description: 初始化、升级、诊断、校验和迁移 Lzheng 本地训练�
 3. 单练或周训练复盘、下一次处方：`lzheng-strength-training-review`；正式复盘必须更新索引并触发工作台刷新。
 4. 停训 7 天、连续漏练 3 次、条件明显变化：`lzheng-training-return`；改变执行状态时先更新执行基准或当前计划，再刷新工作台。
 5. 工作台构建、数据刷新、迁移、发布：`lzheng-fitness-workbench-builder`；它只读聚合，不给出处方。
+
+四个处方类 Skill 在需要来源限定判断时内部读取 `lzheng-training-expert-library`。专家库不是独立处方入口，不拥有当前事实或工作台写入权。
 
 专业 Skill 执行前按以下优先级解析根目录：本次用户明确路径 → `系统/lzheng-system.json` → 环境变量 `LZHENG_FITNESS_HOME` → 仅用于首次引导的保守默认目录。未解析到系统时停止写入并说明缺失项，不把示例数据当作训练事实。
 
@@ -66,7 +68,7 @@ python scripts/lzheng_training_system.py validate --root "<系统根目录>"
 
 只有以下全部通过才可说本地系统可用：
 
-- `doctor` 显示配置、五个专业 Skill、主源目录和工作台均可用；
+- `doctor` 显示配置、四个处方 Skill、专家库、工作台构建器、主源目录和工作台均可用；
 - `validate` 通过每个 Skill 的快速校验、工作台数据/HTML 检查和隐私扫描；
 - 在新的隔离空目录 `bootstrap` 成功，并显示“待建档”而不是假重量；
 - 每次正式复盘和接回均生成 `LZHENG_HANDOFF`，经 `process-handoffs` 刷新成功或明确报告失败。

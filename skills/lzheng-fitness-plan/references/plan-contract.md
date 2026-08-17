@@ -14,7 +14,7 @@ JSON 是状态、文字计划和 HTML 的唯一数据源。先验证 JSON，再�
 | `movement_profile` | array | 单动作阶段、证据和当前角色 |
 | `weekly_schedule` | array | 一周日历和训练日引用 |
 | `training_days` | array | 动作与标准/短版处方 |
-| `movement_coverage` | array | 动作模式或肌群覆盖审计 |
+| `movement_coverage` | array | 供 AI 审计的动作模式覆盖，不直接展示在计划页 |
 | `progression_rules` | array | 条件式渐进规则 |
 | `minimum_versions` | array | 全局 30/20/10 分钟原则 |
 | `short_interruption_rules` | object | 漏练 1—2 次和转恢复 Skill 阈值 |
@@ -23,6 +23,8 @@ JSON 是状态、文字计划和 HTML 的唯一数据源。先验证 JSON，再�
 | `tracking_targets` | array | 目标专属的长期追踪指标；无基线时明确标记待记录 |
 | `knowledge_sources` | array | 实际读取和使用的来源 |
 | `assumptions` | array | 估算、未知和待确认项 |
+
+`plan_meta.frequency` 固定写作 `每周 N 练`（N 为 1—7），并必须等于 `weekly_schedule` 中非空 `day_id` 的数量。`weekly_schedule.day_index` 必须是 1—7 内不重复的整数；每个 `training_days.id` 至少被排入一周一次。同一训练日可以在不同 `day_index` 重复，覆盖量会按真实出现次数累计。
 
 ## 动作处方
 
@@ -33,14 +35,20 @@ JSON 是状态、文字计划和 HTML 的唯一数据源。先验证 JSON，再�
   "id": "day-a-leg-press",
   "name": "腿举",
   "pattern": "膝主导",
+  "pattern_group": "蹲",
   "modality": "固定器械",
   "equipment": "腿举机",
   "prescription": {
     "sets": "3",
+    "set_count": 3,
     "reps": "8—12",
     "intensity": "首组 RPE 6→末组 RPE 7",
     "rest": "90—120 秒"
   },
+  "muscle_contributions": [
+    {"muscle_group": "股四头肌", "coefficient": 1.0},
+    {"muscle_group": "臀部", "coefficient": 0.5}
+  ],
   "purpose": "建立股四头肌基础训练量",
   "priority": "main",
   "selection_reason": "P0 阶段优先使用稳定、容易调节负荷的膝主导动作",
@@ -49,9 +57,17 @@ JSON 是状态、文字计划和 HTML 的唯一数据源。先验证 JSON，再�
 }
 ```
 
+`prescription.sets` 固定为正整数字符串，`prescription.set_count` 是同一数字的整数形式，用于机器计算周组数；两者不一致会被拒绝。
+
 `priority` 使用 `main`、`key` 或 `optional`。P0 计划若安排地面传统/杠铃硬拉，必须额外写 `admission_confirmed: true` 和非空 `admission_evidence`，并在 `movement_profile` 中保存同一动作或髋铰链的 `admission_confirmed: true` 记录与明确证据。
 
-增肌计划的 `main` / `key` 动作还应写入 `muscle_groups`，例如 `["胸", "肱三头肌"]`。它用于工作台展示计划组数和覆盖；计划组数绝不等同于已经完成的训练量。
+## 动作模式与肌群贡献
+
+每个动作必须写入一个固定 `pattern_group`：`蹲`、`髋铰链`、`推`、`拉`、`单腿` 或 `核心`。页面按 `set_count × 该训练日每周出现次数` 自动计算模式周组数。底层仍以固定枚举完成校验和汇总，页面只显示周组数大于 0 的实际覆盖模式。
+
+每个动作必须写非空 `muscle_contributions`，至少包含一项 `1.0` 直接贡献；只允许 `1.0` 和 `0.5` 两种系数。健美肌群名称固定为：`胸肌`、`背阔肌`、`上背/中背`、`下背/竖脊肌`、`肩前束`、`肩中束`、`肩后束`、`肱二头肌`、`肱三头肌`、`股四头肌`、`腘绳肌`、`臀部`、`小腿`、`核心`。
+
+页面汇总公式固定为：直接组 `set_count × 周频次 × 1.0`，间接折算 `set_count × 周频次 × 0.5`，合计为两者之和，并逐项列出动作来源。固定 14 类肌群继续作为底层校验和计算全集，页面只显示合计大于 0 的实际覆盖肌群。`0.5` 是统一的计划估算口径，不表示对每个人的精确生理刺激；计划量也不表示实际完成量。未知动作没有可靠映射时不得猜测，应先补充动作映射或更换为已定义动作。
 
 ## 负荷与校准
 
@@ -135,6 +151,10 @@ JSON 是状态、文字计划和 HTML 的唯一数据源。先验证 JSON，再�
 - 该周期在整周中的训练日和疲劳职责。
 
 没有用户明确要求或确认时保持空数组。
+
+## 复盘节点
+
+`review_checkpoints[]` 按时间先后排列。到达每个节点时，AI 必须先向用户确认该节点要求收集的实际训练反馈，再执行 `decision`；不得让用户仅凭静态表格自行判断。最后一个节点视为本计划的周期末复盘，AI 在确认实际完成、余力、动作稳定性与恢复后，生成下一阶段计划。周期未结束或反馈不足时，不提前编造下一阶段精确处方。
 
 ## 文件命名
 

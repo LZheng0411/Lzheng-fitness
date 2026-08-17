@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "id": "alan-aragon-flexible-dieting",
+  "display_name": "Alan Aragon 灵活饮食营养专家",
+  "source": "Flexible Dieting (2022)",
+  "status": "book_distilled_plan_review_accepted",
+  "entry": "00-专家总入口.md",
+  "source_boundary": "PUBLIC-SOURCE-BOUNDARY.md",
+  "variables": [
+    "nutrition",
+    "energy_balance",
+    "macros",
+    "supplements",
+    "adherence",
+    "maintenance"
+  ],
+  "excluded": [
+    "medical nutrition",
+    "eating-disorder treatment",
+    "post-2022 author positions"
+  ],
+  "distilled_markdown_files": 18,
+  "knowledge_files": 9,
+  "raw_sources_included": false
+}

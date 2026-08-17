@@ -16,6 +16,9 @@ description: 为深蹲、卧推、硬拉、负重引体、推举等力量主项�
 - [训练计划网页规范](references/training-plan-website-spec.md)：数据核验、HTML 交付、视觉和响应式要求。
 - [周期 HTML 与曲线契约](references/cycle-html-contract.md)：固定页面框架、图表口径、JSON 数据结构和验收要求。
 - [证据基础](references/evidence-base.md)：说明周期适用边界、来源和最新指南核验规则。
+- [训练专家选择协议](../lzheng-training-expert-library/references/expert-selection-contract.md)：在计划结构、力量瓶颈或训练阶段变量会改变周期时读取最少必要模块。
+
+专家库只提供约束与判断：一般结构优先 Eric Helms，力量停滞、专项性、变量实验或峰值使用 Greg Nuckols + Eric Helms，目标与现实脱节或是否回到基础时才使用 Dan John。当前表现、周期重量、最终处方和写入权始终归本 Skill；没有真实交叉变量时不制造多人讨论。
 
 ## 任务边界
 
@@ -109,7 +112,7 @@ description: 为深蹲、卧推、硬拉、负重引体、推举等力量主项�
 
 在文字交付完成后，按 `references/training-plan-website-spec.md` 创建可直接双击打开的 HTML 页面。把网页视为计划的可视化版本，而非另一套独立数据：网页中的基本信息、动作、组次、重量、RPE、周次和调整规则必须与文字计划逐项一致。
 
-先按 `references/cycle-html-contract.md` 把当次最终计划整理为 JSON 数据，再用 `scripts/render_strength_cycle_html.py` 生成 HTML。网页结构、配色、图表位置、坐标轴、阶段带和响应式规则必须复用契约；动作、阶段、重量、容量、周数、测试目标和 SVG 路径必须由当次数据生成。不得复制其他计划的图表数值或手改曲线坐标。
+先按 `references/cycle-html-contract.md` 把当次最终计划整理为 JSON 数据，再用 `scripts/render_strength_cycle_html.py` 和唯一模板 `assets/strength-cycle-template.html` 生成 HTML。网页结构、导航、配色、图表位置、坐标轴、阶段带和响应式规则来自模板；动作、阶段、重量、容量、周数、测试目标和 SVG 路径必须由当次数据生成。不得复制其他计划的图表数值、手改曲线坐标或手写另一套页面。
 
 - 每个主项必须在 `<h3>` 与完整周期表之间拥有一张强度/容量图；仅有一个主项时只生成一张，多个主项分别生成。
 - 容量优先按职责日正式组的 `重量 × 组数 × 次数` 计算；不同动作的容量口径、低频暴露和自重/归零周必须在图表脚注写清。

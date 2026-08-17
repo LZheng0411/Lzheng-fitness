@@ -20,6 +20,7 @@ EXPECTED = (
     "lzheng-training-return",
     "lzheng-strength-cycle-planner",
     "lzheng-strength-training-review",
+    "lzheng-training-expert-library",
     "lzheng-training-system",
     "lzheng-fitness-workbench-builder",
 )
@@ -174,6 +175,9 @@ def run(command: list[str], cwd: Path | None = None) -> str:
 
 
 def validate_renderers(temp: Path) -> None:
+    expert_library = SKILLS_ROOT / "lzheng-training-expert-library"
+    run([sys.executable, str(expert_library / "scripts" / "validate_expert_library.py")])
+
     fitness = SKILLS_ROOT / "lzheng-fitness-plan"
     plan_json = fitness / "references" / "plan-contract.example.json"
     output_html = temp / "lzheng-fitness-plan-example.html"
@@ -193,6 +197,10 @@ def validate_renderers(temp: Path) -> None:
     cycle_json = ROOT / "examples" / "lzheng-strength-cycle-example.json"
     cycle_html = temp / "lzheng-strength-cycle-example.html"
     run([sys.executable, str(cycle / "scripts" / "render_strength_cycle_html.py"), str(cycle_json), str(cycle_html)])
+
+    ui_validator = SKILLS_ROOT / "lzheng-training-system" / "scripts" / "validate_ui_contract.py"
+    run([sys.executable, str(ui_validator), str(output_html), "--kind", "plan"])
+    run([sys.executable, str(ui_validator), str(cycle_html), "--kind", "cycle"])
 
     for html in (output_html, cycle_html):
         text = read_text(html)
@@ -236,6 +244,23 @@ def validate_renderers(temp: Path) -> None:
         str(plan_json),
     ])
     run([sys.executable, str(workbench / "scripts" / "Check-FitnessWorkbench.py"), "--project", str(universal_root)])
+    release_root = temp / "universal-plan-release"
+    run([
+        sys.executable,
+        str(workbench / "scripts" / "Prepare-FitnessWorkbenchRelease.py"),
+        "--project",
+        str(universal_root),
+        "--deploy",
+        str(release_root),
+    ])
+    run([
+        sys.executable,
+        str(workbench / "scripts" / "Check-FitnessWorkbench.py"),
+        "--project",
+        str(universal_root),
+        "--deploy",
+        str(release_root),
+    ])
 
 
 def tree_hash(root: Path) -> dict[str, str]:

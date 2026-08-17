@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "id": "eric-helms-training-pyramid",
+  "display_name": "Eric Helms 训练金字塔专家",
+  "source": "The Muscle & Strength Training Pyramid: Training, Second Edition (2018)",
+  "status": "content_ready_entry_acceptance_pending",
+  "entry": "00-专家总入口.md",
+  "source_boundary": "PUBLIC-SOURCE-BOUNDARY.md",
+  "variables": [
+    "adherence",
+    "training_structure",
+    "volume",
+    "intensity",
+    "frequency",
+    "progression",
+    "deload",
+    "peaking"
+  ],
+  "excluded": [
+    "medical decisions",
+    "post-2018 author positions",
+    "current user facts"
+  ],
+  "distilled_markdown_files": 23,
+  "knowledge_files": 13,
+  "raw_sources_included": false
+}

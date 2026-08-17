@@ -11,6 +11,8 @@
 | 单个力量主项的 8—12 周周期 | `lzheng-strength-cycle-planner` | 周期设计、动作特性、疲劳与减量 |
 | 一次力量训练复盘 | `lzheng-strength-training-review` | 复盘模式、渐进、周期调整边界 |
 
+六个来源限定专家模块、状态和变量入口见 [专家登记表](../skills/lzheng-training-expert-library/references/expert-registry.json)。专家模块只提供来源约束，不能覆盖当前事实或直接拥有最终处方。
+
 ## 事实优先级
 
 ```text

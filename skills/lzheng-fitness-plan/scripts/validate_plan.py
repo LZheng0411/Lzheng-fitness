@@ -37,6 +37,24 @@ REQUIRED_TRACKING_TARGETS = {
     "fat_loss": {"training_completion", "bodyweight_trend", "daily_steps", "cardio_minutes"},
     "general_fitness": {"training_completion"},
 }
+ALLOWED_PATTERN_GROUPS = {"蹲", "髋铰链", "推", "拉", "单腿", "核心"}
+ALLOWED_MUSCLE_GROUPS = {
+    "胸肌",
+    "背阔肌",
+    "上背/中背",
+    "下背/竖脊肌",
+    "肩前束",
+    "肩中束",
+    "肩后束",
+    "肱二头肌",
+    "肱三头肌",
+    "股四头肌",
+    "腘绳肌",
+    "臀部",
+    "小腿",
+    "核心",
+}
+ALLOWED_MUSCLE_COEFFICIENTS = {0.5, 1.0}
 
 
 def load_plan(path: Path) -> dict[str, Any]:
@@ -82,10 +100,11 @@ def validate_plan(plan: dict[str, Any]) -> tuple[list[str], list[str]]:
 
     meta = plan["plan_meta"]
     goal_mode = None
+    declared_sessions = None
     if not isinstance(meta, dict):
         errors.append("plan_meta must be an object")
     else:
-        for key in ("plan_id", "title", "generated_at", "timezone", "subject_mode", "subject_id", "phase_goal"):
+        for key in ("plan_id", "title", "generated_at", "timezone", "subject_mode", "subject_id", "phase_goal", "frequency"):
             if not nonempty_string(meta.get(key)):
                 errors.append(f"plan_meta.{key} must be a non-empty string")
         if meta.get("subject_mode") not in {"personal", "client"}:
@@ -100,6 +119,12 @@ def validate_plan(plan: dict[str, Any]) -> tuple[list[str], list[str]]:
                 errors.append(f"client plan contains forbidden identifying fields: {leaked}")
         if not isinstance(meta.get("weeks"), int) or meta.get("weeks", 0) < 1:
             errors.append("plan_meta.weeks must be a positive integer")
+        frequency = meta.get("frequency")
+        frequency_match = re.fullmatch(r"每周\s*([1-7])\s*练", frequency.strip()) if nonempty_string(frequency) else None
+        if frequency_match is None:
+            errors.append("plan_meta.frequency must use the fixed format 每周 N 练, where N is 1-7")
+        else:
+            declared_sessions = int(frequency_match.group(1))
         goal_mode = meta.get("goal_mode")
         if goal_mode is None:
             warnings.append("plan_meta.goal_mode is absent; treating this as a legacy generic plan")
@@ -215,13 +240,50 @@ def validate_plan(plan: dict[str, Any]) -> tuple[list[str], list[str]]:
                 local_ids.add(ex_id)
             if exercise.get("priority") not in {"main", "key", "optional"}:
                 errors.append(f"{ex_prefix}.priority must be main, key, or optional")
+            if exercise.get("pattern_group") not in ALLOWED_PATTERN_GROUPS:
+                errors.append(f"{ex_prefix}.pattern_group must be 蹲, 髋铰链, 推, 拉, 单腿, or 核心")
             prescription = exercise.get("prescription")
+            set_count = None
             if not isinstance(prescription, dict):
                 errors.append(f"{ex_prefix}.prescription must be an object")
             else:
                 for key in ("sets", "reps", "intensity", "rest"):
                     if not nonempty_string(prescription.get(key)):
                         errors.append(f"{ex_prefix}.prescription.{key} must be a non-empty string")
+                set_count = prescription.get("set_count")
+                if not isinstance(set_count, int) or isinstance(set_count, bool) or set_count < 1:
+                    errors.append(f"{ex_prefix}.prescription.set_count must be a positive integer")
+                sets_label = prescription.get("sets")
+                if nonempty_string(sets_label) and re.fullmatch(r"[1-9][0-9]*", sets_label.strip()):
+                    if isinstance(set_count, int) and not isinstance(set_count, bool) and int(sets_label) != set_count:
+                        errors.append(f"{ex_prefix}.prescription.sets must equal set_count")
+                elif nonempty_string(sets_label):
+                    errors.append(f"{ex_prefix}.prescription.sets must be a positive integer string")
+            contributions = exercise.get("muscle_contributions")
+            if not isinstance(contributions, list) or not contributions:
+                errors.append(f"{ex_prefix}.muscle_contributions must be a non-empty array")
+            else:
+                seen_contributions: set[str] = set()
+                has_direct_contribution = False
+                for contribution_index, contribution in enumerate(contributions):
+                    contribution_prefix = f"{ex_prefix}.muscle_contributions[{contribution_index}]"
+                    if not isinstance(contribution, dict):
+                        errors.append(f"{contribution_prefix} must be an object")
+                        continue
+                    muscle_group = contribution.get("muscle_group")
+                    coefficient = contribution.get("coefficient")
+                    if muscle_group not in ALLOWED_MUSCLE_GROUPS:
+                        errors.append(f"{contribution_prefix}.muscle_group is not in the fixed bodybuilding taxonomy")
+                    elif muscle_group in seen_contributions:
+                        errors.append(f"{ex_prefix}.muscle_contributions duplicates {muscle_group}")
+                    else:
+                        seen_contributions.add(muscle_group)
+                    if coefficient not in ALLOWED_MUSCLE_COEFFICIENTS or isinstance(coefficient, bool):
+                        errors.append(f"{contribution_prefix}.coefficient must be 1.0 or 0.5")
+                    if coefficient == 1.0:
+                        has_direct_contribution = True
+                if not has_direct_contribution:
+                    errors.append(f"{ex_prefix}.muscle_contributions must include at least one 1.0 direct contribution")
             load = exercise.get("load")
             if not isinstance(load, dict):
                 errors.append(f"{ex_prefix}.load must be an object; use verified, calibration_required, or not_weight_based")
@@ -277,13 +339,33 @@ def validate_plan(plan: dict[str, Any]) -> tuple[list[str], list[str]]:
     ):
         errors.append("P0 conventional/barbell deadlift requires a matching movement_profile admission record")
 
+    schedule_indexes: set[int] = set()
+    scheduled_day_counts: dict[str, int] = {}
     for index, entry in enumerate(schedule):
         if not isinstance(entry, dict):
             errors.append(f"weekly_schedule[{index}] must be an object")
             continue
+        day_index = entry.get("day_index")
+        if not isinstance(day_index, int) or isinstance(day_index, bool) or not 1 <= day_index <= 7:
+            errors.append(f"weekly_schedule[{index}].day_index must be an integer from 1 to 7")
+        elif day_index in schedule_indexes:
+            errors.append(f"weekly_schedule has duplicate day_index: {day_index}")
+        else:
+            schedule_indexes.add(day_index)
         ref = entry.get("day_id")
         if ref is not None and ref not in day_ids:
             errors.append(f"weekly_schedule[{index}].day_id references unknown day: {ref}")
+        elif ref is not None:
+            scheduled_day_counts[ref] = scheduled_day_counts.get(ref, 0) + 1
+
+    scheduled_sessions = sum(scheduled_day_counts.values())
+    if declared_sessions is not None and declared_sessions != scheduled_sessions:
+        errors.append(
+            f"plan_meta.frequency declares {declared_sessions} session(s), but weekly_schedule contains {scheduled_sessions} training session(s)"
+        )
+    unscheduled_days = sorted(day_ids - scheduled_day_counts.keys())
+    if unscheduled_days and not (isinstance(safety, dict) and safety.get("status") == "blocked"):
+        errors.append(f"training_days are not scheduled in weekly_schedule: {unscheduled_days}")
 
     sources = plan["knowledge_sources"]
     if not isinstance(sources, list) or not sources:
