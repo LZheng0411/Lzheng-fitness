@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lzheng—训练专家知识库"
+  short_description: "六个来源限定专家模块，供计划、周期、复盘和接回内部调用"
+  default_prompt: "使用 $lzheng-training-expert-library 为当前训练问题选择最少必要的来源模块；保留版本和边界，最后交由 Lzheng 主 Skill 结合当前事实总结。"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static UI Contract v1 validator for standalone training HTML."""
+"""Validate fixed standalone HTML templates and responsibility boundaries."""
 from __future__ import annotations
 
 import argparse
@@ -11,6 +11,7 @@ from pathlib import Path
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("html", type=Path)
+    parser.add_argument("--kind", choices=("plan", "cycle", "workbench"))
     args = parser.parse_args()
     if not args.html.is_file():
         print("UI_CONTRACT: FAIL\n- HTML 不存在")
@@ -28,6 +29,72 @@ def main() -> int:
         if not re.search(pattern, text, re.I): errors.append("缺少 " + label)
     for label, pattern in forbidden.items():
         if re.search(pattern, text, re.I): errors.append("包含 " + label)
+    kind = args.kind
+    if kind is None:
+        for candidate, marker in (
+            ("plan", "lzheng-fitness-plan-v4"),
+            ("cycle", "lzheng-strength-cycle-v1"),
+            ("workbench", "lzheng-fitness-workbench-v1"),
+        ):
+            if marker in text:
+                kind = candidate
+                break
+    contracts = {
+        "plan": {
+            "marker": "lzheng-fitness-plan-v4",
+            "sections": ("overview", "week", "training", "progression", "coverage"),
+            "nav": ("概览", "本周", "训练日", "进阶", "覆盖"),
+            "required_text": ("训练日安排", "进阶与周期复盘", "AI 主动向用户确认", "生成下一阶段计划", "动作模式", "健美肌群", "直接组", "间接折算", "全部来源"),
+            "forbidden": (
+                r">\s*下一次训练\s*<",
+                r">\s*(?:标记完成|完成训练|开始训练)\s*<",
+                r">\s*安全状态\s*<",
+                r">\s*本阶段追踪项\s*<",
+                r">\s*执行规则\s*<",
+                r">\s*动作分层与当前职责\s*<",
+                r">\s*假设/待确认\s*<",
+                r">\s*停止普通推进的信号\s*<",
+            ),
+        },
+        "cycle": {
+            "marker": "lzheng-strength-cycle-v1",
+            "sections": ("overview", "schedule", "sessions", "cycles", "rules"),
+            "nav": ("概览", "周结构", "训练日", "周期", "规则"),
+            "forbidden": (r">\s*下一次训练\s*<", r">\s*(?:标记完成|完成训练|开始训练)\s*<"),
+            "required_text": (),
+        },
+        "workbench": {
+            "marker": "lzheng-fitness-workbench-v1",
+            "sections": ("m-today", "m-week", "m-trend", "m-record", "m-settings"),
+            "nav": ("训练", "计划", "负荷", "复盘", "数据"),
+            "forbidden": (),
+            "required_text": (),
+        },
+    }
+    if kind:
+        contract = contracts[kind]
+        if f'data-ui-template="{contract["marker"]}"' not in text:
+            errors.append("固定模板版本不匹配: " + contract["marker"])
+        for section_id in contract["sections"]:
+            if not re.search(rf'id=["\']{re.escape(section_id)}["\']', text):
+                errors.append("缺少固定区块: " + section_id)
+        for label in contract["nav"]:
+            if label not in text:
+                errors.append("缺少固定导航文案: " + label)
+        for label in contract["required_text"]:
+            if label not in text:
+                errors.append("缺少固定页面文案: " + label)
+        for pattern in contract["forbidden"]:
+            if re.search(pattern, text):
+                errors.append("包含工作台专属操作")
+        if kind == "plan" and re.search(r"--green\b|#174f3d|#e7f0ec|#bdd1c6", text, re.I):
+            errors.append("计划页包含旧绿色视觉令牌")
+    else:
+        errors.append("无法识别固定模板类型")
+    if kind != "workbench" and re.search(r"__[A-Z0-9_]+__", text):
+        errors.append("仍有未替换模板占位符")
+    if kind == "workbench" and "__FWB_BRAND__" in text:
+        errors.append("工作台品牌占位符未替换")
     if errors:
         print("UI_CONTRACT: FAIL")
         for error in errors: print("- " + error)

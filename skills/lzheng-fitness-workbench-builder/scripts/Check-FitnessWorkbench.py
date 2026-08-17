@@ -249,10 +249,20 @@ def check_deploy(deploy_dir, source_html=None):
         html = fh.read()
     if re.search(r'href="[^"]*\.md"', html):
         problems.append("发布目录存在指向本地 .md 的链接")
+    if re.search(r"[A-Za-z]:[\\/]", html):
+        problems.append("发布目录仍包含本机绝对路径")
+    if re.search(r"obsidian://open\?path=", html, re.I):
+        problems.append("发布目录仍包含本机 Obsidian 深链")
+    if re.search(r"__[A-Z0-9_]+__", html):
+        problems.append("发布目录仍包含未替换占位符")
     if source_html and os.path.isfile(source_html):
         with open(source_html, encoding="utf-8") as fh:
-            if fh.read() != html:
-                problems.append("发布版 index.html 与正式工作台不一致")
+            source = fh.read()
+        block_pattern = r'(<script id="workbench-data" type="application/json">)[\s\S]*?(</script>)'
+        source_view = re.sub(block_pattern, r"\1{}\2", source, count=1)
+        deploy_view = re.sub(block_pattern, r"\1{}\2", html, count=1)
+        if source_view != deploy_view:
+            problems.append("发布版视图模板与正式工作台不一致")
     for rel in extract_asset_paths(html):
         target = os.path.abspath(os.path.join(deploy_dir, rel.replace("/", os.sep)))
         if not os.path.isfile(target):

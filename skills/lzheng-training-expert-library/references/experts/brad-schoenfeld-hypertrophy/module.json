@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "id": "brad-schoenfeld-hypertrophy",
+  "display_name": "Brad Schoenfeld 增肌研究专家",
+  "source": "Science and Development of Muscle Hypertrophy, Second Edition (2021)",
+  "status": "book_distilled_two_entries_accepted",
+  "entry": "00-专家总入口.md",
+  "source_boundary": "PUBLIC-SOURCE-BOUNDARY.md",
+  "variables": [
+    "hypertrophy",
+    "volume",
+    "frequency",
+    "failure",
+    "range_of_motion",
+    "concurrent_training"
+  ],
+  "excluded": [
+    "medical decisions",
+    "post-2021 author positions",
+    "current user facts"
+  ],
+  "distilled_markdown_files": 17,
+  "knowledge_files": 9,
+  "raw_sources_included": false
+}

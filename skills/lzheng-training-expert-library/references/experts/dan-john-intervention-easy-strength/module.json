@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "id": "dan-john-intervention-easy-strength",
+  "display_name": "Dan John 训练干预与 Easy Strength 专家",
+  "source": "Intervention (2013) and Easy Strength Omnibook (2022)",
+  "status": "content_ready_entry_acceptance_pending",
+  "entry": "00-专家总入口.md",
+  "source_boundary": "PUBLIC-SOURCE-BOUNDARY.md",
+  "variables": [
+    "point_a",
+    "goal_clarity",
+    "movement_gap",
+    "return_to_basics",
+    "low_fatigue_practice"
+  ],
+  "excluded": [
+    "medical decisions",
+    "nutrition prescription",
+    "precise cycle dosage",
+    "current user facts"
+  ],
+  "distilled_markdown_files": 14,
+  "knowledge_files": 5,
+  "raw_sources_included": false
+}

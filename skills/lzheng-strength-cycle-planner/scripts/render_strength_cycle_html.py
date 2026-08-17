@@ -20,6 +20,26 @@ LIGHT = "#e5e5e5"
 BODYWEIGHT = "#a3a3a1"
 
 
+def default_template() -> Path:
+    return Path(__file__).resolve().parents[1] / "assets" / "strength-cycle-template.html"
+
+
+def fill_template(values: dict[str, str]) -> str:
+    path = default_template()
+    if not path.is_file():
+        raise ValueError(f"固定力量周期模板不存在：{path}")
+    output = path.read_text(encoding="utf-8")
+    for key, value in values.items():
+        token = f"__{key}__"
+        if token not in output:
+            raise ValueError(f"固定力量周期模板缺少占位符：{token}")
+        output = output.replace(token, value)
+    unresolved = sorted(set(re.findall(r"__[A-Z0-9_]+__", output)))
+    if unresolved:
+        raise ValueError("固定力量周期模板仍有未替换占位符：" + ", ".join(unresolved))
+    return output
+
+
 def text(value: Any) -> str:
     return html.escape(str(value), quote=True)
 
@@ -220,9 +240,30 @@ def render_html(data: dict[str, Any], header_asset: Path | None) -> str:
     ]
     metric_html = "".join(f'<div class="metric"><strong>{text(item.get("value", "待核验"))}</strong><span>{text(item.get("label", ""))}</span></div>' for item in metrics)
     baseline = plan.get("baseline", "当前基准与限制见本计划的执行基准和各主项周期表。")
-    return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{text(plan.get('title', '力量训练周期计划'))}</title><style>
-:root{{--bg:#fff;--surface:#f5f5f4;--line:#e5e5e5;--ink:#171717;--muted:#737373;--accent:#1a5c3f;--warn:#c2571f}}*{{box-sizing:border-box}}html,body{{max-width:100%;overflow-x:hidden}}html{{scroll-behavior:smooth}}body{{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "PingFang SC","Microsoft YaHei",sans-serif}}header{{position:relative;overflow:hidden;border-top:3px solid var(--accent);padding:64px max(28px,calc((100vw - 1040px)/2)) 48px;background:#fff}}header::after{{content:"";position:absolute;right:max(28px,calc((100vw - 1040px)/2));bottom:0;width:300px;height:210px;background:var(--header-image) right bottom/contain no-repeat;opacity:.96}}header>*{{position:relative;z-index:1;min-width:0;max-width:650px}}h1,h2,h3,p,strong{{overflow-wrap:anywhere;word-break:break-word}}h1{{font-size:42px;line-height:1.16;letter-spacing:-.03em;margin:8px 0 12px}}h2{{font-size:32px;line-height:1.25;letter-spacing:-.03em;margin:0 0 34px}}h3{{font-size:26px;line-height:1.3;margin:24px 0 28px;letter-spacing:-.025em}}p{{margin:0;color:#404040}}.eyebrow{{color:var(--accent);font-size:13px;letter-spacing:.12em;font-weight:700}}nav{{position:sticky;top:0;z-index:4;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(255,255,255,.95);backdrop-filter:blur(8px);padding:12px max(28px,calc((100vw - 1040px)/2))}}nav a{{margin-right:26px;color:var(--muted);text-decoration:none;font-size:14px}}nav a:hover{{color:var(--accent)}}main{{width:100%;max-width:1040px;min-width:0;margin:auto;padding:64px 0 88px;counter-reset:section}}section{{min-width:0;scroll-margin-top:64px;margin:0 0 76px}}section>h2::before{{counter-increment:section;content:"0" counter(section);color:#737373;font-size:18px;font-weight:500;margin-right:18px;vertical-align:middle;letter-spacing:0}}.parameter-card{{min-width:0;background:var(--surface);border-radius:18px;padding:34px 36px 28px}}.parameter-card .section-label{{display:flex;align-items:center;gap:18px;font-size:30px;font-weight:750;letter-spacing:-.03em;border-top:2px solid var(--line);padding-top:24px}}.parameter-card .section-label span{{color:#737373;font-size:17px;font-weight:500;letter-spacing:0}}.baseline{{font-size:18px;line-height:1.7;margin:34px 0 42px;max-width:920px;overflow-wrap:anywhere}}.metrics{{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px}}.metric{{min-width:0}}.metric strong{{display:block;font-size:48px;line-height:1.05;letter-spacing:-.04em}}.metric span{{display:block;color:var(--muted);margin-top:8px}}.schedule-table,.session-table,.cycle{{max-width:100%;overflow-x:auto}}table{{width:100%;border-collapse:collapse;min-width:760px}}th,td{{padding:20px 0;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}}th{{color:var(--muted);font-size:15px;font-weight:500}}td{{font-size:19px}}.schedule-table th:nth-child(1),.schedule-table td:nth-child(1){{width:20%}}.schedule-table th:nth-child(2),.schedule-table td:nth-child(2){{width:31%}}.training-cards{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}}.training-card{{border:1px solid var(--line);border-radius:18px;padding:28px 30px;background:#fff}}.pill{{display:inline-block;background:var(--surface);border-radius:999px;padding:6px 14px;color:#525252;font-size:14px}}.training-card h3{{font-size:25px;margin:26px 0 24px}}.session-table table{{min-width:0}}.session-table th,.session-table td{{padding:15px 0;font-size:16px}}.session-table th:nth-child(1),.session-table td:nth-child(1){{width:34%}}.session-table th:nth-child(2),.session-table td:nth-child(2){{width:26%}}.cycle{{margin:14px 0 42px}}.cycle th,.cycle td{{padding:15px 12px;font-size:15px}}.cycle th{{font-size:13px}}.progression-chart{{margin:0 0 20px;overflow-x:auto}}.progression-chart svg{{display:block;width:100%;min-width:720px;height:auto}}.rule{{border-top:1px solid var(--line);padding:24px 0}}.rule h3{{font-size:20px;margin:0 0 8px}}@media(max-width:760px){{header{{padding:42px 20px 34px}}header::after{{display:none}}h1{{font-size:31px}}h2{{font-size:27px;margin-bottom:26px}}main{{padding:44px 20px 68px}}nav{{padding:11px 20px;white-space:nowrap;overflow-x:auto}}nav a{{margin-right:18px}}section{{margin-bottom:58px}}.parameter-card{{padding:25px 20px}}.parameter-card .section-label{{font-size:24px;padding-top:18px}}.metrics{{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}}.training-cards{{grid-template-columns:1fr;gap:20px}}.metric strong{{font-size:36px}}.baseline{{font-size:16px;margin:26px 0 30px}}.training-card{{padding:24px 20px}}.session-table{{margin-right:-2px}}.schedule-table table{{min-width:650px}}}}@media print{{nav{{position:static}}header::after{{display:none}}main{{padding:28px 0}}.parameter-card{{break-inside:avoid}}.training-card{{break-inside:avoid}}}}
-</style></head><body><header{header_style}><div class="eyebrow">力量训练周期规划</div><h1>{text(plan.get('title', '力量训练周期计划'))}</h1><p>{text(plan.get('subtitle', plan.get('goal', '待核验')))}</p></header><nav><a href="#overview">概览</a><a href="#schedule">每周安排</a><a href="#sessions">训练日</a><a href="#cycles">周期</a><a href="#rules">规则</a></nav><main><section id="overview"><div class="parameter-card"><div class="section-label"><span>01</span>计划参数</div><p class="baseline">{text(baseline)}</p><div class="metrics">{metric_html}</div></div></section><section id="schedule"><h2>每周安排</h2><div class="schedule-table"><table><thead><tr><th>建议日程</th><th>训练主题</th><th>主项职责</th></tr></thead><tbody>{schedule_rows}</tbody></table></div></section><section id="sessions"><h2>训练日安排</h2><div class="training-cards">{''.join(session_cards)}</div></section><section id="cycles"><h2>主项周期</h2>{''.join(cycle_html)}</section><section id="rules"><h2>执行规则</h2>{rules}</section></main></body></html>'''
+    overview_html = (
+        '<div class="parameter-card"><div class="section-label"><span>01</span>计划参数</div>'
+        f'<p class="baseline">{text(baseline)}</p><div class="metrics">{metric_html}</div></div>'
+    )
+    schedule_html = (
+        '<h2>周结构</h2><p class="lead">先看每个训练日承担的职责，再进入具体动作；这里不推算具体执行日期。</p>'
+        f'<div class="schedule-table"><table><thead><tr><th>建议日程</th><th>训练主题</th><th>主项职责</th></tr></thead><tbody>{schedule_rows}</tbody></table></div>'
+    )
+    sessions_html = '<h2>训练日安排</h2><div class="training-cards">' + "".join(session_cards) + "</div>"
+    cycles_html = '<h2>主项周期</h2><div class="scope-note">每个主项固定按“标题 → 强度/容量曲线 → 完整周期表”呈现；曲线和表格必须来自同一份 JSON。</div>' + "".join(
+        f'<div class="cycle-block">{item}</div>' for item in cycle_html
+    )
+    rules_html = '<h2>执行规则</h2>' + rules
+    return fill_template({
+        "DOCUMENT_TITLE": text(plan.get("title", "力量训练周期计划")),
+        "HEADER_STYLE": header_style.strip(),
+        "PLAN_TITLE": text(plan.get("title", "力量训练周期计划")),
+        "PLAN_SUBTITLE": text(plan.get("subtitle", plan.get("goal", "待核验"))),
+        "OVERVIEW_HTML": overview_html,
+        "SCHEDULE_HTML": schedule_html,
+        "SESSIONS_HTML": sessions_html,
+        "CYCLES_HTML": cycles_html,
+        "RULES_HTML": rules_html,
+    })
 
 
 def main() -> None:

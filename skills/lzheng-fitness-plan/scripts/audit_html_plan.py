@@ -27,12 +27,20 @@ def main() -> int:
         "viewport": r'<meta\s+name="viewport"',
         "plan id": r'data-plan-id="[^"]+"',
         "snapshot id": r'data-snapshot-id="[^"]+"',
-        "UI contract": r'data-ui-contract="lzheng-plan-v2"',
-        "quick start": r'id="start"',
+        "fixed template": r'data-ui-template="lzheng-fitness-plan-v4"',
+        "overview": r'id="overview"[^>]+data-template-section="overview"',
+        "weekly structure": r'id="week"[^>]+data-template-section="week"',
         "training section": r'id="training"',
-        "movement stages": r'id="stages"',
-        "fallback rules": r'id="fallback"',
-        "knowledge sources": r'id="sources"',
+        "progression section": r'id="progression"',
+        "coverage section": r'id="coverage"',
+        "training day cards": r'class="training-grid"',
+        "weekly training focus": r'class="schedule-focus"',
+        "AI-led cycle review": r'>进阶与周期复盘<',
+        "AI review confirmation": r'AI 主动向用户确认',
+        "next phase generation": r'生成下一阶段计划',
+        "pattern coverage": r'>动作模式<',
+        "bodybuilding coverage": r'>健美肌群<',
+        "coverage sources": r'>全部来源<',
         "print styles": r'@media\s+print',
         "fixed primary navigation": r'\.sticky\{position:fixed;',
     }
@@ -46,6 +54,15 @@ def main() -> int:
         "iframe": r'<iframe\b',
         "CSS import": r'@import\b',
         "placeholder": r'\bTODO\b|\[TODO',
+        "unresolved template token": r'__[A-Z0-9_]+__',
+        "workbench-only next workout": r'>\s*下一次训练\s*<',
+        "workbench-only completion action": r'>\s*(?:标记完成|完成训练|开始训练)\s*<',
+        "internal safety status": r'>\s*安全状态\s*<',
+        "internal tracking cards": r'>\s*本阶段追踪项\s*<',
+        "internal execution rules": r'>\s*执行规则\s*<',
+        "internal assumptions": r'>\s*假设/待确认\s*<',
+        "legacy green token": r'--green\b|#174f3d|#e7f0ec|#bdd1c6',
+        "zero coverage row": r'class="[^"]*coverage-zero[^"]*"',
     }
     for label, pattern in forbidden.items():
         if re.search(pattern, text, flags=re.I):
@@ -68,10 +85,12 @@ def main() -> int:
                 plan.get("profile_snapshot", {}).get("snapshot_id"),
             ]
             expected.extend(item.get("name") for day in plan.get("training_days", []) for item in day.get("exercises", []))
-            expected.extend(item.get("source_title") for item in plan.get("knowledge_sources", []))
             for value in filter(None, expected):
                 if html.escape(str(value), quote=True) not in text:
                     errors.append(f"rendered HTML does not contain plan value: {value}")
+            schedule_focus_count = text.count('class="schedule-focus"')
+            if schedule_focus_count != len(plan.get("weekly_schedule", [])):
+                errors.append("each weekly schedule card must include one training-focus summary")
 
     if errors:
         for error in errors:

@@ -25,6 +25,11 @@
 - ACSM 官方摘要：https://acsm.org/resistance-training-guidelines-update-2026/
 - WHO 身体活动与久坐指南：https://www.who.int/publications/i/item/9789240015128
 
+## 处方解释与组数折算
+
+- RIR 型 RPE 用“还能完成几次”表达强度；新手第一次接触时由 AI 主动解释，不要求用户只看数字自行理解。新手 RIR 负荷处方研究：https://pubmed.ncbi.nlm.nih.gov/36135029/
+- 肌群周组数的页面汇总采用直接组 `1.0`、间接参与 `0.5` 的统一计划折算。该方法用于比较和审计训练量，不声称是个体精确生理剂量。剂量—反应荟萃回归：https://pubmed.ncbi.nlm.nih.gov/41343037/
+
 涉及特殊人群、疾病、术后、伤病恢复或最新筛查标准时，必须联网读取当前官方或原始来源，不能只依赖本摘要。
 
 ## 书籍角色

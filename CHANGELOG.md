@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.2.0 — 2026-08-17
+
+- Added a seventh portable Skill containing six complete source-limited expert modules: Alan Aragon, Brad Schoenfeld, Brukner and Khan, Dan John, Eric Helms, and Greg Nuckols.
+- Added explicit source/version boundaries, coverage and decision artifacts, knowledge cards, variable-based minimum-expert selection, safety triage, honest validation states, and deterministic route tests.
+- Wired plan, cycle, review, and return Skills to the shared expert library; installing any of those Skills now installs the library automatically.
+- Kept raw books, article snapshots, private training data, and machine-specific paths outside the public bundle.
+
+## 2.1.2 — 2026-08-17
+
+- Added an atomic week-transition contract: weekly review updates the current schedule before handoff and workbench refresh.
+- Added a portable regression gate for stale dates, mixed week labels, declared-frequency mismatches, missing today prescriptions, and selfweight overwritten by history.
+- Preserved public templates and anonymous assets; this release changes data integrity rules, not personal training data or visual identity.
+
 ## 2.1.1 — 2026-08-14
 
 - Added fixed goal-data cards to the workbench: hypertrophy distinguishes planned muscle-group sets from completed work, while fat loss tracks only recorded bodyweight, steps, and cardio data.

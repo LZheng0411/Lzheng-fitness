@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "brukner-khan-return-to-sport",
+  "display_name": "Brukner 与 Khan 运动康复与返场专家",
+  "source": "Brukner & Khan's Clinical Sports Medicine, Fourth Edition (2012)",
+  "status": "book_distilled_plan_return_accepted",
+  "entry": "00-专家总入口.md",
+  "source_boundary": "PUBLIC-SOURCE-BOUNDARY.md",
+  "variables": [
+    "medically_cleared_return",
+    "functional_progression",
+    "return_to_sport",
+    "secondary_prevention"
+  ],
+  "excluded": [
+    "diagnosis",
+    "imaging",
+    "medication",
+    "surgery",
+    "emergency care",
+    "current guidelines"
+  ],
+  "distilled_markdown_files": 17,
+  "knowledge_files": 8,
+  "raw_sources_included": false
+}

@@ -27,15 +27,19 @@
 
 1. 运行数据生成器 `--apply`；
 2. 运行检查脚本并确认 PASS；
-3. 把 `健身工作台.html` 复制为发布目录的 `index.html`；
-4. 按 HTML 中的相对路径复制 `工作台与工具/健身工作台开发/界面素材/`；
-5. 再运行：
+3. 使用发布准备脚本生成脱敏的 `index.html` 并复制图片素材；不得直接复制含本机深链的正式工作台：
+
+```powershell
+python "<skill>/scripts/Prepare-FitnessWorkbenchRelease.py" --project "<项目根>" --deploy "<发布目录>"
+```
+
+4. 再运行：
 
 ```powershell
 python "<skill>/scripts/Check-FitnessWorkbench.py" --project "<项目根>" --deploy "<发布目录>" [--notion "<notion-data.json>"]
 ```
 
-只有 `deploy: PASS` 后才部署或分享。
+发布准备脚本会移除本机绝对路径和 Obsidian 深链，但保留当前页面数据。只有 `deploy: PASS` 后才部署或分享。
 
 ## 更新模板
 

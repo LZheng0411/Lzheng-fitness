@@ -1,6 +1,6 @@
 {
   "name": "Lzheng-fitness",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "license": "MIT",
   "language": "zh-CN",
   "skills": [
@@ -22,6 +22,11 @@
     {
       "name": "lzheng-strength-training-review",
       "path": "skills/lzheng-strength-training-review",
+      "standalone": true
+    },
+    {
+      "name": "lzheng-training-expert-library",
+      "path": "skills/lzheng-training-expert-library",
       "standalone": true
     },
     {

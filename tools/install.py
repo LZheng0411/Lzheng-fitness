@@ -17,9 +17,16 @@ SKILLS = (
     "lzheng-training-return",
     "lzheng-strength-cycle-planner",
     "lzheng-strength-training-review",
+    "lzheng-training-expert-library",
     "lzheng-training-system",
     "lzheng-fitness-workbench-builder",
 )
+EXPERT_DEPENDENTS = {
+    "lzheng-fitness-plan",
+    "lzheng-training-return",
+    "lzheng-strength-cycle-planner",
+    "lzheng-strength-training-review",
+}
 
 
 def default_agent_root(platform: str) -> Path:
@@ -103,9 +110,13 @@ def main() -> None:
         print("\n".join(SKILLS))
         return
 
-    selected = list(SKILLS) if args.all else list(dict.fromkeys(args.skill or []))
-    if not selected:
+    requested = list(SKILLS) if args.all else list(dict.fromkeys(args.skill or []))
+    if not requested:
         parser.error("Choose --all or at least one --skill.")
+    desired = set(requested)
+    if desired & EXPERT_DEPENDENTS:
+        desired.add("lzheng-training-expert-library")
+    selected = [name for name in SKILLS if name in desired]
 
     agent_root = args.target_root.expanduser() if args.target_root else default_agent_root(args.platform)
     skills_root = agent_root / "skills"

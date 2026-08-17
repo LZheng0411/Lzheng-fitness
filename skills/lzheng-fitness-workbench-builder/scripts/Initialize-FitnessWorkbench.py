@@ -248,8 +248,13 @@ workbench_decision: 完成首练后用真实复盘替换初始化记录
         source = Path(args.notion).resolve()
         if not source.is_file():
             fail("Notion JSON 不存在: " + str(source))
+        try:
+            raw = json.loads(source.read_text(encoding="utf-8-sig"))
+        except (OSError, json.JSONDecodeError) as exc:
+            fail("Notion JSON 无法解析: " + str(exc))
+        raw = replace_tokens(raw, tokens)
         notion_path = target / "工作台与工具/健身工作台开发/notion-data.json"
-        shutil.copy2(source, notion_path)
+        write_text(notion_path, json.dumps(raw, ensure_ascii=False, indent=2))
     elif args.demo_data:
         raw = json.loads((ASSET_DIR / "examples/notion-data.example.json").read_text(encoding="utf-8"))
         raw = replace_tokens(raw, tokens)

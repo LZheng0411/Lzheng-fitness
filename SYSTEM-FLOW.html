@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Lzheng AI 健身系统用户流程与对话输出</title>
+  <style>
+    :root{--bg:#f3f3f0;--paper:#fff;--ink:#171717;--muted:#686864;--line:#d9d9d4;--soft:#ecece8;--sidebar:#111;--sidebar-text:#deded8;--content:980px}
+    *{box-sizing:border-box}html{scroll-behavior:smooth;background:var(--bg)}body{margin:0;color:var(--ink);background:var(--bg);font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;line-height:1.72}
+    .shell{display:grid;grid-template-columns:300px minmax(0,1fr);min-height:100vh}aside{position:sticky;top:0;height:100vh;overflow:auto;padding:28px 22px;background:var(--sidebar);color:#fff}
+    .brand{font-size:12px;font-weight:800;letter-spacing:.16em}.side-title{margin:14px 0 18px;font-size:23px;line-height:1.22}.meta{margin-bottom:18px;color:#999;font-size:11px;line-height:1.55}
+    .search{width:100%;margin-bottom:16px;padding:11px 12px;border:1px solid #393939;border-radius:10px;background:#1b1b1b;color:#fff;outline:none}.search:focus{border-color:#aaa}.toc{display:flex;flex-direction:column;gap:2px}
+    .toc-link{display:block;padding:7px 9px;border-radius:8px;color:var(--sidebar-text);font-size:12px;line-height:1.45;text-decoration:none}.toc-link:hover,.toc-link.active{background:#2a2a2a;color:#fff}.toc-link.hidden{display:none}
+    main{min-width:0;padding:54px 5vw 90px}article{max-width:var(--content);margin:0 auto;padding:54px 64px 76px;border:1px solid var(--line);border-radius:24px;background:var(--paper);box-shadow:0 20px 60px rgba(0,0,0,.055)}
+    h1{margin:0 0 18px;font-size:42px;line-height:1.16;letter-spacing:-.035em}h2{scroll-margin-top:28px;margin:64px 0 20px;padding-top:9px;border-top:3px solid var(--ink);font-size:28px;line-height:1.28}h3{scroll-margin-top:28px;margin:38px 0 14px;font-size:20px}h4{margin:28px 0 10px;font-size:16px}
+    p{margin:12px 0;color:#282826}strong{color:#0b0b0b}a{color:#111}hr{margin:46px 0;border:0;border-top:1px solid var(--line)}ul,ol{padding-left:24px}li{margin:5px 0}
+    code{border-radius:5px;background:#edede9;padding:2px 5px;font-family:"Cascadia Code",Consolas,monospace;font-size:.88em}.table-wrap{overflow:auto;margin:16px 0;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:11px 13px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th:last-child,td:last-child{border-right:0}tr:last-child td{border-bottom:0}th{background:#181818;color:#fff}tbody tr:nth-child(even){background:#f7f7f4}
+    .quote-card{margin:18px 0;padding:18px 20px;border:1px solid #d4d4cf;border-left:5px solid #151515;border-radius:14px;background:#f7f7f4}.quote-card.dialogue{background:#f5f5f1}.quote-card.important{background:#eeeeea}.quote-label{display:inline-block;margin-bottom:8px;padding:4px 8px;border-radius:999px;background:#181818;color:#fff;font-size:11px;font-weight:750;letter-spacing:.05em}.quote-card p{margin:8px 0}.quote-card ul,.quote-card ol{margin:8px 0}.check{list-style:none;margin-left:-22px}input[type=checkbox]{accent-color:#111}
+    .doc-note{margin:0 0 34px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:#f7f7f4;color:var(--muted);font-size:12px}
+    @media(max-width:900px){.shell{display:block}aside{position:relative;height:auto;max-height:none;padding:22px}.side-title{font-size:20px}.toc{max-height:260px;overflow:auto}main{padding:18px 12px 70px}article{padding:32px 20px 54px;border-radius:16px}h1{font-size:31px}h2{font-size:24px;margin-top:50px}h3{font-size:18px}}
+    @media print{aside{display:none}.shell{display:block}main{padding:0}article{max-width:none;border:0;box-shadow:none;padding:0}h2{break-before:page}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand">LZHENG FITNESS</div>
+      <div class="side-title">用户流程<br>与对话输出</div>
+      <div class="meta">来源：SYSTEM-FLOW.md<br>生成：2026-08-15T20:17:19+08:00</div>
+      <input id="tocSearch" class="search" type="search" placeholder="搜索阶段或对话…" aria-label="搜索目录">
+      <nav class="toc" aria-label="文档目录"><a class="toc-link" href="#1-用户最终验收什么" data-search="1. 用户最终验收什么">1. 用户最终验收什么</a>
+<a class="toc-link" href="#2-用户可见总流程" data-search="2. 用户可见总流程">2. 用户可见总流程</a>
+<a class="toc-link" href="#3-所有正式回复的统一格式" data-search="3. 所有正式回复的统一格式">3. 所有正式回复的统一格式</a>
+<a class="toc-link" href="#4-阶段-0-首次安装与系统介绍" data-search="4. 阶段 0：首次安装与系统介绍">4. 阶段 0：首次安装与系统介绍</a>
+<a class="toc-link" href="#5-阶段-1-建档与安全确认" data-search="5. 阶段 1：建档与安全确认">5. 阶段 1：建档与安全确认</a>
+<a class="toc-link" href="#6-阶段-2-动作能力与重量校准" data-search="6. 阶段 2：动作能力与重量校准">6. 阶段 2：动作能力与重量校准</a>
+<a class="toc-link" href="#7-阶段-3-生成完整训练计划" data-search="7. 阶段 3：生成完整训练计划">7. 阶段 3：生成完整训练计划</a>
+<a class="toc-link" href="#8-阶段-4-5-第一次训练与日常训练" data-search="8. 阶段 4—5：第一次训练与日常训练">8. 阶段 4—5：第一次训练与日常训练</a>
+<a class="toc-link" href="#9-阶段-6-单次训练复盘" data-search="9. 阶段 6：单次训练复盘">9. 阶段 6：单次训练复盘</a>
+<a class="toc-link" href="#10-阶段-7-周度-阶段与周期复盘" data-search="10. 阶段 7：周度、阶段与周期复盘">10. 阶段 7：周度、阶段与周期复盘</a>
+<a class="toc-link" href="#11-阶段-8-停训-漏练或条件变化后的接回" data-search="11. 阶段 8：停训、漏练或条件变化后的接回">11. 阶段 8：停训、漏练或条件变化后的接回</a>
+<a class="toc-link" href="#12-阶段-9-单项力量专项周期" data-search="12. 阶段 9：单项力量专项周期">12. 阶段 9：单项力量专项周期</a>
+<a class="toc-link" href="#13-阶段-10-异常-失败与用户纠错" data-search="13. 阶段 10：异常、失败与用户纠错">13. 阶段 10：异常、失败与用户纠错</a>
+<a class="toc-link" href="#14-新手教学与术语解释" data-search="14. 新手教学与术语解释">14. 新手教学与术语解释</a>
+<a class="toc-link" href="#15-用户可见文件清单" data-search="15. 用户可见文件清单">15. 用户可见文件清单</a>
+<a class="toc-link" href="#16-最终验收清单" data-search="16. 最终验收清单">16. 最终验收清单</a>
+<a class="toc-link" href="#17-内部完整参考" data-search="17. 内部完整参考">17. 内部完整参考</a></nav>
+    </aside>
+    <main>
+      <article>
+        <div class="doc-note">这是用户验收版。每个阶段都列出 AI 应怎样回复、用户会拿到哪些文件，以及下一步做什么。</div>
+        <h1 id="lzheng-ai-健身系统-用户可见流程与对话输出">Lzheng AI 健身系统：用户可见流程与对话输出</h1>
+<section class="quote-card important"><div class="quote-label">这是一份用户验收页面</div><p>这里只展示用户需要提供什么、AI 必须怎样回复、会创建或更新什么文件，以及用户下一步做什么。路径变量、JSON 字段、脚本、交接协议和内部校验留在内部参考中，不要求用户阅读。</p></section>
+<h2 id="1-用户最终验收什么">1. 用户最终验收什么</h2>
+<p>用户只需要检查两类产出：</p>
+<ol><li><strong>AI 对话输出</strong>：AI 有没有把当前结果、具体安排、创建文件、同步状态和下一步说明白。</li><li><strong>用户可见文件</strong>：完整计划、工作台、复盘、执行基准、接回卡和专项力量周期能否正常打开并与对话一致。</li></ol>
+<p>AI 不得只回复“已生成”“已更新”“检查通过”或“请查看文件”。只要创建或更新了文件，就必须在同一条回复中告诉用户：</p>
+<ul><li>做了什么；</li><li>为什么这样做；</li><li>创建、更新、保持不变或归档了哪些文件；</li><li>哪个文件是当前正式入口；</li><li>用户下一步应该做什么；</li><li>是否还有内容需要确认。</li></ul>
+<h2 id="2-用户可见总流程">2. 用户可见总流程</h2>
+<div class="table-wrap"><table><thead><tr><th>阶段</th><th>用户通常会说</th><th>AI 对话产出</th><th>用户可见文件</th></tr></thead><tbody><tr><td>0. 首次安装</td><td>“开始建立我的健身系统”</td><td>系统介绍、新手模式说明、第一轮问题</td><td>暂不创建正式计划</td></tr><tr><td>1. 建档</td><td>回答目标、经验、时间、器械、恢复和限制</td><td>已确认信息、未知项、安全判断</td><td>状态快照</td></tr><tr><td>2. 重量校准</td><td>提供历史重量或完成试组</td><td>每个动作的试重步骤与起始负荷</td><td>更新状态快照或执行基准</td></tr><tr><td>3. 完整计划</td><td>确认建档和目标</td><td>计划摘要、第一次训练、文件清单</td><td>完整计划 HTML、当前执行基准</td></tr><tr><td>4. 第一次训练</td><td>“我今天第一次练”</td><td>分步骤新手带练</td><td>健身工作台</td></tr><tr><td>5. 日常训练</td><td>“我今天练什么”</td><td>今日处方、短版和停止条件</td><td>健身工作台</td></tr><tr><td>6. 单次复盘</td><td>“我练完了”</td><td>执行判断、下一次明确处方</td><td>单次复盘、工作台更新</td></tr><tr><td>7. 周期复盘</td><td>“帮我复盘这周/这个周期”</td><td>本周通过项、待验证项、调整建议</td><td>周复盘；必要时生成新版计划</td></tr><tr><td>8. 停训接回</td><td>“我一周没练了”</td><td>恢复权限、三档任务、未来 7 天</td><td>接回卡、工作台更新</td></tr><tr><td>9. 专项力量</td><td>“我想提高卧推”</td><td>周期目标、周结构、第一周安排</td><td>力量周期 HTML</td></tr><tr><td>10. 异常与纠错</td><td>“我之前说错了”或文件生成失败</td><td>影响说明、保留内容、修复动作</td><td>新版本、失败说明或恢复后的文件</td></tr></tbody></table></div>
+<h2 id="3-所有正式回复的统一格式">3. 所有正式回复的统一格式</h2>
+<p>除单纯提问外，每次正式回复都使用下面的结构。没有对应内容时明确写“无”，不能悄悄省略。</p>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>当前结果</strong></p>
+<p>一句话说明这次完成了什么，或为什么暂时不能完成。</p>
+<p><strong>系统判断</strong></p>
+<p>用普通语言解释安排依据；第一次出现的健身术语必须同步解释。</p>
+<p><strong>具体安排</strong></p>
+<p>给出计划、训练、复盘、调整或接回内容。</p>
+<p><strong>本次创建或更新的文件</strong></p>
+<p>分别标明：新创建、已更新、保持不变、已归档、生成失败。</p>
+<p><strong>系统同步状态</strong></p>
+<p>说明当前计划、执行基准、复盘、状态档案和工作台是否一致。</p>
+<p><strong>需要你确认</strong></p>
+<p>列出会影响下一步的待确认内容；没有则写“无”。</p>
+<p><strong>你下一步做什么</strong></p>
+<p>只给当前最重要、可以立即执行的一步。</p></section>
+<h2 id="4-阶段-0-首次安装与系统介绍">4. 阶段 0：首次安装与系统介绍</h2>
+<h3 id="触发条件">触发条件</h3>
+<ul><li>第一次安装完成；</li><li>没有状态快照和正式计划；</li><li>用户第一次说“开始”“帮我健身”或“建立健身系统”；</li><li>新电脑迁移后第一次使用；</li><li>用户要求重新介绍系统。</li></ul>
+<h3 id="ai-第一次回复格式">AI 第一次回复格式</h3>
+<p>首次回复保持简短，不一次发送整本说明书，也不让用户先阅读 README、输入命令或记住 Skill 名称。</p>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>欢迎使用 Lzheng AI 个人训练系统</strong></p>
+<p>我会陪你完成建档、制定计划、每次训练、复盘调整和停训接回。你不需要提前懂健身术语；遇到 RPE、RIR、增肌、工作组等词语时，我会在第一次出现时用普通语言解释。</p>
+<p>如果你是新手，我还会教你怎么调整器械、怎么试重量、动作做到什么程度、什么情况应该停止，以及训练后记录什么。</p>
+<p>先告诉我三件事：</p>
+<ol><li>你的主要目标是增肌、减脂、提升力量，还是综合改善？如果不确定，可以直接说“帮我判断”。</li><li>你是完全新手、练过一段时间，还是已经有稳定计划？</li><li>目前有没有疼痛、旧伤、术后恢复或其他会影响运动的情况？</li></ol></section>
+<h3 id="用户回答后的第二次回复">用户回答后的第二次回复</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>我已经了解</strong></p>
+<ul><li>你的目标：<code>{{用户目标或待判断}}</code></li><li>训练经验：<code>{{整体经验}}</code></li><li>当前限制：<code>{{限制或无}}</code></li></ul>
+<p><strong>接下来怎么进行</strong></p>
+<p>我会再确认训练时间、场地器械、近期训练和恢复情况，然后生成状态快照。没有可靠动作重量时，我会逐个动作带你校准，不会让你自己猜。</p>
+<p><strong>本轮只需要回答</strong></p>
+<p><code>{{只列出会改变计划结构的下一组问题}}</code></p></section>
+<h3 id="首次介绍控制">首次介绍控制</h3>
+<p>用户可以随时说：</p>
+<ul><li>“跳过介绍，直接建档”；</li><li>“重新介绍一下系统”；</li><li>“以后讲详细一点”；</li><li>“以后简洁一点”；</li><li>“这个动作按新手方式教我”；</li><li>“继续刚才的建档”；</li><li>“重新开始建档”。</li></ul>
+<h2 id="5-阶段-1-建档与安全确认">5. 阶段 1：建档与安全确认</h2>
+<h3 id="ai-提问格式">AI 提问格式</h3>
+<p>AI 每轮只追问会影响计划的内容，不重复询问用户已经回答的事实。</p>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>已经确认</strong></p>
+<p><code>{{目标、经验、时间、器械、恢复、限制、已有记录}}</code></p>
+<p><strong>还缺少什么</strong></p>
+<p><code>{{缺失信息}}</code></p>
+<p><strong>为什么需要确认</strong></p>
+<p><code>{{说明这些信息会影响训练频率、动作、重量或安全}}</code></p>
+<p><strong>请回答</strong></p>
+<p><code>{{本轮最少必要问题}}</code></p></section>
+<h3 id="建档完成后的回复">建档完成后的回复</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>当前结果</strong></p>
+<p>你的基础建档已经完成，可以进入 <code>{{完整计划 / 保守计划 / 重量校准 / 暂停普通处方}}</code>。</p>
+<p><strong>你的当前情况</strong></p>
+<ul><li>主要目标：<code>{{目标}}</code></li><li>整体训练阶段：<code>{{P0/L1/L2/L3，并用普通语言解释}}</code></li><li>每周可训练时间：<code>{{频率和时长}}</code></li><li>可用器械：<code>{{器械}}</code></li><li>恢复情况：<code>{{睡眠、疲劳、压力等}}</code></li><li>当前限制：<code>{{限制或无}}</code></li><li>仍未知：<code>{{未知项或无}}</code></li></ul>
+<p><strong>本次创建的文件</strong></p>
+<ul><li>新创建：<code>{{状态快照文件}}</code></li></ul>
+<p><strong>你下一步做什么</strong></p>
+<p><code>{{进入重量校准或确认生成完整计划}}</code></p></section>
+<h3 id="安全阻断回复">安全阻断回复</h3>
+<p>出现锐痛、麻木、放射痛、晕厥、胸部异常不适或持续加重症状时，不进入普通高强度处方。</p>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>当前结果</strong></p>
+<p>目前不适合继续生成普通高强度训练处方。</p>
+<p><strong>需要暂停的内容</strong></p>
+<p><code>{{具体动作或训练类型}}</code></p>
+<p><strong>原因</strong></p>
+<p><code>{{只说明观察到的风险，不进行医学诊断}}</code></p>
+<p><strong>你下一步做什么</strong></p>
+<p><code>{{建议获得合适的线下专业评估，或补充必要信息}}</code></p>
+<p><strong>文件状态</strong></p>
+<ul><li>状态快照：<code>{{已创建/已更新}}</code></li><li>精确训练计划：未生成</li></ul></section>
+<h2 id="6-阶段-2-动作能力与重量校准">6. 阶段 2：动作能力与重量校准</h2>
+<p>新手不知道重量时，AI 不得只说“按 RPE 自行选择”。每个动作都要给出可执行试重方法。</p>
+<h3 id="校准前回复">校准前回复</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>今天的目标</strong></p>
+<p>今天不是测试极限，而是学习动作并找到可以稳定重复的起始重量。</p>
+<p><strong>动作：<code>{{动作名称}}</code></strong></p>
+<ol><li>器械调整：<code>{{座椅、把手、脚位等}}</code></li><li>第一组试重：<code>{{明显偏轻的重量或最小档位}} × {{次数}}</code></li><li>如果还能轻松完成 5 次以上：<code>{{如何小幅加重}}</code></li><li>如果只能再做 1 次或动作开始变形：<code>{{如何减重}}</code></li><li>合格标准：<code>{{动作稳定、无异常疼痛、还剩约几次余力}}</code></li></ol>
+<p><strong>停止条件</strong></p>
+<p><code>{{锐痛、麻木、异常不稳、眩晕等}}</code></p>
+<p><strong>完成后告诉我</strong></p>
+<ul><li>使用重量；</li><li>完成次数；</li><li>大约还能再做几次；</li><li>有没有疼痛或动作不稳定；</li><li>感觉偏轻、合适还是偏重。</li></ul></section>
+<h3 id="校准完成后的回复">校准完成后的回复</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>当前结果</strong></p>
+<p><code>{{动作}}</code> 的起始工作重量已确认。</p>
+<p><strong>确认结果</strong></p>
+<ul><li>起始重量：<code>{{重量}}</code></li><li>正式组：<code>{{组数 × 次数}}</code></li><li>目标感觉：<code>{{还剩几次余力，并补充 RPE 对照}}</code></li><li>下次调整条件：<code>{{保持/加重/减轻规则}}</code></li></ul>
+<p><strong>本次更新的文件</strong></p>
+<ul><li>已更新：<code>{{状态快照或当前执行基准}}</code></li></ul>
+<p><strong>你下一步做什么</strong></p>
+<p><code>{{校准下一个动作或确认生成计划}}</code></p></section>
+<h2 id="7-阶段-3-生成完整训练计划">7. 阶段 3：生成完整训练计划</h2>
+<h3 id="生成前确认">生成前确认</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>准备生成计划</strong></p>
+<p>我将按以下事实制定正式计划：</p>
+<ul><li>目标：<code>{{目标}}</code></li><li>每周训练：<code>{{次数}}</code></li><li>单次时间：<code>{{时长}}</code></li><li>场地器械：<code>{{器械}}</code></li><li>当前阶段：<code>{{阶段及普通语言解释}}</code></li><li>重点与限制：<code>{{重点和限制}}</code></li><li>暂时未知：<code>{{未知或无}}</code></li></ul>
+<p>需要你确认：以上信息是否正确？</p></section>
+<h3 id="计划生成后的固定回复">计划生成后的固定回复</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>完整训练计划已生成</strong></p>
+<p><strong>当前结果</strong></p>
+<p>已根据你确认的目标、训练经历、时间、器械、恢复和限制，生成第一版正式训练计划。</p>
+<ul><li>当前阶段：<code>{{P0/L1/L2/L3，并解释}}</code></li><li>主要目标：<code>{{增肌/减脂/力量/综合改善，并解释}}</code></li><li>周期长度：<code>{{X 周}}</code></li><li>每周训练：<code>{{X 次}}</code></li><li>当前准备状态：<code>{{信息充分/使用保守起点}}</code></li></ul>
+<p><strong>核心安排</strong></p>
+<ul><li><code>{{训练日 1：名称、重点、时长}}</code></li><li><code>{{训练日 2：名称、重点、时长}}</code></li><li><code>{{休息、轻活动或有氧安排}}</code></li></ul>
+<p><strong>第一次训练</strong></p>
+<ol><li><code>{{动作}}</code>：<code>{{重量或现场校准方式}}</code>，<code>{{组数 × 次数}}</code>，结束时约留 <code>{{次数}}</code> 次余力。</li><li><code>{{动作}}</code>：<code>{{重量或现场校准方式}}</code>，<code>{{组数 × 次数}}</code>，结束时约留 <code>{{次数}}</code> 次余力。</li><li><code>{{动作}}</code>：<code>{{重量或现场校准方式}}</code>，<code>{{组数 × 次数}}</code>，结束时约留 <code>{{次数}}</code> 次余力。</li></ol>
+<p>如果时间不足：执行 <code>{{30/20/10 分钟版本}}</code>。</p>
+<p><strong>本次创建或更新的文件</strong></p>
+<ul><li>新创建：<code>{{完整训练计划 HTML}}</code></li><li>新创建：<code>{{状态快照}}</code></li><li>新创建或更新：<code>{{当前训练执行基准}}</code></li><li>已更新：<code>{{健身工作台 HTML}}</code></li><li>已归档：<code>{{旧计划；没有则写无}}</code></li></ul>
+<p><strong>系统同步状态</strong></p>
+<ul><li>当前计划：已同步</li><li>执行基准：已同步</li><li>状态档案：已同步</li><li>复盘入口：已建立</li><li>健身工作台：已刷新</li></ul>
+<p><strong>需要你确认</strong></p>
+<p><code>{{待确认内容；没有则写无}}</code></p>
+<p><strong>你下一步做什么</strong></p>
+<p>打开健身工作台，完成第一次训练。训练结束后告诉我实际重量、组次、还剩几次余力、疼痛情况和个人感觉。</p></section>
+<h2 id="8-阶段-4-5-第一次训练与日常训练">8. 阶段 4—5：第一次训练与日常训练</h2>
+<h3 id="第一次训练的新手带练">第一次训练的新手带练</h3>
+<p>新手第一次训练时，AI 一次只指导当前动作。完成并收到反馈后，再进入下一个动作。</p>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>今天的目标</strong></p>
+<p><code>{{例如：学习器械、找到合适重量、完成一次可重复训练}}</code></p>
+<p><strong>当前动作：<code>{{动作}}</code></strong></p>
+<ul><li>为什么做：<code>{{训练目的}}</code></li><li>器械怎么调：<code>{{调整步骤}}</code></li><li>动作怎么做：<code>{{3—5 个关键步骤}}</code></li><li>怎么呼吸：<code>{{呼吸方式}}</code></li><li>做几组：<code>{{热身组和正式组}}</code></li><li>做到什么感觉：<code>{{普通语言余力描述}}</code></li><li>休息多久：<code>{{时间}}</code></li><li>什么情况停止：<code>{{停止条件}}</code></li></ul>
+<p>完成这一组后，把重量、次数和感觉告诉我，我再带你进行下一步。</p></section>
+<h3 id="日常训练前回复">日常训练前回复</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>今天训练：<code>{{训练日名称}}</code></strong></p>
+<ul><li>当前周期：<code>{{第几周、阶段，并解释}}</code></li><li>今日重点：<code>{{今天要验证或推进什么}}</code></li><li>预计时间：<code>{{时长}}</code></li></ul>
+<p><strong>训练顺序</strong></p>
+<ol><li><code>{{动作、重量、组次、余力、休息}}</code></li><li><code>{{动作、重量、组次、余力、休息}}</code></li><li><code>{{动作、重量、组次、余力、休息}}</code></li></ol>
+<p><strong>时间不足版本</strong></p>
+<p><code>{{优先保留的动作和最低任务}}</code></p>
+<p><strong>今天不要做</strong></p>
+<p><code>{{不补课、不临时加量、不测试极限等}}</code></p>
+<p><strong>训练后告诉我</strong></p>
+<p><code>{{需要记录的最少字段}}</code></p></section>
+<h3 id="训练中临时调整">训练中临时调整</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>当前调整</strong></p>
+<p>你反馈 <code>{{发生了什么}}</code>，本次保留 <code>{{保留内容}}</code>，把 <code>{{动作/重量/组数}}</code> 调整为 <code>{{新安排}}</code>。</p>
+<p><strong>原因</strong></p>
+<p><code>{{用普通语言解释}}</code></p>
+<p><strong>继续条件</strong></p>
+<p><code>{{满足什么可以继续}}</code></p>
+<p><strong>停止条件</strong></p>
+<p><code>{{出现什么立即停止}}</code></p></section>
+<h2 id="9-阶段-6-单次训练复盘">9. 阶段 6：单次训练复盘</h2>
+<h3 id="信息不足时">信息不足时</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>我已经收到</strong></p>
+<p><code>{{已确认的训练事实}}</code></p>
+<p><strong>还需要补充</strong></p>
+<p><code>{{只追问会影响安全、比较或下一次处方的字段}}</code></p>
+<p>补充这些信息后，我才能把本次训练写成正式复盘；目前不会把推测写进你的记录。</p></section>
+<h3 id="复盘完成后的固定回复">复盘完成后的固定回复</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>本次训练复盘已完成</strong></p>
+<p><strong>当前结果</strong></p>
+<p><code>{{完成/部分完成/偏轻/合适/偏重/需要观察}}</code></p>
+<p><strong>关键判断</strong></p>
+<ul><li><code>{{动作 1 的判断}}</code></li><li><code>{{动作 2 的判断}}</code></li><li><code>{{恢复、疼痛或技术判断}}</code></li></ul>
+<p><strong>下一次明确处方</strong></p>
+<ol><li><code>{{动作、重量、组次、余力和执行条件}}</code></li><li><code>{{动作、重量、组次、余力和执行条件}}</code></li></ol>
+<p><strong>本次创建或更新的文件</strong></p>
+<ul><li>新创建：<code>{{单次训练复盘 Markdown}}</code></li><li>已更新：<code>{{复盘索引}}</code></li><li>已更新：<code>{{健身工作台 HTML}}</code></li><li>已更新或保持：<code>{{当前执行基准}}</code></li></ul>
+<p><strong>系统同步状态</strong></p>
+<p><code>{{说明复盘、下一次处方和工作台是否一致}}</code></p>
+<p><strong>需要你确认</strong></p>
+<p><code>{{需要确认的结构调整；没有则写无}}</code></p>
+<p><strong>你下一步做什么</strong></p>
+<p><code>{{恢复、记录或下一次训练动作}}</code></p></section>
+<h2 id="10-阶段-7-周度-阶段与周期复盘">10. 阶段 7：周度、阶段与周期复盘</h2>
+<h3 id="周复盘回复">周复盘回复</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>本周训练复盘已完成</strong></p>
+<p><strong>本周目标进度</strong></p>
+<ul><li>已通过：<code>{{已验证内容}}</code></li><li>待验证：<code>{{尚未验证内容}}</code></li><li>出现偏差：<code>{{偏差及是否重复}}</code></li></ul>
+<p><strong>系统判断</strong></p>
+<p><code>{{维持、规则内小调整、需要结构调整或进入下一阶段}}</code></p>
+<p><strong>下周验证目标</strong></p>
+<p><code>{{下周最重要的 1—3 项}}</code></p>
+<p><strong>本次创建或更新的文件</strong></p>
+<ul><li>新创建：<code>{{周复盘 Markdown}}</code></li><li>已更新：<code>{{复盘索引}}</code></li><li>已更新：<code>{{健身工作台 HTML}}</code></li><li>当前计划：<code>{{保持不变/等待确认/生成新版本}}</code></li></ul>
+<p><strong>需要你确认</strong></p>
+<p><code>{{结构调整方案；没有则写无}}</code></p></section>
+<h3 id="计划结构调整前">计划结构调整前</h3>
+<p>动作、训练日、频率、训练量、周期长度、目标或测试安排改变时，AI 必须先展示差异并等待确认。</p>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>建议调整计划</strong></p>
+<p><strong>为什么调整</strong>：<code>{{依据}}</code></p>
+<div class="table-wrap"><table><thead><tr><th>项目</th><th>调整前</th><th>调整后</th><th>影响</th></tr></thead><tbody><tr><td><code>{{项目}}</code></td><td><code>{{原安排}}</code></td><td><code>{{新安排}}</code></td><td><code>{{影响}}</code></td></tr></tbody></table></div>
+<p>确认后我会创建新版本，不覆盖旧计划，并同步执行基准和工作台。是否应用？</p></section>
+<h3 id="新版本生成后">新版本生成后</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>新版计划已生成</strong></p>
+<ul><li>当前正式版本：<code>{{新版本}}</code></li><li>新创建：<code>{{新版计划 HTML}}</code></li><li>已更新：<code>{{执行基准、工作台}}</code></li><li>已归档：<code>{{旧版本及位置}}</code></li><li>保持不变：<code>{{未受影响的内容}}</code></li></ul>
+<p><strong>你下一步做什么</strong></p>
+<p><code>{{按新版本完成的第一项行动}}</code></p></section>
+<h2 id="11-阶段-8-停训-漏练或条件变化后的接回">11. 阶段 8：停训、漏练或条件变化后的接回</h2>
+<h3 id="接回完成后的固定回复">接回完成后的固定回复</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>训练接回方案已生成</strong></p>
+<p><strong>当前恢复权限</strong></p>
+<p><code>{{正常接回/降级接回/最低任务/暂停并建议评估，并用普通语言解释}}</code></p>
+<p><strong>本周目标</strong></p>
+<p><code>{{重新建立出勤、找回动作感觉、观察恢复等}}</code></p>
+<p><strong>第一次训练三档选择</strong></p>
+<ul><li>正常版：<code>{{安排}}</code></li><li>降级版：<code>{{安排}}</code></li><li>最低版：<code>{{安排}}</code></li></ul>
+<p><strong>未来 7 天</strong></p>
+<p><code>{{简明日程}}</code></p>
+<p><strong>本次创建或更新的文件</strong></p>
+<ul><li>新创建：<code>{{状态快照}}</code></li><li>新创建：<code>{{个人训练接回卡}}</code></li><li>已更新：<code>{{健身工作台 HTML}}</code></li><li>当前长期计划：<code>{{保持/等待重新评估}}</code></li></ul>
+<p><strong>48 小时内的行动</strong></p>
+<p><code>{{用户可以立即完成的最小行动}}</code></p></section>
+<h2 id="12-阶段-9-单项力量专项周期">12. 阶段 9：单项力量专项周期</h2>
+<h3 id="生成前确认-2">生成前确认</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>准备制定 <code>{{动作}}</code> 专项周期</strong></p>
+<ul><li>当前成绩：<code>{{成绩及来源}}</code></li><li>周期目标：<code>{{目标}}</code></li><li>周期长度：<code>{{8—12 周}}</code></li><li>每周暴露：<code>{{次数}}</code></li><li>与完整计划的关系：<code>{{如何避免冲突}}</code></li><li>仍需确认：<code>{{最小加重单位、器械、恢复等}}</code></li></ul></section>
+<h3 id="周期生成后的固定回复">周期生成后的固定回复</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>专项力量周期已生成</strong></p>
+<p><strong>当前结果</strong></p>
+<p>已为 <code>{{动作}}</code> 生成 <code>{{周数}}</code> 周周期，目标是 <code>{{目标}}</code>。</p>
+<p><strong>周期结构</strong></p>
+<ul><li>积累阶段：<code>{{说明}}</code></li><li>强化阶段：<code>{{说明}}</code></li><li>减量或测试阶段：<code>{{说明}}</code></li></ul>
+<p><strong>第一周安排</strong></p>
+<p><code>{{每次暴露的重量、组次、余力和休息}}</code></p>
+<p><strong>本次创建或更新的文件</strong></p>
+<ul><li>新创建：<code>{{力量周期 HTML}}</code></li><li>完整计划：<code>{{保持不变/等待合并确认}}</code></li><li>健身工作台：<code>{{已更新/等待合并}}</code></li></ul>
+<p><strong>需要你确认</strong></p>
+<p><code>{{是否合并到当前完整计划等}}</code></p>
+<p><strong>你下一步做什么</strong></p>
+<p><code>{{第一周第一次训练}}</code></p></section>
+<h2 id="13-阶段-10-异常-失败与用户纠错">13. 阶段 10：异常、失败与用户纠错</h2>
+<h3 id="文件生成失败">文件生成失败</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>当前结果</strong></p>
+<p><code>{{文件}}</code> 没有成功生成，因此本次任务尚未完整交付。</p>
+<p><strong>已经完成并保留</strong></p>
+<p><code>{{可靠文件或记录}}</code></p>
+<p><strong>没有完成</strong></p>
+<p><code>{{失败文件以及对用户的影响}}</code></p>
+<p><strong>当前正式入口</strong></p>
+<p><code>{{仍可使用的旧版本；没有则明确写无}}</code></p>
+<p><strong>你现在需要做什么</strong></p>
+<p><code>{{通常写无需操作，由 AI 修复；若确实需要用户信息则具体说明}}</code></p></section>
+<h3 id="用户纠正资料">用户纠正资料</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>已收到更正</strong></p>
+<p>你把 <code>{{原信息}}</code> 更正为 <code>{{新信息}}</code>。</p>
+<p><strong>影响范围</strong></p>
+<ul><li>需要调整：<code>{{训练频率、动作、重量、周期等}}</code></li><li>保持不变：<code>{{不受影响的内容}}</code></li><li>需要创建新版本：<code>{{是/否及原因}}</code></li></ul>
+<p><strong>应用前确认</strong></p>
+<p><code>{{展示修改后的安排并等待确认}}</code></p></section>
+<h3 id="找不到当前资料">找不到当前资料</h3>
+<section class="quote-card dialogue"><div class="quote-label">AI 对话输出</div><p><strong>当前结果</strong></p>
+<p>我没有找到可靠的 <code>{{当前计划/训练记录/状态快照}}</code>，因此不会把旧资料或示例数据当成你的当前事实。</p>
+<p><strong>可以继续的方式</strong></p>
+<ol><li><code>{{用户提供现有资料}}</code></li><li><code>{{建立新的保守基准}}</code></li></ol>
+<p><strong>暂时不会生成</strong></p>
+<p><code>{{受影响的精确处方或文件}}</code></p></section>
+<h2 id="14-新手教学与术语解释">14. 新手教学与术语解释</h2>
+<h3 id="教学原则">教学原则</h3>
+<ul><li>新手模式下，先说普通语言，再补充专业术语。</li><li>第一次出现术语时解释；之后根据用户偏好使用详细或简洁模式。</li><li>整体有经验不代表每个动作都熟悉；单个新动作仍可开启新手指导。</li><li>用户可以只说“轻松、合适、吃力”，AI 再追问必要细节。</li><li>疼痛不属于 RPE，也不能用“坚持一下”处理安全信号。</li></ul>
+<h3 id="常见词语的用户解释">常见词语的用户解释</h3>
+<div class="table-wrap"><table><thead><tr><th>术语</th><th>AI 应怎样解释</th></tr></thead><tbody><tr><td>RPE</td><td>主观用力程度。RPE 7 大约还能做 3 次，RPE 8 约 2 次，RPE 9 约 1 次</td></tr><tr><td>RIR</td><td>还能完成多少次。RIR 3 就是还能再做约 3 次</td></tr><tr><td>增肌</td><td>通过力量训练、营养和恢复，让肌肉逐步增长，不等于单纯练到酸痛</td></tr><tr><td>工作组</td><td>真正用于训练效果的正式组，不包括前面的轻重量热身组</td></tr><tr><td>热身组</td><td>用较轻重量熟悉动作、检查状态，为正式组做准备</td></tr><tr><td>力竭</td><td>已经无法再用合格动作完成一次，不等于普通的累</td></tr><tr><td>渐进超负荷</td><td>随能力提高逐步增加重量、次数、组数或动作质量，不要求每次都加重量</td></tr><tr><td>双重渐进</td><td>先把次数提高到范围上限，再增加一个最小重量单位</td></tr><tr><td>减量周</td><td>暂时降低训练压力帮助恢复，不代表退步</td></tr><tr><td>1RM</td><td>某动作最多只能完成一次的重量，新手通常不需要测试</td></tr><tr><td>顶组</td><td>当天最主要、强度最高的一组，不等于必须做到力竭</td></tr><tr><td>回退组</td><td>顶组后降低一点重量完成的训练组，用来积累稳定练习和训练量</td></tr><tr><td>容量日</td><td>以完成较多高质量组次为主的训练日，不是随意堆组数</td></tr><tr><td>积累期</td><td>周期前段，用于建立技术、训练量和稳定表现的阶段</td></tr></tbody></table></div>
+<h2 id="15-用户可见文件清单">15. 用户可见文件清单</h2>
+<div class="table-wrap"><table><thead><tr><th>文件</th><th>用户什么时候查看</th><th>必须包含什么</th></tr></thead><tbody><tr><td>健身工作台.html</td><td>日常训练和复盘后</td><td>今天或下一次练什么、当前状态、最新结果</td></tr><tr><td>完整训练计划-vNN.html</td><td>制定或实质修改完整计划后</td><td>阶段目标、周结构、训练日、进阶和覆盖</td></tr><tr><td>当前训练执行基准.md</td><td>需要核对当前版本和执行规则时</td><td>当前计划版本、周次、规则和限制</td></tr><tr><td>状态快照.md</td><td>建档、条件改变或接回后</td><td>已确认事实、未知项和当前限制</td></tr><tr><td>单次训练复盘.md</td><td>每次正式复盘后</td><td>训练事实、判断和下一次处方</td></tr><tr><td>周训练复盘.md</td><td>每周或阶段复盘后</td><td>通过项、待验证项、决策和下周目标</td></tr><tr><td>个人训练接回卡.md</td><td>停训或条件变化后</td><td>恢复权限、三档任务、7 天安排和停止条件</td></tr><tr><td>力量周期-vNN.html</td><td>用户确认专项力量周期后</td><td>周期结构、每次暴露、进阶、减量和测试规则</td></tr></tbody></table></div>
+<p>系统还会维护结构化数据、交接记录、配置和备份，但这些属于系统内部产物。除非它们影响用户可见文件，否则 AI 不要求用户检查，也不在主回复中展开字段和路径细节。</p>
+<h2 id="16-最终验收清单">16. 最终验收清单</h2>
+<p>每个阶段完成前必须检查：</p>
+<ul><li class="check"><input type="checkbox" disabled> AI 没有只说“已生成”或“请查看文件”；</li><li class="check"><input type="checkbox" disabled> 当前结果和系统判断已经用普通语言说明；</li><li class="check"><input type="checkbox" disabled> 第一次出现的健身术语已经解释；</li><li class="check"><input type="checkbox" disabled> 用户现在要做什么已经明确；</li><li class="check"><input type="checkbox" disabled> 所有新建、更新、保持、归档和失败文件都已列出；</li><li class="check"><input type="checkbox" disabled> 当前正式入口已经指出；</li><li class="check"><input type="checkbox" disabled> 对话、计划、执行基准、复盘和工作台互相一致；</li><li class="check"><input type="checkbox" disabled> 需要用户确认的内容没有被 AI 擅自决定；</li><li class="check"><input type="checkbox" disabled> 文件失败时没有把残缺产物说成完成；</li><li class="check"><input type="checkbox" disabled> 新手能够只凭当前回复完成下一步，不必自己搜索术语或阅读技术文档。</li></ul>
+<h2 id="17-内部完整参考">17. 内部完整参考</h2>
+<p>原来的技术型完整流程已经保留在：</p>
+<ul><li><code>validation-output/SYSTEM-FLOW-INTERNAL-20260815.md</code></li><li><code>validation-output/SYSTEM-FLOW-INTERNAL-20260815.html</code></li></ul>
+<p>普通用户无需阅读。后续系统实现、字段核对和脚本维护时再使用。</p>
+      </article>
+    </main>
+  </div>
+  <script>
+    const links=[...document.querySelectorAll('.toc-link')];
+    const search=document.getElementById('tocSearch');
+    search.addEventListener('input',()=>{const q=search.value.trim().toLowerCase();links.forEach(a=>a.classList.toggle('hidden',q&&!a.dataset.search.includes(q)));});
+    const sections=links.map(a=>document.getElementById(a.getAttribute('href').slice(1))).filter(Boolean);
+    const observer=new IntersectionObserver(entries=>{const visible=entries.filter(e=>e.isIntersecting).sort((a,b)=>a.boundingClientRect.top-b.boundingClientRect.top)[0];if(!visible)return;links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+visible.target.id));},{rootMargin:'-10% 0px -75% 0px'});
+    sections.forEach(section=>observer.observe(section));
+  </script>
+</body>
+</html>

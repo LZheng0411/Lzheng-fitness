@@ -5,7 +5,7 @@ description: 将训练计划 JSON、执行基准、训练复盘、可选 Notion 
 
 # Lzheng 健身工作台构建器
 
-把工作台视为“稳定界面模板 + 用户事实文件 + 可重复构建脚本”。不把训练重量写死在页面视图，不复制其他人的个人记录。工作台必须适配增肌、减脂、力量和综合健身，四个力量主项只属于力量模式，不能作为其他目标的前提。
+把工作台视为“唯一固定界面模板 + 用户事实文件 + 可重复构建脚本”。唯一视图资产是 `assets/workbench-template.html`；AI 只能刷新 `workbench-data`，不得手写另一套工作台。不把训练重量写死在页面视图，不复制其他人的个人记录。工作台必须适配增肌、减脂、力量和综合健身，四个力量主项只属于力量模式，不能作为其他目标的前提。
 
 读取 `../lzheng-training-system/references/system-contract.md`；如果存在交接记录，读取 `../lzheng-training-system/references/handoff-schema.md`，只消费其中已确认产物。系统根目录优先使用本次用户指定路径，其次使用套件配置；视图代码不得包含固定磁盘路径。
 
@@ -53,6 +53,16 @@ python "<skill>/scripts/Adapt-PlanContract.py" "<完整计划.json>" "<当前周
 
 正式计划、训练复盘或接回完成后不手工猜测刷新时机：创建 `LZHENG_HANDOFF` 后运行 `lzheng-training-system/scripts/Process-LzhengHandoffs.py --project "<项目根目录>"`。它只刷新通过契约验证的事实；需要合并的专项周期会保持待合并，不能越权成为当前计划。
 
+### 周切换同步契约（强制）
+
+跨周时必须把“复盘结论、下一周处方、当前计划 `schedule`、工作台数据”作为一次原子更新：先把 `schedule` 改成覆盖今天的真实七日日期，所有训练日使用同一个 Wn，训练日数量与 `plan.frequency` 一致，再创建交接并刷新工作台。不得只改复盘、只改周次或让旧周训练卡继续显示。
+
+构建器必须拒绝：排程不覆盖今天、训练日混合多个 Wn、训练日数量与频率不符、今天是训练日但没有今日处方、以及计划写明“自重”却被历史负重覆盖。每次发布前运行：
+
+```powershell
+python "<skill>/scripts/Test-FitnessWorkbenchWeekTransition.py"
+```
+
 必须保持：
 
 - 当前周期只保留同一计划的一个有效版本；
@@ -78,11 +88,12 @@ python "<skill>/scripts/Validate-FitnessWorkbenchSkill.py" --skill "<skill>"
 以下全部通过才能声明完成：
 
 1. `Validate-FitnessWorkbenchSkill.py` 返回 `FITNESS_WORKBENCH_SKILL: PASS`；
-2. `quick_validate.py <skill>` 返回通过；
-3. 在一个全新的隔离目录运行初始化脚本成功，页面显示“待建档”且不把匿名示例重量当处方；
-4. 新目录的 `Check-FitnessWorkbench.py` 检查为 `FITNESS_WORKBENCH_CHECK: PASS`；
-5. 正式页面所引用的每张图片在项目和发布目录中都存在；
-6. Skill 文本和模板不含原作者训练记录、用户名或固定磁盘路径。
+2. `Test-FitnessWorkbenchWeekTransition.py` 返回 `FITNESS_WORKBENCH_WEEK_TRANSITION: PASS`；
+3. `quick_validate.py <skill>` 返回通过；
+4. 在一个全新的隔离目录运行初始化脚本成功，页面显示“待建档”且不把匿名示例重量当处方；
+5. 新目录的 `Check-FitnessWorkbench.py` 检查为 `FITNESS_WORKBENCH_CHECK: PASS`；
+6. 正式页面所引用的每张图片在项目和发布目录中都存在；
+7. Skill 文本和模板不含原作者训练记录、用户名或固定磁盘路径。
 
 ## 资源
 
@@ -90,8 +101,10 @@ python "<skill>/scripts/Validate-FitnessWorkbenchSkill.py" --skill "<skill>"
 - `scripts/Build-FitnessWorkbenchData.py`：从计划、复盘、执行基准和 Notion JSON 生成数据块。
 - `scripts/Adapt-PlanContract.py`：将完整计划 Skill 的统一 `plan_contract` 适配为工作台主源。
 - `scripts/Check-FitnessWorkbench.py`：检查结构、事实一致性、资源和发布副本。
+- `scripts/Prepare-FitnessWorkbenchRelease.py`：生成移除本机路径与 Obsidian 深链的分享版并复制素材。
 - `scripts/Refresh-FitnessWorkbenchTemplate.py`：从正式页面刷新脱敏模板。
 - `scripts/Validate-FitnessWorkbenchSkill.py`：检查 Skill 包完整性与可迁移性。
+- `scripts/Test-FitnessWorkbenchWeekTransition.py`：回归验证跨周同步、频率、今日处方与自重语义。
 - `scripts/Migrate-FitnessWorkbenchSchema.py`：将保留的 schema 5 数据块安全迁移为 schema 6；正式页面仍应由数据生成器重新构建。
 - `assets/workbench-template.html`：不含个人事实的界面模板。
 - `assets/backgrounds/`：工作台内置图片。
