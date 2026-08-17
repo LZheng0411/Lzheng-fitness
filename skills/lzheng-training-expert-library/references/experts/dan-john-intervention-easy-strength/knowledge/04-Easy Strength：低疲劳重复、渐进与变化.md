@@ -38,4 +38,3 @@ title: Easy Strength：低疲劳重复、渐进与变化
 ## 来源定位
 
 *Easy Strength Omnibook*：EPUB Section 2（The Fundamentals of Easy Strength）和 Section 4（Addressing the Issues of Easy Strength），尤其 Pavel's Quote、Slow and Steady Wins the Race、Reasonable Doable Repeatable、Rolling Averages、Sorta Max/Variation。回查 规范检索稿。
-

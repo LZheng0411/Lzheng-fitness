@@ -32,4 +32,3 @@ title: 长期训练的两种模式：Park Bench、Bus Bench 与掌握
 ## 来源定位
 
 *Intervention*：Chapter 22、27，PDF 190—200、242—246；*Easy Strength Omnibook*：The Quadrants、Easy Strength across a Lifetime、Beyond the Basics and Successful Aging。回查两份 来源档。
-
