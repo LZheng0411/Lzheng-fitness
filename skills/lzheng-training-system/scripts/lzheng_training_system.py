@@ -7,6 +7,7 @@ import datetime as dt
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -17,6 +18,7 @@ PORTABLE_CONFIG_VERSION = 1
 PROJECT_RELATIVE = Path("个人训练系统")
 BACKUP_RELATIVE = Path("系统/backups")
 RUNTIME_SKILLS = "@runtime"
+WINDOWS_ABSOLUTE = re.compile(r"^[A-Za-z]:[\\/]")
 CORE_SKILLS = (
     "lzheng-fitness-plan",
     "lzheng-strength-cycle-planner",
@@ -73,11 +75,16 @@ def portable_relative(path: Path, root: Path, field: str) -> str:
     return relative.as_posix()
 
 
+def is_machine_absolute(value: object) -> bool:
+    text = str(value or "")
+    return Path(text).is_absolute() or bool(WINDOWS_ABSOLUTE.match(text)) or text.startswith(("\\\\", "//"))
+
+
 def safe_relative(root: Path, raw: object, fallback: Path, field: str) -> Path:
     """Resolve a portable config path and reject absolute paths or traversal."""
     value = str(raw or fallback.as_posix())
     candidate = Path(value)
-    if candidate.is_absolute():
+    if is_machine_absolute(value):
         candidate = fallback
     target = (root / candidate).resolve()
     try:
@@ -95,7 +102,7 @@ def migrate_config(root: Path, path: Path, data: dict) -> dict:
 
     project_value = str(data.get("project_root") or "")
     project_candidate = Path(project_value) if project_value else None
-    if not project_candidate or project_candidate.is_absolute():
+    if not project_candidate or is_machine_absolute(project_value):
         data["project_root"] = desired_project
         changed = True
     else:
@@ -111,7 +118,7 @@ def migrate_config(root: Path, path: Path, data: dict) -> dict:
 
     backup_value = str(data.get("backup_root") or "")
     backup_candidate = Path(backup_value) if backup_value else None
-    if not backup_candidate or backup_candidate.is_absolute():
+    if not backup_candidate or is_machine_absolute(backup_value):
         data["backup_root"] = desired_backup
         changed = True
     else:
