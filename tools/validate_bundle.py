@@ -149,6 +149,34 @@ def validate_repository_hygiene() -> None:
                 fail(f"{label} found in repository file: {rel}")
 
 
+def validate_beginner_guide() -> None:
+    guide = ROOT / "BEGINNER-GUIDE.md"
+    readme = ROOT / "README.md"
+    if not guide.is_file():
+        fail("Missing beginner setup guide: BEGINNER-GUIDE.md")
+
+    guide_text = read_text(guide)
+    for required in (
+        "开始建立我的健身系统",
+        "个人训练系统\\健身工作台.html",
+        "迁移到新电脑",
+        "不要只复制 `健身工作台.html`",
+        "安全边界",
+    ):
+        if required not in guide_text:
+            fail(f"Beginner guide is missing required section or instruction: {required}")
+
+    for path in (readme, guide):
+        text = read_text(path)
+        for target in LINK_RE.findall(text):
+            target = target.strip().strip("<>").split("#", 1)[0]
+            if not target or target.startswith(("http://", "https://", "mailto:")):
+                continue
+            resolved = (path.parent / target).resolve()
+            if not resolved.exists():
+                fail(f"Broken local link in {path.relative_to(ROOT)}: {target}")
+
+
 def run(command: list[str], cwd: Path | None = None) -> str:
     env = os.environ.copy()
     env["PYTHONDONTWRITEBYTECODE"] = "1"
@@ -291,6 +319,7 @@ def validate_install(temp: Path) -> None:
 
 
 def main() -> None:
+    validate_beginner_guide()
     validate_repository_hygiene()
     manifest = json.loads(read_text(ROOT / "lzheng-fitness.manifest.json"))
     manifest_names = tuple(item["name"] for item in manifest.get("skills", []))
