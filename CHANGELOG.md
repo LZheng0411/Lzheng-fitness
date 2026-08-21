@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.3.0 — 2026-08-21
+
+- Upgraded the offline workbench to the fixed v3 interface with a local motion background, static fallback, responsive layouts, and an in-workbench reader for reviews and status documents.
+- Replaced machine-bound system configuration with current-root-relative paths and a runtime Skill marker; legacy absolute paths now migrate automatically with a recoverable configuration backup.
+- Expanded portability checks to cover renamed folders, Chinese and spaced paths, no-Obsidian release copies, embedded documents, plan targets, CSS/images/video/posters, and explicit missing-asset failures.
+- Kept personal training data, machine paths, preview screenshots, caches, and generated review copies outside the public bundle.
+
 ## 2.2.0 — 2026-08-17
 
 - Added a seventh portable Skill containing six complete source-limited expert modules: Alan Aragon, Brad Schoenfeld, Brukner and Khan, Dan John, Eric Helms, and Greg Nuckols.

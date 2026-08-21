@@ -122,6 +122,7 @@ def main():
 
     fixed_dirs = [
         "训练与周期/当前周期",
+        "训练与周期/力量周期",
         "知识库入口",
         "训练复盘与状态/训练复盘",
         "训练复盘与状态/当前执行基准",
@@ -139,8 +140,9 @@ def main():
     write_text(target / "健身工作台.html", template)
 
     image_target = target / "工作台与工具/健身工作台开发/界面素材"
-    for source in sorted((ASSET_DIR / "backgrounds").glob("*.png")):
-        shutil.copy2(source, image_target / source.name)
+    for source in sorted((ASSET_DIR / "backgrounds").iterdir()):
+        if source.is_file() and source.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp", ".mp4"):
+            shutil.copy2(source, image_target / source.name)
 
     supplied_plan = Path(args.plan).resolve() if args.plan else None
     if supplied_plan and not supplied_plan.is_file():
@@ -220,8 +222,9 @@ workbench_decision: 完成首练后用真实复盘替换初始化记录
 
 - 动态数据只写入 `健身工作台.html` 的唯一 `workbench-data` 数据块。
 - 当前计划使用 `训练与周期/当前周期` 中版本号最大的 `*-vNN.json`。
+- 完整计划、力量周期、复盘和接回卡优先写入本知识库的固定目录，不在工作目录散落新文件。
 - 训练重量、完成状态和复盘必须可追溯；未知时显示待确认。
-- 复盘索引必须链接到真实 Markdown，页面使用 Obsidian 深链打开。
+- 完整计划 HTML 使用相对链接，可在普通文件夹或 Obsidian 仓库中打开；复盘索引链接到真实 Markdown。
 - 临时文件、发布副本和浏览器缓存不得放入项目根目录。
 """
     root_readme = """# 个人训练系统
@@ -229,6 +232,8 @@ workbench_decision: 完成首练后用真实复盘替换初始化记录
 本目录由 `lzheng-fitness-workbench-builder` 创建。日常只打开 `健身工作台.html`；计划、复盘和执行基准是页面事实来源。
 
 内置匿名数据只用于验证系统。正式使用前应完成建档和动作重量校准；正式计划可以直接使用 lzheng-fitness-plan 生成的 plan_contract，由构建器自动接入。
+
+正式产物统一归档：完整计划进入 `训练与周期/当前周期`，专项力量周期进入 `训练与周期/力量周期`，训练复盘进入 `训练复盘与状态/训练复盘`，状态快照和接回卡进入 `训练复盘与状态/状态档案`。
 """
     route = """# 健身工作台
 

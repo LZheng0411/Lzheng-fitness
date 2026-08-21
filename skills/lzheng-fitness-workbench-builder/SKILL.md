@@ -1,6 +1,6 @@
 ---
 name: lzheng-fitness-workbench-builder
-description: 将训练计划 JSON、执行基准、训练复盘、可选 Notion 导出和内置界面素材组装为可离线打开的个人健身工作台，并完成数据刷新、Obsidian 深链、响应式页面、发布副本与自动校验。用于用户要求从零构建、迁移、重建、打包、同步、修复或发布健身工作台，或希望在新电脑上复刻同款个人训练系统时；不用于制定个性化训练处方、单次训练复盘或医疗建议。
+description: 将训练计划 JSON、执行基准、训练复盘、可选 Notion 导出和内置界面素材组装为可离线打开的个人健身工作台，并完成数据刷新、内置文档阅读、可选 Obsidian 编辑、响应式页面、发布副本与自动校验。用于用户要求从零构建、迁移、重建、打包、同步、修复或发布健身工作台，或希望在新电脑上复刻同款个人训练系统时；不用于制定个性化训练处方、单次训练复盘或医疗建议。
 ---
 
 # Lzheng 健身工作台构建器
@@ -14,6 +14,7 @@ description: 将训练计划 JSON、执行基准、训练复盘、可选 Notion 
 - **从零构建 / 新电脑迁移**：读取 [输入契约](references/input-contract.md)，使用初始化脚本创建完整目录和可运行页面。
 - **刷新数据**：保留正式 HTML 视图，只运行数据生成器更新唯一 `workbench-data` 数据块；schema 6 必须包含建档、系统、知识包、状态和来源核验信息。
 - **接入完整计划**：完整计划使用 `plan_contract` 时，先运行 `Adapt-PlanContract.py` 适配为工作台主源；不得要求用户手工重写第二份计划 JSON。
+- **链接打不开 / 跨电脑迁移异常**：完整读取 [路径可迁移修复协议](references/path-portability-repair.md)，先盘点全部入口、配置和发布目标，再修复并执行整体移动回归；不得只修改截图中的单个按钮。
 - **修改界面或更换背景**：读取 [视觉契约](references/visual-contract.md)，修改源工作台后用模板刷新脚本生成脱敏模板。
 - **制作发布副本**：读取 [迁移与发布](references/migration-and-release.md)，先校验，再复制 HTML 和全部本地素材。
 - **制定计划或训练复盘**：转交对应训练 Skill；本 Skill 只消费结果，不凭空生成个人处方。
@@ -69,7 +70,8 @@ python "<skill>/scripts/Test-FitnessWorkbenchWeekTransition.py"
 - 当前周来自复盘索引或用户确认，不按日历擅自推算；
 - 今日训练按计划中的真实日期精确匹配；
 - 未知重量显示待确认，不沿用旧值冒充事实；
-- 复盘卡使用 `obsidian://open` 打开实际 Markdown 文件；
+- 完整计划 HTML 使用工作台相对链接直接交给浏览器；不得依赖固定盘符或要求项目必须是 Obsidian 仓库；
+- 复盘与状态内容默认可在工作台内阅读；Obsidian 只作为根据当前位置即时生成的可选编辑入口；
 - 图表已执行部分为实线，后续计划为虚线，重合时只显示实线。
 
 ## 更新界面模板
@@ -89,11 +91,12 @@ python "<skill>/scripts/Validate-FitnessWorkbenchSkill.py" --skill "<skill>"
 
 1. `Validate-FitnessWorkbenchSkill.py` 返回 `FITNESS_WORKBENCH_SKILL: PASS`；
 2. `Test-FitnessWorkbenchWeekTransition.py` 返回 `FITNESS_WORKBENCH_WEEK_TRANSITION: PASS`；
-3. `quick_validate.py <skill>` 返回通过；
-4. 在一个全新的隔离目录运行初始化脚本成功，页面显示“待建档”且不把匿名示例重量当处方；
-5. 新目录的 `Check-FitnessWorkbench.py` 检查为 `FITNESS_WORKBENCH_CHECK: PASS`；
-6. 正式页面所引用的每张图片在项目和发布目录中都存在；
-7. Skill 文本和模板不含原作者训练记录、用户名或固定磁盘路径。
+3. `Test-FitnessWorkbenchPortability.py` 返回 `FITNESS_WORKBENCH_PORTABILITY: PASS`；
+4. `quick_validate.py <skill>` 返回通过；
+5. 在一个全新的隔离目录运行初始化脚本成功，页面显示“待建档”且不把匿名示例重量当处方；
+6. 新目录的 `Check-FitnessWorkbench.py` 检查为 `FITNESS_WORKBENCH_CHECK: PASS`；
+7. 正式页面所引用的每张图片和完整计划 HTML 在项目、移动后目录和发布目录中都存在；
+8. Skill 文本和模板不含原作者训练记录、用户名或固定磁盘路径。
 
 ## 资源
 
@@ -105,7 +108,9 @@ python "<skill>/scripts/Validate-FitnessWorkbenchSkill.py" --skill "<skill>"
 - `scripts/Refresh-FitnessWorkbenchTemplate.py`：从正式页面刷新脱敏模板。
 - `scripts/Validate-FitnessWorkbenchSkill.py`：检查 Skill 包完整性与可迁移性。
 - `scripts/Test-FitnessWorkbenchWeekTransition.py`：回归验证跨周同步、频率、今日处方与自重语义。
+- `scripts/Test-FitnessWorkbenchPortability.py`：把完整健身系统移动到新目录，验证计划、内置文档、全部页面资源和无 Obsidian 发布副本仍可用。
 - `scripts/Migrate-FitnessWorkbenchSchema.py`：将保留的 schema 5 数据块安全迁移为 schema 6；正式页面仍应由数据生成器重新构建。
+- `references/path-portability-repair.md`：AI 处理链接失效、旧绝对路径、系统迁移和发布假通过时的强制修复协议。
 - `assets/workbench-template.html`：不含个人事实的界面模板。
-- `assets/backgrounds/`：工作台内置图片。
+- `assets/backgrounds/`：工作台内置视频、静态兜底和兼容图片。
 - `assets/examples/`：匿名计划与 Notion 输入示例。

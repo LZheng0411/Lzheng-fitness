@@ -52,7 +52,7 @@
 
 ## 5. 实现和验收
 
-- 用户指定输出目录时优先使用；否则使用 `LZHENG_FITNESS_HOME/plans/`，未设置时使用当前工作目录的 `lzheng-fitness-output/plans/`。新文件采用 `YYYY年MM月DD日-训练对象-周期目标训练计划.html`：单项以动作名为训练对象，整套计划以训练结构为训练对象；日期按当前用户时区的首次制定日、月日补零。实质修订保留原日期并添加 `-v02`、`-v03`，新周期才使用新的制定日期；禁止覆盖旧文件或使用“最新版”“最终版”等命名。
+- 用户指定输出目录时优先使用；否则先使用已初始化系统配置中的 `output_locations.cycles`，尚未建立系统配置时才使用 `LZHENG_FITNESS_HOME/plans/` 或当前工作目录的 `lzheng-fitness-output/plans/`。新文件采用 `YYYY年MM月DD日-训练对象-周期目标训练计划.html`：单项以动作名为训练对象，整套计划以训练结构为训练对象；日期按当前用户时区的首次制定日、月日补零。实质修订保留原日期并添加 `-v02`、`-v03`，新周期才使用新的制定日期；禁止覆盖旧文件或使用“最新版”“最终版”等命名。
 - 使用单个 UTF-8 HTML 文件和内嵌 CSS；不要依赖 CDN、框架或网络字体。
 - 为保证上传到其他环境后图片仍显示，默认运行 `scripts/inline_html_image.py <html> --asset <skill assets/header-lineart.png>`，把线稿转为 HTML 内部的 `data:image/...;base64`。不要依赖同目录相对路径，也不要使用会过期的临时外链。
 - 在宽屏和小屏检查：标题不被图遮挡、卡片不溢出、表格可读、长表可滚动、中文不会逐字挤压。390px 视口必须满足 `document.documentElement.scrollWidth <= clientWidth`；长表和图表只允许在自身容器内横向滚动。

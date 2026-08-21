@@ -48,7 +48,7 @@ description: 初始化、升级、诊断、校验和迁移 Lzheng 本地训练�
 
 四个处方类 Skill 在需要来源限定判断时内部读取 `lzheng-training-expert-library`。专家库不是独立处方入口，不拥有当前事实或工作台写入权。
 
-专业 Skill 执行前按以下优先级解析根目录：本次用户明确路径 → `系统/lzheng-system.json` → 环境变量 `LZHENG_FITNESS_HOME` → 仅用于首次引导的保守默认目录。未解析到系统时停止写入并说明缺失项，不把示例数据当作训练事实。
+专业 Skill 执行前按以下优先级解析根目录：本次用户明确路径 → `系统/lzheng-system.json` → 环境变量 `LZHENG_FITNESS_HOME` → 仅用于首次引导的保守默认目录。已存在系统配置时，计划、周期、复盘、状态和接回卡必须优先写入 `output_locations` 指定的知识库分区，不得继续散落到当前工作目录。未解析到系统时停止写入并说明缺失项，不把示例数据当作训练事实。
 
 ## 命令
 
@@ -71,4 +71,5 @@ python scripts/lzheng_training_system.py validate --root "<系统根目录>"
 - `doctor` 显示配置、四个处方 Skill、专家库、工作台构建器、主源目录和工作台均可用；
 - `validate` 通过每个 Skill 的快速校验、工作台数据/HTML 检查和隐私扫描；
 - 在新的隔离空目录 `bootstrap` 成功，并显示“待建档”而不是假重量；
+- 整套系统移动到不同盘符或改名后，旧绝对路径自动迁移，`doctor` 与 `upgrade` 继续通过；
 - 每次正式复盘和接回均生成 `LZHENG_HANDOFF`，经 `process-handoffs` 刷新成功或明确报告失败。

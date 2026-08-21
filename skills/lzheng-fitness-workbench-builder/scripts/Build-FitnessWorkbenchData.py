@@ -24,7 +24,7 @@ import math
 import os
 import re
 import sys
-from urllib.parse import quote
+from urllib.parse import quote, unquote, urlparse
 
 SCHEMA_VERSION = 6
 DEFAULT_CALENDAR = {"1": "上肢A", "2": "腿B", "4": "上肢B", "6": "腿A"}
@@ -192,30 +192,79 @@ def declared_training_frequency(plan_json):
     return int(match.group(1)) if match and int(match.group(1)) > 0 else None
 
 
-def obsidian_href(path):
-    return "obsidian://open?path=" + quote(os.path.abspath(path).replace("\\", "/"), safe="")
+def relative_path(path, project_root):
+    """Store project-local paths without binding the workbench to one machine."""
+    return os.path.relpath(os.path.abspath(path), os.path.abspath(project_root)).replace("\\", "/")
+
+
+def browser_href(path):
+    """Create a browser-safe relative href for a local standalone file."""
+    return quote(str(path).replace("\\", "/"), safe="/-._~")
+
+
+def resolve_project_href(project_root, href):
+    """Resolve a relative workbench href and reject schemes or directory traversal."""
+    parsed = urlparse(str(href or ""))
+    if parsed.scheme or parsed.netloc:
+        return None
+    decoded = unquote(parsed.path).replace("/", os.sep)
+    if not decoded or os.path.isabs(decoded):
+        return None
+    root = os.path.abspath(project_root)
+    candidate = os.path.abspath(os.path.join(root, decoded))
+    try:
+        if os.path.commonpath([root, candidate]) != root:
+            return None
+    except ValueError:
+        return None
+    return candidate
 
 
 def build_links(project_root, previous=None, notion=None):
-    """Generate machine-local Obsidian links at build time; never hard-code a vault path in the view."""
+    """Keep Markdown targets relative; the view creates optional Obsidian links at runtime."""
     links = dict(previous or {})
     targets = {
         "review_index": os.path.join(project_root, "训练复盘与状态", "训练复盘", "INDEX.md"),
         "status_index": os.path.join(project_root, "训练复盘与状态", "状态档案", "INDEX.md"),
     }
     for key, path in targets.items():
+        for suffix in ("_path", "_href", "_file"):
+            links.pop(key + suffix, None)
         if os.path.isfile(path):
-            links[key + "_path"] = os.path.abspath(path)
-            links[key + "_href"] = obsidian_href(path)
-        else:
-            links.pop(key + "_path", None)
-            links.pop(key + "_href", None)
+            links[key + "_file"] = relative_path(path, project_root)
     notion_url = (notion or {}).get("notion_url") or links.get("notion_url")
     if isinstance(notion_url, str) and notion_url.startswith(("https://", "http://")):
         links["notion_url"] = notion_url
     else:
         links.pop("notion_url", None)
     return links
+
+
+def read_portable_document(path):
+    """Read a local Markdown source for the workbench's built-in reader."""
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8-sig") as fh:
+        return fh.read()
+
+
+def build_portable_documents(project_root):
+    """Embed primary Markdown indexes so reading never depends on Obsidian."""
+    targets = {
+        "review_index": ("训练复盘索引", os.path.join(project_root, "训练复盘与状态", "训练复盘", "INDEX.md")),
+        "status_index": ("状态档案", os.path.join(project_root, "训练复盘与状态", "状态档案", "INDEX.md")),
+    }
+    documents = {}
+    for key, (title, path) in targets.items():
+        content = read_portable_document(path)
+        if content is None:
+            continue
+        documents[key] = {
+            "title": title,
+            "file_path": relative_path(path, project_root),
+            "content_markdown": content,
+        }
+    return documents
 
 
 def build_meta(plan_json, plan_file_name, current_week, baseline, project_root):
@@ -233,8 +282,7 @@ def build_meta(plan_json, plan_file_name, current_week, baseline, project_root):
         "plan_start": baseline.get("week_start") or baseline.get("period_start"),
         "plan_end": baseline.get("period_end"),
         "plan_file": plan_rel,
-        "plan_path": os.path.abspath(plan_abs),
-        "plan_href": obsidian_href(plan_abs),
+        "plan_href": browser_href(plan_rel),
         "baseline_file": baseline.get("file"),
         "baseline_version": baseline.get("source_version"),
         "week_note": (plan.get("baseline") or plan.get("constraints") or "")[:180],
@@ -330,13 +378,13 @@ def build_knowledge_info(project_root):
                 public_pack = {
                     "schema": 1,
                     "status": "available",
-                    "source": os.path.abspath(path),
+                    "source": relative_path(path, project_root),
                     "version": manifest.get("version"),
                     "reviewed_at": manifest.get("reviewed_at"),
                 }
                 break
         except (OSError, ValueError, json.JSONDecodeError):
-            public_pack = {"schema": 1, "status": "invalid", "source": os.path.abspath(path)}
+            public_pack = {"schema": 1, "status": "invalid", "source": relative_path(path, project_root)}
             break
     return {
         "public_pack": public_pack,
@@ -365,10 +413,10 @@ def find_latest_status_artifact(project_root):
                 fields = json.load(fh)
             body = ""
         except (OSError, ValueError, json.JSONDecodeError):
-            return {"path": path, "file": os.path.basename(path), "invalid": True}
+            return {"path": path, "file_path": relative_path(path, project_root), "file": os.path.basename(path), "invalid": True}
     else:
         fields, body = read_frontmatter(path)
-    return {"path": os.path.abspath(path), "file": os.path.basename(path), "fields": fields if isinstance(fields, dict) else {}, "body": body}
+    return {"path": os.path.abspath(path), "file_path": relative_path(path, project_root), "file": os.path.basename(path), "fields": fields if isinstance(fields, dict) else {}, "body": body}
 
 
 def status_from_artifact(artifact):
@@ -397,14 +445,14 @@ def status_from_artifact(artifact):
             "effective_until": until,
             "reason": "接回状态要求暂缓训练" if hold else "接回方案已过有效期；请先重新确认当前状态。",
             "source": artifact.get("file"),
-            "source_path": artifact.get("path"),
+            "source_file": artifact.get("file_path"),
         }
     return {
         "state": "return",
         "effective_until": until,
         "reason": "当前处于接回阶段；按接回卡的正常／降级／最低方案执行，不套用停训前加重。",
         "source": artifact.get("file"),
-        "source_path": artifact.get("path"),
+        "source_file": artifact.get("file_path"),
     }
 
 
@@ -425,11 +473,11 @@ def build_status_info(baseline, meta, onboarding, artifact=None):
     }
 
 
-def build_provenance(plan_path, baseline, review_rows, sync):
+def build_provenance(plan_path, baseline, review_rows, sync, project_root):
     checked = dt.datetime.now().astimezone().isoformat(timespec="minutes")
     return {
-        "plan": {"source": os.path.abspath(plan_path), "verified_at": checked, "trust": "local_verified"},
-        "baseline": {"source": baseline.get("path"), "verified_at": checked, "trust": "local_verified"},
+        "plan": {"source": relative_path(plan_path, project_root), "verified_at": checked, "trust": "local_verified"},
+        "baseline": {"source": relative_path(baseline.get("path"), project_root), "verified_at": checked, "trust": "local_verified"},
         "reviews": {"source": "训练复盘与状态/训练复盘/INDEX.md", "verified_at": checked, "trust": "local_verified", "count": len(review_rows)},
         "notion": {"source": "optional_notion_export", "verified_at": sync.get("last_attempt"), "trust": "verified" if sync.get("status") == "ok" else sync.get("status")},
     }
@@ -929,8 +977,8 @@ def build_reviews(review_rows, project_root):
             absolute = os.path.abspath(os.path.join(project_root, review_dir, r["file"] + ".md"))
             if not os.path.isfile(absolute):
                 fail("复盘索引目标不存在: " + absolute)
-            item["path"] = absolute
-            item["href"] = obsidian_href(absolute)
+            item["file_path"] = relative_path(absolute, project_root)
+            item["content_markdown"] = read_portable_document(absolute) or ""
             item.update(read_workbench_summary(absolute))
         else:
             fail("复盘索引缺少可打开的文件链接: %s %s" % (r.get("full_date"), r.get("day")))
@@ -1091,7 +1139,7 @@ def inherit_previous(html_path):
         return {}
 
 
-def validate(data, plan_json):
+def validate(data, plan_json, project_root):
     """校验数据块与主源一致性。返回 (ok, [问题])。"""
     problems = []
     unresolved = sorted(set(re.findall(r"__[A-Z0-9_]+__", json.dumps(data, ensure_ascii=False))))
@@ -1114,7 +1162,8 @@ def validate(data, plan_json):
                 problems.append("执行基准周期长度与计划周数不一致")
         except (TypeError, ValueError):
             problems.append("执行基准周期日期非法")
-    if not meta.get("plan_href") or not os.path.isfile(meta.get("plan_path", "")):
+    plan_target = resolve_project_href(project_root, meta.get("plan_href"))
+    if not plan_target or not os.path.isfile(plan_target):
         problems.append("完整计划入口不存在")
     # 曲线与 cycles 逐点一致
     for name, chart in data.get("charts", {}).items():
@@ -1146,7 +1195,8 @@ def validate(data, plan_json):
             if not exercise.get("w") or not exercise.get("d"):
                 problems.append("主项缺少精确处方: %s/%s" % (day, exercise.get("name")))
     for review in data.get("reviews", []):
-        if not review.get("href") or not os.path.isfile(review.get("path", "")):
+        review_target = resolve_project_href(project_root, browser_href(review.get("file_path", "")))
+        if not review_target or not os.path.isfile(review_target):
             problems.append("复盘链接目标不存在: " + str(review.get("file")))
     summary = data.get("today_summary")
     if summary:
@@ -1174,7 +1224,7 @@ def apply_data(html_path, data, backup_dir):
     失败时保留原文件，并把上一版备份到 backup_dir。"""
     with open(html_path, encoding="utf-8") as fh:
         html = fh.read()
-    payload = json.dumps(data, ensure_ascii=False)
+    payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
     replacement = '<script id="workbench-data" type="application/json">' + payload + '</script>'
     new_html, n = re.subn(
         r'<script id="workbench-data" type="application/json">[\s\S]*?</script>',
@@ -1289,6 +1339,7 @@ def main():
         "advice": prev.get("advice") or "按复盘索引的最近一次判定准备下一次训练。",
         "today_summary": build_today_summary(review_rows, timeline),
         "links": build_links(project, prev.get("links", {}), notion),
+        "documents": build_portable_documents(project),
         "notion": notion or {
             "last_sync": None,
             "bodyweight": [],
@@ -1299,7 +1350,7 @@ def main():
             "note": "Notion 数据未提供；页面将显示待同步状态。",
         },
         "sync": sync,
-        "provenance": build_provenance(plan_path, baseline, review_rows, sync),
+        "provenance": build_provenance(plan_path, baseline, review_rows, sync, project),
     }
     if not onboarding["completed"]:
         for day in data["days"].values():
@@ -1310,7 +1361,7 @@ def main():
                     if onboarding["mode"] == "needs_calibration"
                     else "待建档：示例重量不可作为处方"
                 )
-    problems = validate(data, plan_json)
+    problems = validate(data, plan_json, project)
     if problems:
         fail("；".join(problems))
 

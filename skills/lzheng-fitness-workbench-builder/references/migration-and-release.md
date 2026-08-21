@@ -7,7 +7,7 @@
 - Codex：`%CODEX_HOME%/skills/`；未设置时使用用户目录下的 `.codex/skills/`；
 - 已安装 `my-study-helper` 插件：放入插件的 `skills/` 目录。
 
-必须整目录复制，不能只复制 `SKILL.md`；模板、脚本和三张背景图都是运行依赖。
+必须整目录复制，不能只复制 `SKILL.md`；模板、脚本、动态背景、静态兜底和兼容图片都是运行依赖。
 
 安装后重新启动或刷新 Agent 环境，再说“使用 `$lzheng-fitness-workbench-builder` 从零搭建健身工作台”。
 
@@ -19,15 +19,15 @@
 - 当前执行基准 Markdown；
 - 复盘 `INDEX.md` 与其链接的 Markdown 文件；
 - 可选的 `notion-data.json`；
-- 希望继续使用的自定义背景图。
+- 希望继续使用的自定义背景图片或视频。
 
-不要复制缓存、浏览器 profile、临时截图、旧发布目录或绝对路径。构建器会在新路径重新生成 Obsidian 深链。
+不要复制缓存、浏览器 profile、临时截图或旧发布目录。完整计划由工作台按钮直接打开；复盘和状态内容嵌入工作台阅读器。Obsidian 编辑入口只根据当前位置即时生成，目录不是已注册仓库时也不影响主要阅读功能。
 
 ## 发布副本
 
 1. 运行数据生成器 `--apply`；
 2. 运行检查脚本并确认 PASS；
-3. 使用发布准备脚本生成脱敏的 `index.html` 并复制图片素材；不得直接复制含本机深链的正式工作台：
+3. 使用发布准备脚本生成脱敏的 `index.html`，安全嵌入允许发布的本地文档，并复制全部页面素材；不得直接复制含本机深链的正式工作台：
 
 ```powershell
 python "<skill>/scripts/Prepare-FitnessWorkbenchRelease.py" --project "<项目根>" --deploy "<发布目录>"
@@ -39,7 +39,7 @@ python "<skill>/scripts/Prepare-FitnessWorkbenchRelease.py" --project "<项目�
 python "<skill>/scripts/Check-FitnessWorkbench.py" --project "<项目根>" --deploy "<发布目录>" [--notion "<notion-data.json>"]
 ```
 
-发布准备脚本会移除本机绝对路径和 Obsidian 深链，但保留当前页面数据。只有 `deploy: PASS` 后才部署或分享。
+发布准备脚本会移除本机绝对路径和已保存的 Obsidian 深链，并复制当前完整计划 HTML、视频、海报和页面素材。只有 `deploy: PASS` 后才部署或分享。
 
 ## 更新模板
 

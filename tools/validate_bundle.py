@@ -215,6 +215,7 @@ def validate_renderers(temp: Path) -> None:
     run([sys.executable, str(workbench / "scripts" / "Validate-FitnessWorkbenchSkill.py"), "--skill", str(workbench)])
 
     system = SKILLS_ROOT / "lzheng-training-system"
+    run([sys.executable, str(system / "scripts" / "Test-LzhengTrainingSystemPortability.py")])
     portable_root = temp / "portable-training-system"
     run([sys.executable, str(system / "scripts" / "lzheng_training_system.py"), "bootstrap", "--target", str(portable_root)])
     run([sys.executable, str(system / "scripts" / "lzheng_training_system.py"), "doctor", "--root", str(portable_root)])

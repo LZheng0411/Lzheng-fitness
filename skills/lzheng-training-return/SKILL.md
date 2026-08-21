@@ -102,7 +102,7 @@ description: 处理停训达到7天、连续漏练3次、生病或伤病评估�
 2. 《Lzheng 个人训练接回卡》；
 3. 如用户需要，更新后的第一周训练安排。
 
-用户指定输出目录时优先使用；否则写入 `LZHENG_FITNESS_HOME/returns/`，未设置环境变量时写入当前工作目录的 `lzheng-fitness-output/returns/`。客户模式只使用代号。真实姓名、联系方式、病史原文不写入公共知识库或示例。
+用户指定输出目录时优先使用；否则先读取已初始化系统的 `系统/lzheng-system.json`，把状态快照和接回卡写入 `output_locations.returns`；只有尚未建立系统配置时，才写入 `LZHENG_FITNESS_HOME/returns/` 或当前工作目录的 `lzheng-fitness-output/returns/`。客户模式只使用代号。真实姓名、联系方式、病史原文不写入公共知识库或示例。
 
 ## 输出要求
 

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ui-template="lzheng-fitness-workbench-v1">
+<html lang="zh-CN" data-ui-template="lzheng-fitness-workbench-v3">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>健身工作台</title>
+<title>Lzheng 健身系统</title>
 <style>
   :root{
     --bg:#f6f6f4; --card:#ffffff; --ink:#1a1a1a; --muted:#666666; --faint:#999999;
@@ -289,13 +289,21 @@
     --bg:#e9e9e6;--card:#f8f8f6;--ink:#0b0b0b;--muted:#555;--faint:#878787;
     --line:rgba(12,12,12,.12);--hero:#0b0b0b;--accent:#111;--accent-soft:#e7e7e4;
     --radius:20px;--radius-sm:12px;--shadow:0 18px 55px rgba(0,0,0,.08);
+    /* FITNESS_WORKBENCH_BACKGROUND_CONFIG_START */
+    --workbench-background-image:url("工作台与工具/健身工作台开发/界面素材/workbench-background.png");
+    --workbench-background-desktop-position:60% center;
+    --workbench-background-mobile-position:66% center;
+    --workbench-hero-desktop-position:60% center;
+    --workbench-hero-mobile-position:68% center;
+    --workbench-nav-position:70% center;
+    /* FITNESS_WORKBENCH_BACKGROUND_CONFIG_END */
   }
   html{background:#e4e4e1}
   body{
     background-image:
       linear-gradient(90deg,rgba(239,239,236,.95),rgba(239,239,236,.90) 44%,rgba(239,239,236,.93)),
-      url("工作台与工具/健身工作台开发/界面素材/garou-cosmic-crouch.png");
-    background-size:cover;background-position:center 42%;background-attachment:fixed;background-repeat:no-repeat;
+      var(--workbench-background-image);
+    background-size:cover;background-position:var(--workbench-background-desktop-position);background-attachment:fixed;background-repeat:no-repeat;
     color:var(--ink);
   }
   .appbar{background:rgba(238,238,235,.78);border-color:rgba(0,0,0,.12);backdrop-filter:blur(24px) saturate(0)}
@@ -310,8 +318,8 @@
     min-height:350px;padding:38px;border-radius:26px;
     background-image:
       linear-gradient(90deg,rgba(5,5,5,.97) 0%,rgba(5,5,5,.90) 43%,rgba(5,5,5,.48) 72%,rgba(5,5,5,.28) 100%),
-      url("工作台与工具/健身工作台开发/界面素材/garou-cosmic-crouch.png");
-    background-size:cover;background-position:center 54%;box-shadow:0 28px 70px rgba(0,0,0,.24);
+      var(--workbench-background-image);
+    background-size:cover;background-position:var(--workbench-hero-desktop-position);box-shadow:0 28px 70px rgba(0,0,0,.24);
   }
   .hero:before{content:"W" attr(data-week) " / " "TRAINING SYSTEM";right:34px;bottom:25px;color:rgba(255,255,255,.22);font-size:13px;font-weight:650;letter-spacing:.14em}
   .hero:after{display:none}
@@ -350,8 +358,8 @@
     body{
       background-image:
         linear-gradient(rgba(239,239,236,.95),rgba(239,239,236,.91)),
-        url("工作台与工具/健身工作台开发/界面素材/garou-cosmic-crouch.png");
-      background-position:center 50%;
+        var(--workbench-background-image);
+      background-position:var(--workbench-background-mobile-position);
     }
     .nav{background:rgba(244,244,241,.88);backdrop-filter:blur(24px) saturate(0)}
     .nav a i{background:#111}
@@ -359,8 +367,8 @@
       min-height:380px;padding:27px 22px;
       background-image:
         linear-gradient(180deg,rgba(5,5,5,.48) 0%,rgba(5,5,5,.66) 42%,rgba(5,5,5,.96) 100%),
-        url("工作台与工具/健身工作台开发/界面素材/garou-cosmic-crouch.png");
-      background-position:center 50%;
+        var(--workbench-background-image);
+      background-position:var(--workbench-hero-mobile-position);
     }
     .hero .hi{font-size:29px;max-width:90%}.hero .sub{max-width:88%}.hero .pills{margin-top:15px}
     .advice{margin-top:122px;max-width:none}
@@ -411,16 +419,6 @@
   .insight-point{padding:11px 12px;border-left:1px solid rgba(255,255,255,.18);font-size:11px;color:rgba(255,255,255,.72);line-height:1.55}
   .insight-point b{display:block;margin-bottom:3px;color:#fff;font-size:11px}
 
-  #goalMetricBox{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;padding:1px;background:rgba(0,0,0,.13);overflow:hidden}
-  #goalMetricBox.has-four{grid-template-columns:repeat(4,minmax(0,1fr))}
-  .goal-metric{position:relative;min-height:142px;padding:19px;background:rgba(249,249,247,.88)}
-  .goal-metric:before{content:attr(data-state);position:absolute;right:13px;top:13px;padding:4px 7px;border:1px solid rgba(0,0,0,.12);border-radius:999px;color:#777;font-size:8px;font-weight:720;letter-spacing:.08em}
-  .goal-metric .gm-label{max-width:74%;font-size:10px;font-weight:720;letter-spacing:.06em;color:#666}
-  .goal-metric .gm-value{margin-top:17px;font-size:19px;font-weight:780;line-height:1.18;letter-spacing:-.035em;color:#111;overflow-wrap:anywhere}
-  .goal-metric .gm-detail{margin-top:9px;font-size:10px;line-height:1.5;color:#666}
-  .goal-metric .gm-next{margin-top:10px;padding-top:9px;border-top:1px solid rgba(0,0,0,.1);font-size:9px;line-height:1.45;color:#444}
-  .goal-metric.planned{background:rgba(238,238,235,.88)}.goal-metric.needs-data{border-top:3px solid #111}
-
   #weekMain{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:rgba(0,0,0,.14);border-color:rgba(0,0,0,.18)}
   .wk .row{display:block;min-height:188px;padding:21px;background:rgba(249,249,247,.88)}
   .wk .row .k{display:block;font-size:16px}.wk .row .v{display:block;max-width:none;text-align:left}
@@ -459,12 +457,12 @@
     .hero:before{right:17px;bottom:14px}.hero .pill{padding:7px 11px;font-size:10px}
     .ringwrap{padding:24px;gap:22px}.ring{width:112px;height:112px}.ring svg{width:112px;height:112px}
     .insight-points{grid-template-columns:1fr}.insight-point{border-left:none;border-top:1px solid rgba(255,255,255,.15)}
-    #weekNote{grid-template-columns:1fr}.rv{grid-template-columns:1fr}.rv .row{min-height:auto}#goalMetricBox,#goalMetricBox.has-four{grid-template-columns:1fr 1fr}
+    #weekNote{grid-template-columns:1fr}.rv{grid-template-columns:1fr}.rv .row{min-height:auto}
     #setBox,#ruleBox{grid-template-columns:1fr 1fr}#howNote{grid-template-columns:1fr 1fr}
   }
   @media (max-width:520px){
     .ringwrap{display:block}.ring{margin:0 auto}.ringinfo{margin-top:22px}.stages{padding-left:20px;padding-right:20px}
-    #weekMain{grid-template-columns:1fr}.wk .row{min-height:auto}.day{min-height:166px}#goalMetricBox,#goalMetricBox.has-four{grid-template-columns:1fr}
+    #weekMain{grid-template-columns:1fr}.wk .row{min-height:auto}.day{min-height:166px}
     .chartcard{padding:15px}.chartcard svg{height:160px}
     #setBox,#ruleBox,#howNote{grid-template-columns:1fr}.how-step,#setBox .setrow{min-height:auto}
   }
@@ -473,8 +471,8 @@
   body{
     background-image:
       linear-gradient(90deg,rgba(239,239,236,.87),rgba(239,239,236,.78) 46%,rgba(239,239,236,.82)),
-      url("工作台与工具/健身工作台开发/界面素材/garou-cosmic-crouch.png");
-    background-position:center 50%;
+      var(--workbench-background-image);
+    background-position:var(--workbench-background-desktop-position);
   }
   #m-trend,#m-settings{background:transparent}
   #m-trend>h2,#m-settings>h2{font-size:18px;font-weight:760;letter-spacing:-.02em;margin:32px 0 13px}
@@ -516,8 +514,8 @@
     .nav{
       background-image:
         linear-gradient(180deg,rgba(5,5,5,.62),rgba(5,5,5,.42)),
-        url("工作台与工具/健身工作台开发/界面素材/garou-cosmic-crouch.png");
-      background-size:auto,cover;background-position:center,50% 50%;background-repeat:no-repeat;
+        var(--workbench-background-image);
+      background-size:auto,cover;background-position:center,var(--workbench-nav-position);background-repeat:no-repeat;
       border-right:1px solid rgba(255,255,255,.13);box-shadow:18px 0 48px rgba(0,0,0,.16);
       backdrop-filter:blur(4px) brightness(.76) saturate(0)
     }
@@ -526,12 +524,12 @@
   }
   @media (max-width:899px){
     body{
-      background-image:linear-gradient(rgba(239,239,236,.88),rgba(239,239,236,.83)),url("工作台与工具/健身工作台开发/界面素材/garou-cosmic-crouch.png");
-      background-position:50% center;
+      background-image:linear-gradient(rgba(239,239,236,.88),rgba(239,239,236,.83)),var(--workbench-background-image);
+      background-position:var(--workbench-background-mobile-position);
     }
     .hero{
-      background-image:linear-gradient(180deg,rgba(5,5,5,.36) 0%,rgba(5,5,5,.58) 44%,rgba(5,5,5,.94) 100%),url("工作台与工具/健身工作台开发/界面素材/garou-cosmic-crouch.png");
-      background-position:50% 50%;
+      background-image:linear-gradient(180deg,rgba(5,5,5,.36) 0%,rgba(5,5,5,.58) 44%,rgba(5,5,5,.94) 100%),var(--workbench-background-image);
+      background-position:var(--workbench-hero-mobile-position);
     }
     .weight-row{grid-template-columns:94px minmax(0,1fr) 82px}.weight-status{display:none}
   }
@@ -540,12 +538,1294 @@
     .weight-row{grid-template-columns:76px minmax(0,1fr) 66px;min-height:50px}.weight-cell{padding:9px 8px;font-size:10px}.weight-value{font-size:14px}
     .rule-item[open]{grid-column:auto}
   }
+
+  /* 2026-08-15 interactive chart exploration */
+  .chartcard .ttl{align-items:center}.chart-tools{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap}
+  .chart-expand{padding:6px 10px;border-radius:999px;background:rgba(12,12,12,.92);color:#fff;border:1px solid rgba(0,0,0,.2);font-size:10px;font-weight:720;letter-spacing:.04em;cursor:zoom-in;transition:transform .18s ease,box-shadow .18s ease}
+  .chart-expand:hover,.chart-expand:focus-visible{transform:translateY(-1px);box-shadow:0 7px 18px rgba(0,0,0,.16);outline:none}
+  .chartcard .plot,.chart-modal-plot{position:relative}
+  .chart-point .point-dot{transform-box:fill-box;transform-origin:center;transition:transform .16s ease,filter .16s ease,stroke-width .16s ease}
+  .chart-point:hover .point-dot,.chart-point:focus .point-dot{transform:scale(1.72);filter:drop-shadow(0 3px 3px rgba(0,0,0,.28))}
+  .chart-point:focus{outline:none}.chart-point.actual-point.has-review{cursor:pointer}.chart-point.actual-point:not(.has-review){cursor:help}.chart-point.plan-point{cursor:default}
+  .chart-tip{position:absolute;z-index:4;left:0;top:0;max-width:min(270px,80%);padding:8px 10px;border-radius:10px;background:rgba(8,8,8,.94);color:#fff;box-shadow:0 12px 28px rgba(0,0,0,.22);font-size:10px;font-weight:620;line-height:1.45;pointer-events:none;opacity:0;transform:translate(-50%,-115%) scale(.96);transition:opacity .12s ease,transform .12s ease}
+  .chart-tip.on{opacity:1;transform:translate(-50%,-115%) scale(1)}
+  .chart-modal{position:fixed;z-index:1000;inset:0;display:none;align-items:center;justify-content:center;padding:28px;background:rgba(0,0,0,.72);backdrop-filter:blur(14px) saturate(0)}
+  .chart-modal.on{display:flex}.chart-modal-panel{width:min(1060px,96vw);max-height:92vh;overflow:auto;padding:26px;border:1px solid rgba(255,255,255,.34);border-radius:24px;background:rgba(245,245,242,.96);box-shadow:0 34px 100px rgba(0,0,0,.38)}
+  .chart-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:16px}.chart-modal-kicker{font-size:9px;font-weight:760;letter-spacing:.16em;color:#777}.chart-modal-title{margin-top:5px;font-size:25px;font-weight:790;letter-spacing:-.035em}.chart-modal-cap{margin-top:5px;font-size:11px;color:#666}
+  .chart-modal-close{flex:none;width:40px;height:40px;padding:0;border-radius:50%;background:#111;color:#fff;font-size:20px;line-height:1;cursor:pointer}
+  .chart-modal-plot{min-height:360px;padding:18px 14px 7px;border:1px solid rgba(0,0,0,.18);border-radius:18px;background:rgba(255,255,255,.45);overflow:hidden}.chart-modal-plot svg{display:block;width:100%;height:420px}
+  .chart-modal-note{display:flex;justify-content:space-between;gap:18px;margin-top:14px;color:#5b5b57;font-size:10px;line-height:1.55}.chart-modal-note b{color:#111}.chart-modal-open{overflow:hidden}
+  @media (max-width:700px){
+    .chart-modal{padding:0;align-items:stretch}.chart-modal-panel{width:100%;max-height:none;min-height:100%;padding:20px 14px 96px;border:none;border-radius:0}.chart-modal-title{font-size:22px}.chart-modal-plot{min-height:300px;padding:10px 4px}.chart-modal-plot svg{height:340px}.chart-modal-note{display:block}.chart-modal-note span{display:block;margin-top:5px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .chart-point .point-dot,.chart-expand,.chart-tip{transition:none}.chart-expand:hover,.chart-expand:focus-visible{transform:none}
+  }
+
+  /* 2026-08-15 managed ambient video background */
+  .workbench-video{position:fixed;z-index:0;inset:0;width:100%;height:100%;object-fit:cover;object-position:var(--workbench-background-desktop-position);opacity:0;pointer-events:none;transition:opacity .55s ease;background:#e4e4e1}
+  .workbench-video-wash{position:fixed;z-index:1;inset:0;pointer-events:none;opacity:0;background:linear-gradient(90deg,rgba(239,239,236,.87),rgba(239,239,236,.78) 46%,rgba(239,239,236,.82));transition:opacity .55s ease}
+  body.video-background-active .workbench-video,body.video-background-active .workbench-video-wash{opacity:1}
+  body>.syncbar,body>main,body>footer{position:relative;z-index:2}
+  body.video-background-active .hero{background-image:linear-gradient(90deg,rgba(5,5,5,.97) 0%,rgba(5,5,5,.90) 43%,rgba(5,5,5,.48) 72%,rgba(5,5,5,.28) 100%)}
+  @media (min-width:900px){body.video-background-active .nav{background-image:linear-gradient(180deg,rgba(5,5,5,.62),rgba(5,5,5,.42))}}
+  @media (max-width:899px){
+    .workbench-video{object-position:var(--workbench-background-mobile-position)}
+    body.video-background-active .hero{background-image:linear-gradient(180deg,rgba(5,5,5,.48) 0%,rgba(5,5,5,.66) 42%,rgba(5,5,5,.96) 100%)}
+  }
+  @media (prefers-reduced-motion:reduce){.workbench-video{display:none}.workbench-video-wash{display:none}}
+
+  /* 2026-08-16 transparent glass interface v7 */
+  :root{
+    --glass-light:rgba(246,246,242,.18);
+    --glass-light-strong:rgba(246,246,242,.28);
+    --glass-dark:rgba(5,5,5,.34);
+    --glass-dark-strong:rgba(5,5,5,.52);
+    --glass-edge:rgba(255,255,255,.38);
+    --glass-edge-dark:rgba(0,0,0,.16);
+    --glass-shadow:0 18px 54px rgba(0,0,0,.11),inset 0 1px 0 rgba(255,255,255,.48);
+    --glass-filter:blur(22px) saturate(112%);
+  }
+  body{
+    background-image:linear-gradient(rgba(239,239,236,.16),rgba(239,239,236,.16)),var(--workbench-background-image);
+  }
+  .workbench-video-wash{background:rgba(232,232,228,.10)}
+  .appbar,
+  .syncbar.ok,.syncbar.stale,.syncbar.failed,
+  .card,.note,.day,.ex,.link,.chartcard,#bwBox,#bwNote,
+  #cycleCard,#weekMain,.wk .row,.rv,.rv .row,
+  #setBox .setrow,.rule-item,.how-step{
+    background:var(--glass-light);
+    border-color:var(--glass-edge)!important;
+    box-shadow:var(--glass-shadow);
+    -webkit-backdrop-filter:var(--glass-filter);
+    backdrop-filter:var(--glass-filter);
+  }
+  .appbar{
+    background:rgba(245,245,241,.13);
+    border-bottom-color:rgba(255,255,255,.34);
+    box-shadow:0 10px 34px rgba(0,0,0,.06),inset 0 -1px 0 rgba(0,0,0,.08);
+  }
+  .chip,.chartcard .ttl .cap,.rv .top .dt,.day .st,.weight-status span,
+  .review-point,.plan-tag{
+    background:rgba(255,255,255,.20);
+    border:1px solid rgba(255,255,255,.40);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.42);
+    -webkit-backdrop-filter:blur(12px);
+    backdrop-filter:blur(12px);
+  }
+  .syncbar.ok,.syncbar.stale,.syncbar.failed{color:#3f3f3c}
+  .hero,
+  body.video-background-active .hero{
+    background:var(--glass-dark);
+    background-image:none;
+    border:1px solid rgba(255,255,255,.23);
+    box-shadow:0 28px 76px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.20);
+    -webkit-backdrop-filter:blur(18px) brightness(.82) saturate(105%);
+    backdrop-filter:blur(18px) brightness(.82) saturate(105%);
+  }
+  .hero:before{background:rgba(0,0,0,.20);border-color:rgba(255,255,255,.30)}
+  .hero .pill{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.28)}
+  .advice{
+    background:rgba(245,245,241,.24);
+    border-color:rgba(255,255,255,.42);
+    box-shadow:0 18px 44px rgba(0,0,0,.14),inset 0 1px 0 rgba(255,255,255,.50);
+    -webkit-backdrop-filter:blur(24px) brightness(1.08);
+    backdrop-filter:blur(24px) brightness(1.08);
+  }
+  .ex.main,.day.on,#weekNote{
+    background:var(--glass-dark-strong);
+    border-color:rgba(255,255,255,.22)!important;
+    box-shadow:0 20px 54px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.15);
+    -webkit-backdrop-filter:blur(22px) brightness(.78);
+    backdrop-filter:blur(22px) brightness(.78);
+  }
+  .chartcard .plot,.chart-modal-plot,.weight-table{
+    background:rgba(255,255,255,.08);
+    border-color:rgba(255,255,255,.32);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.34);
+    -webkit-backdrop-filter:blur(10px) brightness(1.04);
+    backdrop-filter:blur(10px) brightness(1.04);
+  }
+  #chartBox,#ruleBox{background:transparent!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+  #weekMain,#setBox,#howNote{gap:1px;background:rgba(255,255,255,.20);border-color:rgba(255,255,255,.30)}
+  .weight-row.header{background:rgba(5,5,5,.58)}
+  .rv a.row:hover,.rule-item[open]{background:var(--glass-light-strong)}
+  .review-decision{background:rgba(255,255,255,.16)}
+  button,.chart-expand{background:rgba(8,8,8,.72);border-color:rgba(255,255,255,.20);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+  button.ghost{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.38)}
+  footer{color:#4f4f4c;border-color:rgba(255,255,255,.32);text-shadow:0 1px 0 rgba(255,255,255,.42)}
+  .chart-modal{background:rgba(0,0,0,.38);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+  .chart-modal-panel{
+    background:rgba(239,239,235,.22);
+    border-color:rgba(255,255,255,.38);
+    box-shadow:0 34px 100px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.48);
+    -webkit-backdrop-filter:blur(30px) brightness(1.05);
+    backdrop-filter:blur(30px) brightness(1.05);
+  }
+  @media (min-width:900px){
+    .nav,body.video-background-active .nav{
+      background:rgba(5,5,5,.28);
+      background-image:none;
+      border-right-color:rgba(255,255,255,.20);
+      box-shadow:18px 0 48px rgba(0,0,0,.12),inset -1px 0 0 rgba(255,255,255,.08);
+      -webkit-backdrop-filter:blur(22px) brightness(.72) saturate(105%);
+      backdrop-filter:blur(22px) brightness(.72) saturate(105%);
+    }
+    .nav a.on{
+      background:rgba(255,255,255,.18);
+      color:#fff;
+      text-shadow:0 1px 7px rgba(0,0,0,.45);
+      box-shadow:0 10px 28px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.28);
+    }
+    .nav a.on i{background:#fff}
+  }
+  @media (max-width:899px){
+    body{background-image:linear-gradient(rgba(239,239,236,.14),rgba(239,239,236,.14)),var(--workbench-background-image)}
+    .workbench-video-wash{background:rgba(225,225,221,.08)}
+    .nav{
+      background:rgba(5,5,5,.42);
+      border-top-color:rgba(255,255,255,.20);
+      box-shadow:0 -14px 38px rgba(0,0,0,.14),inset 0 1px 0 rgba(255,255,255,.12);
+      -webkit-backdrop-filter:blur(24px) brightness(.76);
+      backdrop-filter:blur(24px) brightness(.76);
+    }
+    .nav a,.nav a.on{color:rgba(255,255,255,.72)}
+    .nav a.on{background:rgba(255,255,255,.12);color:#fff}.nav a i,.nav a.on i{background:#fff}
+    .hero,body.video-background-active .hero{background:rgba(5,5,5,.42);background-image:none}
+    .card,.note,.day,.ex,.link,.chartcard,#bwBox,#bwNote,#cycleCard,#weekMain,.wk .row,.rv,.rv .row,#setBox .setrow,.rule-item,.how-step{background:rgba(246,246,242,.23)}
+  }
+
+  /* 2026-08-16 sharp video, next-week hierarchy & gridless charts v8 */
+  .hero,body.video-background-active .hero,
+  .advice,.chartcard .plot,.chart-modal-plot{
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+  .hero,body.video-background-active .hero{background:rgba(5,5,5,.24)}
+  .advice{background:rgba(235,235,231,.34)}
+  .plan-tag{
+    background:rgba(5,5,5,.78);
+    color:#fff;
+    border-color:rgba(255,255,255,.24);
+    box-shadow:0 5px 14px rgba(0,0,0,.12);
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+  .chartcard .plot,.chart-modal-plot{
+    background:transparent;
+    border:none;
+    box-shadow:none;
+  }
+  .chartcard .plot{padding:8px 2px 0}
+  .advice.has-next-plan{max-width:none;padding:0;overflow:hidden}
+  .next-plan-wrap{padding:18px 19px 10px}
+  .next-plan-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding-bottom:14px;border-bottom:1px solid rgba(0,0,0,.16)}
+  .next-plan-kicker{font-size:9px;font-weight:780;letter-spacing:.16em;color:#555}
+  .next-plan-title{margin-top:4px;font-size:20px;font-weight:780;letter-spacing:-.025em}
+  .next-plan-phase{flex:none;padding:5px 9px;border-radius:999px;background:rgba(5,5,5,.76);color:#fff;font-size:9px;font-weight:720}
+  .next-plan-table{margin-top:2px}
+  .next-plan-row{display:grid;grid-template-columns:78px 72px minmax(0,1.65fr) minmax(150px,.8fr);gap:13px;align-items:start;padding:13px 0;border-bottom:1px solid rgba(0,0,0,.13)}
+  .next-plan-row:last-child{border-bottom:none}
+  .next-plan-label{display:block;margin-bottom:4px;font-size:8px;font-weight:760;letter-spacing:.12em;color:#686864}
+  .next-plan-date b,.next-plan-day b{font-size:12px}
+  .next-plan-main{display:grid;gap:6px}
+  .next-plan-lift{display:grid;grid-template-columns:72px minmax(0,1fr);gap:8px;font-size:11px;line-height:1.45}
+  .next-plan-lift b{font-weight:760}.next-plan-lift span{font-weight:620}
+  .next-plan-focus{font-size:10px;line-height:1.55;color:#41413e}
+  .advice.has-next-plan>.hint{margin:0;padding:10px 19px 13px;border-top:1px solid rgba(255,255,255,.25)}
+  @media (min-width:900px){
+    .nav,body.video-background-active .nav{
+      background:rgba(5,5,5,.14);
+      -webkit-backdrop-filter:none;
+      backdrop-filter:none;
+    }
+  }
+  @media (max-width:899px){
+    .nav{
+      background:rgba(5,5,5,.26);
+      -webkit-backdrop-filter:none;
+      backdrop-filter:none;
+    }
+    .hero,body.video-background-active .hero{background:rgba(5,5,5,.30)}
+  }
+  @media (max-width:700px){
+    .next-plan-wrap{padding:16px 15px 8px}
+    .next-plan-title{font-size:18px}
+    .next-plan-row{grid-template-columns:72px minmax(0,1fr);gap:9px 12px;padding:12px 0}
+    .next-plan-main,.next-plan-focus{grid-column:1/-1}
+    .next-plan-lift{grid-template-columns:68px minmax(0,1fr)}
+    .advice.has-next-plan>.hint{padding-left:15px;padding-right:15px}
+  }
+
+  /* 2026-08-16 contrast, full transparency & chart axes v9 */
+  .appbar h1:before{content:""}
+  @media (min-width:900px){
+    .nav:before,.nav:after{
+      color:#fff;
+      text-shadow:0 2px 4px rgba(0,0,0,.96),0 0 16px rgba(0,0,0,.88);
+    }
+    .nav a{
+      color:rgba(255,255,255,.96);
+      font-weight:740;
+      text-shadow:0 2px 3px rgba(0,0,0,.98),0 0 14px rgba(0,0,0,.88);
+      background:rgba(5,5,5,.10);
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .nav a:hover{color:#fff;background:rgba(5,5,5,.28);border-color:rgba(255,255,255,.22)}
+    .nav a.on{
+      background:rgba(5,5,5,.50);
+      border-color:rgba(255,255,255,.38);
+      box-shadow:0 10px 28px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.20);
+    }
+  }
+  .hero .hi{
+    display:table;
+    padding:4px 10px 5px;
+    border-radius:10px;
+    color:#fff;
+    background:rgba(5,5,5,.34);
+    text-shadow:0 2px 4px rgba(0,0,0,.98),0 0 16px rgba(0,0,0,.82);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.13);
+  }
+  .hero .sub{
+    display:table;
+    padding:4px 9px;
+    border-radius:8px;
+    color:rgba(255,255,255,.98);
+    background:rgba(5,5,5,.31);
+    text-shadow:0 2px 3px rgba(0,0,0,.98),0 0 12px rgba(0,0,0,.82);
+  }
+  #cycleCard,
+  #cycleCard .ringwrap,
+  .day{
+    background:transparent!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
+  #cycleCard{
+    border-color:rgba(255,255,255,.58)!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.36)!important;
+  }
+  #cycleCard .ringwrap,#cycleCard .stages{
+    color:#111;
+    text-shadow:0 1px 1px #fff,0 0 8px rgba(255,255,255,.98),0 0 16px rgba(255,255,255,.82);
+  }
+  #cycleCard:before{color:rgba(0,0,0,.62);text-shadow:0 1px 2px rgba(255,255,255,.95)}
+  .day{
+    border-color:rgba(255,255,255,.62)!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.38)!important;
+  }
+  .day.on{
+    background:transparent!important;
+    border-color:rgba(0,0,0,.74)!important;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.58),0 0 0 1px rgba(0,0,0,.74)!important;
+  }
+  .day .dn,.day .dd,.day .m,.day .day-main,.day.on .dd,.day.on .m{
+    color:#111;
+    text-shadow:0 1px 1px #fff,0 0 8px rgba(255,255,255,.98),0 0 15px rgba(255,255,255,.84);
+  }
+  .day .day-main,.day.on .day-main{border-color:rgba(0,0,0,.20)}
+  .day .st{
+    color:#111;
+    background:rgba(255,255,255,.58);
+    border-color:rgba(0,0,0,.20);
+    text-shadow:none;
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+  .chart-axes line{vector-effect:non-scaling-stroke}
+  .chart-axis-label,.chart-value-label,.chart-week-label{
+    paint-order:stroke fill;
+    stroke:rgba(248,248,245,.96);
+    stroke-width:3.2px;
+    stroke-linejoin:round;
+  }
+  @media (max-width:899px){
+    .nav a{color:rgba(255,255,255,.94);font-weight:700;text-shadow:0 2px 4px rgba(0,0,0,.94)}
+  }
+
+  /* 2026-08-16 single-outline transparent surfaces v10 */
+  :root{
+    --surface-outline:rgba(255,255,255,.64);
+    --surface-divider:rgba(17,17,17,.18);
+    --surface-text-halo:0 1px 1px rgba(255,255,255,1),0 0 8px rgba(255,255,255,.96),0 0 16px rgba(255,255,255,.72);
+  }
+  .appbar,.syncbar.ok,.syncbar.stale,.syncbar.failed{
+    background:transparent;
+    border-radius:0;
+    border-left:0;
+    border-right:0;
+    box-shadow:none;
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+  .appbar{border-bottom-color:rgba(17,17,17,.16)}
+  .syncbar.ok,.syncbar.stale,.syncbar.failed{border-color:rgba(255,255,255,.54);color:#222;text-shadow:var(--surface-text-halo)}
+  main h2{color:#222;text-shadow:var(--surface-text-halo)}
+  main .card,main .note,main .ex,main .link,main .chartcard,
+  main .rv,main .rv .row,main #bwBox,main #bwNote,
+  main #weekMain,main .wk .row,main #weekNote,
+  main #setBox .setrow,main .rule-item,main .how-step{
+    background:transparent;
+    box-shadow:none;
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+  main .card,main .note,main .ex,main .link,main .chartcard,
+  main .rv,main .setrow,main .rule-item,main .how-step{
+    color:#111;
+    text-shadow:var(--surface-text-halo);
+  }
+
+  .hero,body.video-background-active .hero{
+    min-height:auto;
+    padding:34px 38px 30px;
+    color:#111;
+    background:transparent;
+    border:1px solid var(--surface-outline);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.30);
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+  .hero:before{
+    color:#222;
+    background:transparent;
+    border:0;
+    text-shadow:var(--surface-text-halo);
+  }
+  .hero .hi,.hero .sub{
+    display:block;
+    width:max-content;
+    max-width:100%;
+    padding:0;
+    color:#111;
+    background:transparent;
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+    text-shadow:var(--surface-text-halo);
+  }
+  .hero .pills{gap:0;margin-top:24px}
+  .hero .pill{
+    padding:0 18px 0 0;
+    margin-right:18px;
+    color:#111;
+    background:transparent;
+    border:0;
+    border-right:1px solid var(--surface-divider);
+    border-radius:0;
+    box-shadow:none;
+    text-shadow:var(--surface-text-halo);
+  }
+  .hero .pill:last-child{padding-right:0;margin-right:0;border-right:0}
+  .advice,.advice.has-next-plan{
+    max-width:none;
+    margin-top:28px;
+    padding:0;
+    color:#111;
+    background:transparent;
+    border:0;
+    border-top:1px solid var(--surface-outline);
+    border-radius:0;
+    box-shadow:none;
+    overflow:visible;
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+    text-shadow:var(--surface-text-halo);
+  }
+  .advice:not(.has-next-plan){padding-top:22px}
+  .next-plan-wrap{padding:19px 0 0}
+  .next-plan-head{padding-bottom:14px;border-bottom-color:var(--surface-divider)}
+  .next-plan-row{border-bottom-color:var(--surface-divider)}
+  .advice.has-next-plan>.hint{padding:11px 0 0;border-top-color:var(--surface-divider)}
+
+  #todayList{
+    gap:0;
+    overflow:hidden;
+    border:1px solid var(--surface-outline);
+    border-radius:24px;
+    background:transparent;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.26);
+  }
+  #todayList .ex,#todayList .ex.main{
+    min-height:122px;
+    color:#111;
+    background:transparent;
+    border:0!important;
+    border-right:1px solid var(--surface-divider)!important;
+    border-bottom:1px solid var(--surface-divider)!important;
+    border-radius:0;
+    box-shadow:none;
+    text-shadow:var(--surface-text-halo);
+  }
+  #todayList .ex:nth-child(2n){border-right:0!important}
+  #todayList .ex.main:before{display:none}
+  #todayList .ex.main .s,#todayList .ex.main .d,#todayList .ex.main .rpe,
+  #todayList .ex .s,#todayList .ex .d,#todayList .ex .rpe{color:#4e4e4a!important}
+  #todayNote,#bwNote,#m-record>.note{
+    padding:12px 0;
+    border:0;
+    border-top:1px solid rgba(255,255,255,.54);
+    border-radius:0;
+    color:#333;
+    text-shadow:var(--surface-text-halo);
+  }
+
+  #cycleCard,.day,#weekNote,#weekMain,
+  .chartcard,#bwBox,#dotBox,#reviewBox,#linkBox,
+  #setBox,#ruleBox,#howNote{
+    border-color:var(--surface-outline)!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.26)!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
+  #weekNote{
+    color:#111;
+    background:transparent;
+    text-shadow:var(--surface-text-halo);
+  }
+  #weekNote .insight-label,#weekNote .insight-point{color:#222}
+  #weekMain{gap:0;background:transparent;overflow:hidden}
+  .wk .row{
+    border-right:1px solid var(--surface-divider);
+    border-bottom:1px solid var(--surface-divider);
+  }
+  .wk .row:nth-child(2n){border-right:0}
+
+  #chartBox{background:transparent;border:0;box-shadow:none!important}
+  .chartcard{background:transparent!important}
+  .chartcard .ttl,.chartcard .legend,.chartcard .actuals{position:relative;z-index:1}
+  #bwBox,#dotBox{background:transparent!important}
+  #bwBox{padding:0}
+  .weight-table{background:transparent;border:0;border-radius:0;box-shadow:none}
+  .weight-row.header{background:rgba(5,5,5,.72)}
+
+  #reviewBox{
+    gap:0;
+    padding:0;
+    overflow:hidden;
+    background:transparent;
+  }
+  .rv .row{
+    border:0!important;
+    border-right:1px solid var(--surface-divider)!important;
+    border-bottom:1px solid var(--surface-divider)!important;
+    border-radius:0;
+  }
+  .rv .row:nth-child(2n){border-right:0!important}
+  .rv a.row:hover{background:rgba(255,255,255,.16)}
+  .rv .top .dt{background:rgba(255,255,255,.56);text-shadow:none}
+  #linkBox{
+    display:grid;
+    gap:0;
+    overflow:hidden;
+    border:1px solid var(--surface-outline);
+    border-radius:24px;
+    background:transparent;
+  }
+  #linkBox .link{
+    min-height:96px;
+    border:0;
+    border-right:1px solid var(--surface-divider);
+    border-bottom:1px solid var(--surface-divider);
+    border-radius:0;
+  }
+  #linkBox .link:last-child{border-right:0}
+
+  #setBox,#ruleBox,#howNote{
+    overflow:hidden;
+    background:transparent!important;
+  }
+  #setBox{gap:0}
+  #setBox .setrow{
+    border-right:1px solid var(--surface-divider);
+    border-bottom:1px solid var(--surface-divider);
+  }
+  #ruleBox{gap:0;padding:0}
+  .rule-item{
+    border:0;
+    border-right:1px solid var(--surface-divider);
+    border-bottom:1px solid var(--surface-divider);
+    border-radius:0;
+  }
+  .rule-item[open]{background:rgba(255,255,255,.16)}
+  .how-step{border-right:1px solid var(--surface-divider);border-bottom:1px solid var(--surface-divider)}
+  .how-step .num,.how-step p,.rule-body{color:#444;text-shadow:var(--surface-text-halo)}
+  .plan-tag,.next-plan-phase,.chartcard .actual,button,.chart-expand{ text-shadow:none }
+
+  @media (max-width:899px){
+    .hero,body.video-background-active .hero{padding:27px 22px 24px;background:transparent}
+    .hero .hi{font-size:28px}
+    .hero .sub{font-size:13px}
+    .advice,.advice.has-next-plan{margin-top:24px}
+    #todayList{grid-template-columns:1fr}
+    #todayList .ex,#todayList .ex.main{grid-column:auto;border-right:0!important}
+    .wk .row{border-right:0}
+    .rv .row{border-right:0!important}
+    #linkBox{grid-template-columns:1fr}
+    #linkBox .link{border-right:0}
+  }
+  @media (max-width:700px){
+    .next-plan-wrap{padding:17px 0 0}
+    .advice.has-next-plan>.hint{padding-left:0;padding-right:0}
+    #cycleCard,.day,#todayList,#weekNote,#weekMain,.chartcard,#bwBox,#dotBox,#reviewBox,#linkBox,#setBox,#ruleBox,#howNote{border-radius:18px}
+  }
+
+  /* 2026-08-16 4k background & high contrast text v11 */
+  :root{
+    --surface-text-halo:
+      -1px -1px 0 rgba(255,255,255,.98),
+       1px -1px 0 rgba(255,255,255,.98),
+      -1px  1px 0 rgba(255,255,255,.98),
+       1px  1px 0 rgba(255,255,255,.98),
+       0 0 5px rgba(255,255,255,1),
+       0 0 11px rgba(255,255,255,.92);
+  }
+  .next-plan-row,.next-plan-date,.next-plan-day,.next-plan-main,.next-plan-focus{
+    color:#0a0a0a;
+    text-shadow:var(--surface-text-halo);
+  }
+  .next-plan-label{
+    color:#111;
+    font-size:9px;
+    font-weight:820;
+    letter-spacing:.11em;
+    text-shadow:var(--surface-text-halo);
+  }
+  .next-plan-focus{
+    font-size:11.5px;
+    font-weight:700;
+    line-height:1.62;
+  }
+  .next-plan-focus>span:last-child{color:#080808}
+  .next-plan-lift{font-size:11.5px}
+
+  /* 2026-08-16 semantic text contrast v12 */
+  :root{
+    --surface-text-halo:
+      -1px -1px 0 rgba(255,255,255,.98),
+       1px -1px 0 rgba(255,255,255,.98),
+      -1px  1px 0 rgba(255,255,255,.98),
+       1px  1px 0 rgba(255,255,255,.98),
+       0 0 2px rgba(255,255,255,.86);
+    --text-on-dark:#fff;
+    --text-on-dark-shadow:0 1px 2px rgba(0,0,0,.96),0 0 4px rgba(0,0,0,.72);
+  }
+  .chart-tip,
+  .weight-row.header,
+  .weight-row.header .weight-cell,
+  .dot .c.train,
+  .chartcard .actual,
+  .plan-tag,
+  .next-plan-phase,
+  button,
+  .chart-expand,
+  .chart-modal-close{
+    color:var(--text-on-dark)!important;
+    text-shadow:var(--text-on-dark-shadow)!important;
+    -webkit-text-stroke:0 transparent!important;
+  }
+  .chart-tip{
+    font-weight:720;
+    letter-spacing:.01em;
+  }
+  .weight-row.header .weight-cell{
+    color:#fff!important;
+    font-weight:780;
+    opacity:1;
+  }
+  .dot .c.train{
+    text-shadow:0 1px 2px #000!important;
+  }
+
+  /* 2026-08-16 focus reading veil v13 */
+  :root{--focus-reading-veil:rgba(250,250,247,.54)}
+  .next-plan-focus{
+    position:relative;
+    isolation:isolate;
+    color:#090909!important;
+    text-shadow:none!important;
+    -webkit-text-stroke:0 transparent!important;
+  }
+  .next-plan-focus::before{
+    content:"";
+    position:absolute;
+    z-index:0;
+    inset:-2px -8px;
+    background:var(--focus-reading-veil);
+    filter:blur(7px);
+    pointer-events:none;
+  }
+  .next-plan-focus>span{
+    position:relative;
+    z-index:1;
+    color:#090909!important;
+    text-shadow:none!important;
+    -webkit-text-stroke:0 transparent!important;
+  }
+  @media (max-width:700px){
+    .next-plan-focus::before{inset:-1px 0;filter:blur(6px)}
+  }
+
+  /* 2026-08-16 small text reading veil v14 */
+  :root{--small-reading-veil:rgba(250,250,247,.50)}
+  #stageBar .stg span,
+  .day-reading,
+  #weekNote .insight-point{
+    position:relative;
+    isolation:isolate;
+  }
+  #stageBar .stg span::before,
+  .day-reading::before,
+  #weekNote .insight-point::before{
+    content:"";
+    position:absolute;
+    z-index:0;
+    background:var(--small-reading-veil);
+    filter:blur(7px);
+    pointer-events:none;
+  }
+  #stageBar .stg span::before{inset:-2px 8% -3px}
+  .day-reading::before{inset:-7px -9px}
+  #weekNote .insight-point::before{inset:2px 4px}
+  #stageBar .stg span>*,
+  .day-reading>*,
+  #weekNote .insight-point>*{
+    position:relative;
+    z-index:1;
+  }
+  #stageBar .stg span,
+  #stageBar .stg span b,
+  #stageBar .stg span em,
+  .day .dn,.day .dd,.day .m,.day .day-main,.day.on .dd,.day.on .m,
+  #weekNote .insight-point,#weekNote .insight-point b,#weekNote .insight-value{
+    color:#0a0a0a!important;
+    text-shadow:none!important;
+    -webkit-text-stroke:0 transparent!important;
+  }
+  #stageBar .stg span em{display:block;font-style:normal;font-weight:560}
+  #weekNote .insight-point b{font-weight:760}
+  #weekNote .insight-value{display:block}
+  @media (max-width:700px){
+    .day-reading::before{inset:-5px -4px;filter:blur(6px)}
+    #weekNote .insight-point::before{inset:3px 0;filter:blur(6px)}
+  }
+
+  /* 2026-08-16 white typography on dark video v16 */
+  :root{
+    --page-text:#fff;
+    --page-text-muted:rgba(255,255,255,.78);
+    --page-text-faint:rgba(255,255,255,.62);
+    --page-text-shadow:0 1px 2px rgba(0,0,0,.98),0 0 5px rgba(0,0,0,.78);
+    --focus-reading-veil:rgba(0,0,0,.38);
+    --small-reading-veil:rgba(0,0,0,.34);
+    --surface-text-halo:var(--page-text-shadow);
+  }
+  body.dark-background-theme .appbar,
+  body.dark-background-theme .syncbar,
+  body.dark-background-theme .nav,
+  body.dark-background-theme main,
+  body.dark-background-theme footer{
+    color:var(--page-text)!important;
+    text-shadow:var(--page-text-shadow)!important;
+    -webkit-text-stroke:0 transparent!important;
+  }
+  body.dark-background-theme .appbar *,
+  body.dark-background-theme .syncbar *,
+  body.dark-background-theme .nav *,
+  body.dark-background-theme main *,
+  body.dark-background-theme footer *{
+    color:var(--page-text)!important;
+    text-shadow:var(--page-text-shadow)!important;
+    -webkit-text-stroke:0 transparent!important;
+  }
+  body.dark-background-theme .nav::before,
+  body.dark-background-theme .nav::after{
+    color:var(--page-text)!important;
+    text-shadow:var(--page-text-shadow)!important;
+  }
+  body.dark-background-theme main .sub,
+  body.dark-background-theme main .dd,
+  body.dark-background-theme main .hint,
+  body.dark-background-theme main .weight-date,
+  body.dark-background-theme main .chartcard .lg,
+  body.dark-background-theme main .chartcard .lg .stat,
+  body.dark-background-theme footer{
+    color:var(--page-text-muted)!important;
+  }
+  body.dark-background-theme #todayList .ex .s,
+  body.dark-background-theme #todayList .ex .d,
+  body.dark-background-theme #todayList .ex .rpe,
+  body.dark-background-theme .next-plan-focus,
+  body.dark-background-theme .next-plan-focus>span,
+  body.dark-background-theme #stageBar .stg span,
+  body.dark-background-theme #stageBar .stg span b,
+  body.dark-background-theme #stageBar .stg span em,
+  body.dark-background-theme .day .dn,
+  body.dark-background-theme .day .dd,
+  body.dark-background-theme .day .m,
+  body.dark-background-theme .day .day-main,
+  body.dark-background-theme .day.on .dd,
+  body.dark-background-theme .day.on .m,
+  body.dark-background-theme #weekNote,
+  body.dark-background-theme #weekNote .insight-label,
+  body.dark-background-theme #weekNote .insight-point,
+  body.dark-background-theme #weekNote .insight-point b,
+  body.dark-background-theme #weekNote .insight-value{
+    color:var(--page-text)!important;
+    text-shadow:var(--page-text-shadow)!important;
+    -webkit-text-stroke:0 transparent!important;
+  }
+  body.dark-background-theme .chip,
+  body.dark-background-theme .chartcard .ttl .cap,
+  body.dark-background-theme .rv .top .dt,
+  body.dark-background-theme .day .st,
+  body.dark-background-theme .weight-status span,
+  body.dark-background-theme .review-point,
+  body.dark-background-theme .plan-tag,
+  body.dark-background-theme .next-plan-phase{
+    color:#fff!important;
+    background:rgba(5,5,5,.72)!important;
+    border-color:rgba(255,255,255,.24)!important;
+    text-shadow:var(--page-text-shadow)!important;
+    -webkit-text-stroke:0 transparent!important;
+  }
+  body.dark-background-theme .chartcard svg text{
+    fill:#fff!important;
+    stroke:none!important;
+    paint-order:normal!important;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,1)) drop-shadow(0 0 2px rgba(0,0,0,.92));
+  }
+
+  /* 2026-08-16 next-week readable type v17 */
+  :root{
+    --next-plan-label-size:11px;
+    --next-plan-body-size:13.5px;
+  }
+  .next-plan-row{
+    grid-template-columns:88px 84px minmax(0,1.5fr) minmax(220px,1fr);
+    gap:18px;
+    padding:18px 0;
+  }
+  .next-plan-label{
+    margin-bottom:6px;
+    font-size:var(--next-plan-label-size);
+    line-height:1.35;
+  }
+  .next-plan-date b,.next-plan-day b{font-size:14px;line-height:1.5}
+  .next-plan-lift{
+    grid-template-columns:88px minmax(0,1fr);
+    gap:10px;
+    font-size:var(--next-plan-body-size);
+    line-height:1.58;
+  }
+  .next-plan-focus{
+    font-size:var(--next-plan-body-size);
+    line-height:1.68;
+  }
+  @media (max-width:700px){
+    :root{--next-plan-label-size:10px;--next-plan-body-size:12.5px}
+    .next-plan-row{grid-template-columns:78px minmax(0,1fr);gap:11px 14px;padding:15px 0}
+    .next-plan-date b,.next-plan-day b{font-size:13px}
+    .next-plan-lift{grid-template-columns:82px minmax(0,1fr);gap:8px}
+  }
+
+  /* 2026-08-16 global readable type & compact copy v18 */
+  :root{
+    --ui-base-size:15px;
+    --ui-body-size:14px;
+    --ui-small-size:12px;
+    --ui-label-size:11px;
+    --next-plan-label-size:12px;
+    --next-plan-body-size:15px;
+  }
+  body{font-size:var(--ui-base-size);line-height:1.65}
+  .appbar h1{font-size:18px}.chip{font-size:var(--ui-small-size)}
+  .syncbar{font-size:13px}.nav a{font-size:15px}
+  main h2{font-size:21px;font-weight:700}
+  .hero .hi{font-size:38px}.hero .sub{font-size:15px}.hero .pill{font-size:13px}
+  .advice{font-size:15px}.advice .hint,.note,.hint{font-size:13px}
+  button,.chart-expand{font-size:14px}
+  .today-status .eyebrow{font-size:12px}.today-status .result{font-size:18px}.today-status .next,.today-status .mark{font-size:13px}
+  .ex .l .n{font-size:16px}.ex .l .s{font-size:13px}.ex .r .w{font-size:23px}.ex .r .d,.ex .r .rpe{font-size:13px}
+  .ring .num .w{font-size:34px}.ring .num .ph{font-size:12px}
+  .ringinfo .row,.ringinfo .row .k{font-size:13px}.ringinfo .row .v{font-size:15px}
+  #stageBar .stg span,#stageBar .stg span b,#stageBar .stg span em{font-size:12px}
+  .day .dn{font-size:18px}.day .st{font-size:11px}.day .dd{font-size:13px}.day .m{font-size:14px}
+  .day-main b{font-size:13px}.day-main strong{font-size:17px}
+  .insight-label{font-size:12px}.insight-lead{font-size:19px}.insight-point,.insight-point b{font-size:13px}
+  .wk .row .k{font-size:18px}.plan-tag{font-size:11px}.plan-prescription{font-size:15px}.plan-criterion{font-size:13px}
+  .chartcard .ttl .n{font-size:20px}.chartcard .ttl .cap{font-size:11px}.chartcard .actual{font-size:11px}.chartcard .lg{font-size:12px}
+  .chart-tip{font-size:12px}.chartcard svg text,.chart-modal-plot svg text{font-size:11px!important}
+  .weight-cell{font-size:14px}.weight-row.header .weight-cell{font-size:11px}.weight-value{font-size:19px}.weight-status span{font-size:11px}
+  .dot .c,.dot .d{font-size:11px}.dotlegend{font-size:12px}
+  .review-kicker{font-size:11px}.review-title{font-size:20px}.review-lead{font-size:15px}
+  .review-point{font-size:11px}.review-decision{font-size:13px}.rv .open{font-size:12px}
+  .link .n{font-size:15px}.link .s{font-size:13px}
+  #setBox .setrow .k{font-size:11px}#setBox .setrow .v{font-size:15px}
+  .rule-title{font-size:16px}.rule-preview span{font-size:12px}.rule-body{font-size:14px}
+  .how-step .num{font-size:11px}.how-step b{font-size:16px}.how-step p{font-size:13px}
+  footer{font-size:12px}
+  .chart-modal-kicker{font-size:11px}.chart-modal-title{font-size:28px}.chart-modal-cap,.chart-modal-note{font-size:13px}
+  @media (max-width:700px){
+    :root{--ui-base-size:14px;--next-plan-label-size:10.5px;--next-plan-body-size:13px}
+    .appbar h1{font-size:16px}.chip{font-size:10px}.nav a{font-size:12px}
+    main h2{font-size:19px}.hero .hi{font-size:31px}.hero .sub{font-size:14px}.hero .pill{font-size:12px}
+    .day .dn{font-size:17px}.day .m{font-size:13px}
+    .chartcard .ttl .n{font-size:18px}.chartcard svg text,.chart-modal-plot svg text{font-size:10px!important}
+  }
+
+  /* 2026-08-16 readable chart labels v19 */
+  .chartcard svg .chart-value-label{
+    font-size:14px!important;
+    font-weight:820!important;
+  }
+  .chartcard svg .chart-week-label{
+    font-size:13px!important;
+    font-weight:780!important;
+  }
+  .chart-modal-plot svg .chart-value-label{font-size:16px!important;font-weight:820!important}
+  .chart-modal-plot svg .chart-week-label{font-size:14px!important;font-weight:780!important}
+  .chart-modal-plot svg .chart-axis-label{font-size:13px!important;font-weight:720!important}
+  @media (max-width:700px){
+    .chartcard svg .chart-value-label{font-size:12px!important}
+    .chartcard svg .chart-week-label{font-size:12px!important}
+    .chart-modal-plot svg .chart-value-label{font-size:14px!important}
+    .chart-modal-plot svg .chart-week-label,.chart-modal-plot svg .chart-axis-label{font-size:12px!important}
+  }
+
+  /* 2026-08-16 common hierarchy & interaction audit v20 */
+  body .appbar,
+  body .syncbar,
+  body .syncbar.ok,
+  body .syncbar.stale,
+  body .syncbar.failed{
+    background:transparent!important;
+    border:0!important;
+    border-radius:0!important;
+    box-shadow:none!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
+  body .appbar .chip{
+    padding:0!important;
+    background:transparent!important;
+    border:0!important;
+    border-radius:0!important;
+    box-shadow:none!important;
+  }
+  .appbar h1{font-size:19px}
+  .appbar .chip,.syncbar{font-size:14px}
+
+  .ringinfo .row,.ringinfo .row .k{font-size:15px;line-height:1.55}
+  .ringinfo .row .v{font-size:17px;line-height:1.45}
+  .stages{padding-bottom:54px}
+  #stageBar .stg span,#stageBar .stg span b,#stageBar .stg span em{font-size:14px;line-height:1.35}
+  .day .st{font-size:13px}
+  .day .dd{font-size:15px;line-height:1.55}
+  .day-main b{font-size:15px}.day-main strong{font-size:18px}
+  .insight-label{font-size:13px}.insight-point,.insight-point b{font-size:14px}
+  .plan-tag{font-size:12px}.plan-criterion{font-size:14px}
+  .chartcard .ttl .cap,.chartcard .actual,.chartcard .lg{font-size:13px}
+  .chart-tip{font-size:13px}
+  .weight-row.header .weight-cell,.weight-status span{font-size:13px}
+  .dot .c,.dot .d{font-size:13px}.dotlegend{font-size:13px}
+  .review-kicker,.review-point{font-size:13px}.rv .open{font-size:13px}
+  .rule-preview span{font-size:13px}.how-step .num{font-size:13px}.how-step p{font-size:14px}
+  footer{font-size:13px}
+
+  .chartcard .lg i.plan{
+    width:38px;height:3px;border:0;
+    background:repeating-linear-gradient(90deg,currentColor 0 17px,transparent 17px 29px);
+  }
+
+  @media (min-width:901px) and (hover:hover){
+    .nav a{
+      position:relative;z-index:0;transform-origin:left center;
+      transition:transform .22s cubic-bezier(.2,.8,.2,1),background-color .22s ease,box-shadow .22s ease,color .22s ease;
+    }
+    .nav a:hover,.nav a:focus-visible{
+      z-index:3;
+      transform:translateX(9px) scale(1.075);
+      background:rgba(8,8,8,.68);
+      color:#fff;
+      box-shadow:0 16px 36px rgba(0,0,0,.24);
+    }
+    .nav a:focus-visible{outline:2px solid rgba(255,255,255,.92);outline-offset:3px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .nav a{transition:none!important}
+    .nav a:hover,.nav a:focus-visible{transform:none!important}
+  }
+  @media (max-width:700px){
+    .appbar h1{font-size:17px}.appbar .chip,.syncbar{font-size:12px}
+    .ringinfo .row,.ringinfo .row .k{font-size:14px}.ringinfo .row .v{font-size:15px}
+    .stages{padding-bottom:48px}
+    #stageBar .stg span,#stageBar .stg span b,#stageBar .stg span em{font-size:12.5px}
+    .day .dd{font-size:14px}.day-main b{font-size:14px}
+  }
+
+  /* 2026-08-16 origin morph & transparent chart focus v21 */
+  body>.appbar,body>.syncbar,body>main,body>.nav,body>footer{
+    transition:opacity .16s ease,visibility 0s linear 0s;
+  }
+  body.chart-modal-open>.appbar,
+  body.chart-modal-open>.syncbar,
+  body.chart-modal-open>main,
+  body.chart-modal-open>.nav,
+  body.chart-modal-open>footer{
+    opacity:0!important;
+    visibility:hidden;
+    pointer-events:none;
+    transition:opacity .16s ease,visibility 0s linear .16s;
+  }
+  .chart-modal{
+    display:flex!important;
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    background:transparent!important;
+    box-shadow:none!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+    transition:opacity .09s linear,visibility 0s linear .26s;
+  }
+  .chart-modal.on{
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transition:opacity .07s linear,visibility 0s linear 0s;
+  }
+  .chart-modal-panel{
+    background:transparent!important;
+    border:0!important;
+    box-shadow:none!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+    will-change:transform,opacity;
+    transform-origin:center center;
+  }
+  .chart-modal-plot{
+    background:transparent!important;
+    border:0!important;
+    box-shadow:none!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
+  body.dark-background-theme .chart-modal-panel,
+  body.dark-background-theme .chart-modal-panel *{
+    color:var(--page-text)!important;
+    text-shadow:var(--page-text-shadow)!important;
+    -webkit-text-stroke:0 transparent!important;
+  }
+  body.dark-background-theme .chart-modal-plot svg text{
+    fill:#fff!important;
+    stroke:none!important;
+    paint-order:normal!important;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,1)) drop-shadow(0 0 2px rgba(0,0,0,.92));
+  }
+  body.dark-background-theme .chart-modal-plot .chart-axes line{
+    stroke:rgba(255,255,255,.68)!important;
+  }
+  .chart-modal-close{
+    background:rgba(5,5,5,.72)!important;
+    border:1px solid rgba(255,255,255,.62)!important;
+    box-shadow:0 9px 28px rgba(0,0,0,.24)!important;
+  }
+  @media (prefers-reduced-motion:reduce){
+    body>.appbar,body>.syncbar,body>main,body>.nav,body>footer,.chart-modal{transition:none!important}
+    .chart-modal-panel{will-change:auto}
+  }
+
+  /* 2026-08-17 light background readability & live nav v22 */
+  :root{
+    --light-video-text-shadow:0 2px 3px rgba(0,0,0,.98),0 0 9px rgba(0,0,0,.82);
+    --light-video-small-shadow:0 1px 2px rgba(0,0,0,1),0 0 6px rgba(0,0,0,.9);
+  }
+  body.dark-background-theme .hero,
+  body.dark-background-theme .hero *{
+    color:#fff!important;
+    text-shadow:var(--light-video-text-shadow)!important;
+    -webkit-text-stroke:0 transparent!important;
+  }
+  .hero .sub{
+    max-width:46rem;
+    font-size:18px;
+    line-height:1.6;
+    font-weight:670;
+    letter-spacing:.005em;
+  }
+  .advice.has-next-plan>.hint,
+  .advice .hint,
+  #todayNote,
+  #bwNote,
+  #m-record>.note{
+    font-size:15px;
+    line-height:1.7;
+    font-weight:620;
+    color:#fff!important;
+    text-shadow:var(--light-video-small-shadow)!important;
+  }
+  .weight-cell,.weight-date{
+    font-size:16px;
+    line-height:1.55;
+  }
+  #bwNote{max-width:76rem}
+  footer{font-size:14px;line-height:1.55}
+  @media (min-width:900px){
+    body .nav,
+    body.video-background-active .nav,
+    body.dark-background-theme .nav{
+      background:transparent!important;
+      background-image:none!important;
+      border-right:1px solid rgba(255,255,255,.20)!important;
+      box-shadow:inset -1px 0 rgba(255,255,255,.14),8px 0 26px rgba(0,0,0,.04)!important;
+      -webkit-backdrop-filter:none!important;
+      backdrop-filter:none!important;
+    }
+    body .nav a{
+      background:rgba(8,8,8,.10);
+      box-shadow:inset 0 1px rgba(255,255,255,.11);
+    }
+    body .nav a.on{background:rgba(8,8,8,.56)}
+  }
+  @media (max-width:700px){
+    .hero .sub{font-size:16px;line-height:1.55}
+    .advice.has-next-plan>.hint,.advice .hint,#todayNote,#bwNote,#m-record>.note{font-size:14px}
+    .weight-cell,.weight-date{font-size:14px}
+    footer{font-size:13px}
+  }
+
+  /* 2026-08-17 small type scale only v23 */
+  .appbar .chip,.syncbar{font-size:15px}
+  .nav a{font-size:16px}
+  .hero .pill{font-size:14px}
+  .advice.has-next-plan>.hint,.advice .hint,#todayNote,#bwNote,#m-record>.note{font-size:16px}
+  .next-plan-kicker,.next-plan-label{font-size:12px}
+  .next-plan-date b,.next-plan-day b{font-size:15px}
+  .next-plan-lift,.next-plan-focus{font-size:15px}
+  .today-status .eyebrow{font-size:13px}.today-status .next,.today-status .mark{font-size:14px}
+  .ex .l .s,.ex .r .d,.ex .r .rpe{font-size:14px}
+  .ring .num .ph{font-size:13px}
+  #stageBar .stg span,#stageBar .stg span b,#stageBar .stg span em{font-size:15px}
+  .day .st{font-size:14px}.day .dd,.day .m{font-size:16px}
+  .insight-label{font-size:14px}.insight-point,.insight-point b{font-size:15px}
+  .plan-tag{font-size:13px}.plan-criterion{font-size:15px}
+  .chartcard .ttl .cap,.chartcard .actual,.chartcard .lg,.chart-tip{font-size:14px}
+  .chartcard svg .chart-value-label{font-size:15px!important}
+  .chartcard svg .chart-week-label{font-size:14px!important}
+  .chart-modal-plot svg .chart-value-label{font-size:17px!important}
+  .chart-modal-plot svg .chart-week-label{font-size:15px!important}
+  .chart-modal-plot svg .chart-axis-label{font-size:14px!important}
+  .weight-row.header .weight-cell,.weight-status span{font-size:14px}
+  .dot .c,.dot .d,.dotlegend{font-size:14px}
+  .review-kicker,.review-point{font-size:14px}.review-decision,.rv .st{font-size:15px}.rv .open{font-size:14px}
+  .link .s{font-size:14px}
+  .rule-preview span,.how-step .num{font-size:14px}.how-step p{font-size:15px}
+  .chart-modal-kicker{font-size:13px}.chart-modal-cap,.chart-modal-note{font-size:14px}
+  @media (min-width:900px){
+    .nav:before{font-size:20px}.nav:after{font-size:10px}
+  }
+  @media (max-width:700px){
+    .appbar .chip,.syncbar{font-size:13px}.nav a{font-size:13px}
+    .hero .pill{font-size:13px}
+    .advice.has-next-plan>.hint,.advice .hint,#todayNote,#bwNote,#m-record>.note{font-size:15px}
+    .next-plan-kicker,.next-plan-label{font-size:11px}
+    .next-plan-date b,.next-plan-day b,.next-plan-lift,.next-plan-focus{font-size:14px}
+    .day .st{font-size:13px}.day .dd,.day .m{font-size:15px}
+    .chartcard svg .chart-value-label,.chartcard svg .chart-week-label{font-size:13px!important}
+    .chart-modal-plot svg .chart-value-label{font-size:15px!important}
+    .chart-modal-plot svg .chart-week-label,.chart-modal-plot svg .chart-axis-label{font-size:13px!important}
+  }
+
+  /* 2026-08-17 shadow-free typography v24 */
+  :root{
+    --page-text-shadow:none;
+    --surface-text-halo:none;
+    --light-video-text-shadow:none;
+    --light-video-small-shadow:none;
+  }
+  body.dark-background-theme,
+  body.dark-background-theme *,
+  body.dark-background-theme *::before,
+  body.dark-background-theme *::after{
+    text-shadow:none!important;
+  }
+  body.dark-background-theme svg text{
+    filter:none!important;
+  }
+
+  /* 2026-08-17 clean light text shadow v25 */
+  :root{
+    --clean-text-shadow:0 1px 1px rgba(0,0,0,.45);
+    --page-text-shadow:var(--clean-text-shadow);
+    --surface-text-halo:var(--clean-text-shadow);
+    --light-video-text-shadow:var(--clean-text-shadow);
+    --light-video-small-shadow:var(--clean-text-shadow);
+  }
+  body.dark-background-theme,
+  body.dark-background-theme *,
+  body.dark-background-theme *::before,
+  body.dark-background-theme *::after{
+    text-shadow:var(--clean-text-shadow)!important;
+  }
+  body.dark-background-theme svg text{
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.45))!important;
+  }
+
+  /* 2026-08-17 stable reading surfaces & medium layout v26 */
+  :root{
+    --reading-surface:linear-gradient(120deg,rgba(7,7,7,.76),rgba(7,7,7,.60));
+    --reading-surface-soft:linear-gradient(120deg,rgba(7,7,7,.68),rgba(7,7,7,.52));
+    --reading-divider:rgba(255,255,255,.22);
+  }
+  body.dark-background-theme,
+  body.dark-background-theme *,
+  body.dark-background-theme *::before,
+  body.dark-background-theme *::after{
+    text-shadow:none!important;
+    -webkit-text-stroke:0 transparent!important;
+  }
+  body.dark-background-theme svg text{
+    fill:#fff!important;
+    stroke:none!important;
+    filter:none!important;
+    paint-order:normal!important;
+  }
+  body.dark-background-theme .hero{
+    background:linear-gradient(100deg,rgba(7,7,7,.80) 0%,rgba(7,7,7,.72) 58%,rgba(7,7,7,.50) 100%)!important;
+    box-shadow:none!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
+  body.dark-background-theme :is(
+    #todayList .ex,#todayNote,#cycleCard,.day,#weekNote,#weekMain,
+    .chartcard,#bwBox,#bwNote,#dotBox,.rv .row,.link,#m-record>.note,
+    #howNote,.rule-item,.chart-modal-panel
+  ){
+    background:var(--reading-surface-soft)!important;
+    border-color:var(--reading-divider)!important;
+    box-shadow:none!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
+  body.dark-background-theme :is(#cycleCard,#weekNote,#weekMain,#bwBox,#dotBox,#howNote,.chart-modal-panel){
+    background:var(--reading-surface)!important;
+  }
+  body.dark-background-theme :is(#chartBox,#reviewBox,#ruleBox){
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+  body.dark-background-theme :is(.next-plan-focus,.day-reading,#weekNote .insight-point)::before{
+    display:none!important;
+  }
+  body.dark-background-theme main>section>h2{
+    width:min(100%,34rem);
+    padding:6px 10px;
+    color:#fff!important;
+    background:linear-gradient(90deg,rgba(7,7,7,.74),rgba(7,7,7,.38) 72%,transparent);
+  }
+  body.dark-background-theme :is(.appbar h1,.appbar .chip,.syncbar,footer>span){
+    color:#fff!important;
+    mix-blend-mode:difference;
+  }
+  body.dark-background-theme :is(.next-plan-row,.wk .row,.weight-row,.rv .row){
+    border-color:var(--reading-divider)!important;
+  }
+  @media (min-width:701px) and (max-width:1100px){
+    .next-plan-row{
+      grid-template-columns:92px minmax(0,1fr)!important;
+      gap:12px 16px!important;
+    }
+    .next-plan-main,.next-plan-focus{grid-column:1/-1!important}
+    .next-plan-focus{padding-top:12px;border-top:1px solid var(--reading-divider)}
+    .days{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+    #chartBox,.rv{grid-template-columns:1fr!important}
+  }
+  @media (max-width:700px){
+    body.dark-background-theme .hero{
+      background:linear-gradient(180deg,rgba(7,7,7,.82),rgba(7,7,7,.66))!important;
+    }
+    body.dark-background-theme main>section>h2{width:100%}
+  }
+
+  /* 2026-08-17 black chrome typography v27 */
+  body.dark-background-theme :is(.appbar h1,.appbar .chip,.syncbar,.nav a),
+  body.dark-background-theme .nav::before,
+  body.dark-background-theme .nav::after{
+    color:#080808!important;
+    mix-blend-mode:normal!important;
+    text-shadow:none!important;
+    -webkit-text-stroke:0 transparent!important;
+  }
+  body.dark-background-theme .appbar .chip{
+    background:transparent!important;
+    border:0!important;
+    box-shadow:none!important;
+  }
+  @media (min-width:900px){
+    body.dark-background-theme .nav a{
+      background:rgba(255,255,255,.62)!important;
+      border-color:rgba(0,0,0,.08)!important;
+      box-shadow:inset 0 1px rgba(255,255,255,.72)!important;
+    }
+    body.dark-background-theme .nav a:hover,
+    body.dark-background-theme .nav a:focus-visible{
+      background:rgba(255,255,255,.82)!important;
+    }
+    body.dark-background-theme .nav a.on{
+      background:rgba(255,255,255,.92)!important;
+      border-color:rgba(0,0,0,.34)!important;
+    }
+    body.dark-background-theme .nav a.on::before{background:#080808!important}
+  }
+
+  /* 2026-08-17 black nav descendants v28 */
+  body.dark-background-theme .nav a,
+  body.dark-background-theme .nav a *,
+  body.dark-background-theme .appbar h1,
+  body.dark-background-theme .appbar h1 *,
+  body.dark-background-theme .appbar .chip,
+  body.dark-background-theme .appbar .chip *,
+  body.dark-background-theme .syncbar,
+  body.dark-background-theme .syncbar *{
+    color:#080808!important;
+    mix-blend-mode:normal!important;
+    text-shadow:none!important;
+    -webkit-text-stroke:0 transparent!important;
+  }
+  @supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+    .appbar,.syncbar.ok,.syncbar.stale,.syncbar.failed,.card,.note,.day,.ex,.link,.chartcard,#bwBox,#bwNote,#cycleCard,#weekMain,.wk .row,.rv,.rv .row,#setBox .setrow,.rule-item,.how-step{background:rgba(242,242,238,.76)}
+    .hero,body.video-background-active .hero,.ex.main,.day.on,#weekNote{background:rgba(7,7,7,.78)}
+  }
+  .doc-overlay{position:fixed;z-index:1000;inset:0;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.72)}
+  .doc-overlay[hidden]{display:none}
+  .doc-dialog{width:min(880px,100%);max-height:min(86vh,900px);display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(255,255,255,.18);border-radius:22px;background:#f4f4f0;color:#111;box-shadow:0 28px 90px rgba(0,0,0,.5)}
+  .doc-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid #d6d6d1}
+  .doc-head h2{margin:0;font-size:20px}.doc-close{border:0;border-radius:999px;padding:9px 13px;background:#111;color:#fff;cursor:pointer}
+  .doc-body{padding:22px;overflow:auto;font-size:15px;line-height:1.8}.doc-body h1,.doc-body h2,.doc-body h3{margin:1.2em 0 .5em;line-height:1.3}.doc-body p{margin:.7em 0}.doc-body li{margin:.35em 0}.doc-body .md-raw{white-space:pre-wrap;overflow-wrap:anywhere;font-family:inherit}
+  .doc-actions{display:flex;gap:10px;padding:14px 20px;border-top:1px solid #d6d6d1}.doc-actions a{display:inline-flex;padding:9px 13px;border-radius:999px;background:#111;color:#fff;text-decoration:none}.doc-actions a[hidden]{display:none}
+  .rv .row[role="button"],button.link{cursor:pointer}button.link{width:100%;font:inherit;text-align:left}
 </style>
 </head>
-<body>
+<body class="dark-background-theme">
+
+<video id="workbenchBgVideo" class="workbench-video" muted loop playsinline preload="auto" poster="工作台与工具/健身工作台开发/界面素材/workbench-background.png" aria-hidden="true">
+  <source id="workbenchVideoSource" src="工作台与工具/健身工作台开发/界面素材/workbench-background.mp4" type="video/mp4">
+</video>
+<div class="workbench-video-wash" aria-hidden="true"></div>
+
+<div class="doc-overlay" id="docOverlay" hidden>
+  <article class="doc-dialog" role="dialog" aria-modal="true" aria-labelledby="docTitle">
+    <header class="doc-head"><h2 id="docTitle">内容</h2><button class="doc-close" id="docClose" type="button">关闭</button></header>
+    <div class="doc-body" id="docBody"></div>
+    <footer class="doc-actions"><a id="docObsidian" href="#" hidden>在 Obsidian 编辑</a></footer>
+  </article>
+</div>
 
 <div class="appbar">
-  <h1>健身工作台</h1>
+  <h1>Lzheng 健身系统</h1>
   <span class="chip" id="verChip"></span>
 </div>
 <div class="syncbar" id="syncBar"></div>
@@ -571,17 +1851,15 @@
       </div>
       <div class="stages" id="stageBar"></div>
     </div>
-    <h2 id="weekDaysHeading">本周训练日</h2>
+    <h2>本周四练日</h2>
     <div class="days" id="dayGrid"></div>
     <div class="note" id="weekNote"></div>
-    <h2 id="goalMetricsHeading">目标数据</h2>
-    <div class="card" id="goalMetricBox"></div>
-    <h2 id="weekFocusHeading">本周重点 · <span id="weekMainLabel">W2</span></h2>
+    <h2>本周主项 · <span id="weekMainLabel">W2</span></h2>
     <div class="card wk" id="weekMain"></div>
   </section>
 
   <section id="m-trend">
-    <h2 id="trendHeading">训练进展</h2>
+    <h2>主项 8 周负荷</h2>
     <div class="card" id="chartBox"></div>
     <h2>体重趋势</h2>
     <div class="card" id="bwBox"></div>
@@ -595,16 +1873,14 @@
     <div class="card rv" id="reviewBox"></div>
     <h2>入口</h2>
     <div class="links" id="linkBox"></div>
-    <div class="note">复盘条目会通过 Obsidian 深链直接打开本地文件；首次点击若浏览器询问是否允许打开 Obsidian，请选择允许。</div>
+    <div class="note">复盘和状态内容可直接在工作台阅读；如果当前目录属于 Obsidian 仓库，阅读器会额外提供可选编辑入口。</div>
   </section>
 
   <section id="m-settings">
-    <h2>数据与同步</h2>
-    <div class="card" id="setBox"></div>
-    <h2>规则要点</h2>
-    <div class="card" id="ruleBox"></div>
     <h2>怎么用</h2>
     <div class="note" id="howNote"></div>
+    <h2>规则要点</h2>
+    <div class="card" id="ruleBox"></div>
   </section>
 </main>
 
@@ -624,45 +1900,41 @@
   var systemInfo = D.system || {};
   var trainingStatus = D.status || {};
   var knowledge = D.knowledge || {};
-  var objectiveLabels = {
-    strength: '力量',
-    hypertrophy: '增肌',
-    fat_loss: '减脂',
-    general_fitness: '综合健身'
-  };
-  var objectiveLabel = objectiveLabels[m.objective_mode] || '训练计划';
-  var objectiveSignals = {
-    strength: ['动作质量与完成标准', '关键动作的重量、次数与余力', '阶段测试或复盘结论'],
-    hypertrophy: ['动作质量与目标次数', '重量、次数与余力', '肌群训练完成情况'],
-    fat_loss: ['力量训练完成情况', '体重或围度趋势', '步数、有氧与恢复'],
-    general_fitness: ['训练完成情况', '重量、次数与动作质量', '恢复与日常活动']
-  };
-  var activeSignals = objectiveSignals[m.objective_mode] || objectiveSignals.general_fitness;
+  var bgVideo=document.getElementById('workbenchBgVideo');
+  var motionPreference=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)');
+  function setAmbientVideoState(){
+    if(!bgVideo)return;
+    if(motionPreference&&motionPreference.matches){bgVideo.pause();document.body.classList.remove('video-background-active');return;}
+    bgVideo.muted=true;
+    var attempt=bgVideo.play();
+    if(attempt&&attempt.catch){attempt.catch(function(){document.body.classList.remove('video-background-active');});}
+  }
+  if(bgVideo){
+    bgVideo.addEventListener('playing',function(){document.body.classList.add('video-background-active');});
+    bgVideo.addEventListener('error',function(){document.body.classList.remove('video-background-active');});
+    document.addEventListener('visibilitychange',function(){if(document.hidden){bgVideo.pause();}else{setAmbientVideoState();}});
+    if(motionPreference){if(motionPreference.addEventListener)motionPreference.addEventListener('change',setAmbientVideoState);else if(motionPreference.addListener)motionPreference.addListener(setAmbientVideoState);}
+    setAmbientVideoState();
+  }
 
   function el(tag, cls, html){ var n=document.createElement(tag); if(cls)n.className=cls; if(html!=null)n.innerHTML=html; return n; }
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function escAttr(s){ return esc(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function compactText(value,max){
+    var full=String(value==null?'':value).replace(/\s+/g,' ').trim();
+    if(full.length<=max)return full;
+    var min=Math.floor(max*.62),cut=-1;
+    ['；','。','，','｜'].forEach(function(mark){var at=full.lastIndexOf(mark,max);if(at>=min&&at>cut)cut=at+1;});
+    if(cut<min)cut=max;
+    return full.slice(0,cut).replace(/[；。，｜、\s]+$/,'')+'…';
+  }
+  function compactNode(tag,cls,value,max){
+    var full=String(value==null?'':value).replace(/\s+/g,' ').trim(),short=compactText(full,max);
+    var node=el(tag,cls);node.textContent=short;
+    if(short!==full){node.title=full;node.setAttribute('aria-label',full);}
+    return node;
+  }
   function pad(n){ return n<10?'0'+n:''+n; }
-
-  function displayDayDate(day){
-    if(!day) return '待排期';
-    return day.date ? day.date.slice(5) : (D.weekday[day.title] || '待排期');
-  }
-
-  function trainingDayOrder(){
-    var defaults = ['上肢A','腿A','上肢B','腿B'];
-    if(defaults.every(function(name){ return D.days[name]; })) return defaults;
-    return Object.keys(D.days || {}).sort(function(a,b){
-      var ad = (D.days[a] && D.days[a].date) || '';
-      var bd = (D.days[b] && D.days[b].date) || '';
-      return ad.localeCompare(bd) || a.localeCompare(b);
-    });
-  }
-
-  function prescriptionLabel(exercise){
-    if(exercise && exercise.w) return exercise.w;
-    if(exercise && String(exercise.d || '').indexOf('待校准') >= 0) return '待校准';
-    return '见计划';
-  }
 
   document.getElementById('verChip').textContent = '来源 v' + m.source_version.replace('v','') + ' · 更新于 ' + m.updated_at;
 
@@ -712,11 +1984,11 @@
   function renderExCard(e){
     var card = el('div','ex' + (e.main?' main':''));
     var l = el('div','l'); l.appendChild(el('div','n',e.name));
-    if(e.weight_source) l.appendChild(el('div','s','重量依据：'+e.weight_source));
+    if(e.weight_source) l.appendChild(compactNode('div','s','重量依据：'+e.weight_source,34));
     var r = el('div','r');
     r.appendChild(el('div','w', e.w || '—'));
-    if(e.d) r.appendChild(el('div','d',e.d));
-    if(e.rpe) r.appendChild(el('div','rpe',e.rpe));
+    if(e.d) r.appendChild(compactNode('div','d',e.d,42));
+    if(e.rpe) r.appendChild(compactNode('div','rpe',e.rpe,44));
     card.appendChild(l); card.appendChild(r);
     return card;
   }
@@ -724,24 +1996,47 @@
   function nextEvent(){
     return timeline.filter(function(x){return x.date>todayIso;})[0] || null;
   }
+  function renderNextWeekSchedule(container, plan){
+    advice.classList.add('has-next-plan');
+    var wrap=el('div','next-plan-wrap');
+    var head=el('div','next-plan-head');
+    var heading=el('div',null);
+    heading.appendChild(el('div','next-plan-kicker','NEXT WEEK / 下一周安排'));
+    heading.appendChild(el('div','next-plan-title','W'+plan.week+' · '+(plan.phase||'下一阶段')));
+    head.appendChild(heading);
+    head.appendChild(el('span','next-plan-phase',plan.phase ? plan.phase+'周' : '待执行'));
+    wrap.appendChild(head);
+    var table=el('div','next-plan-table');
+    (plan.sessions||[]).forEach(function(session){
+      var row=el('div','next-plan-row');
+      var date=el('div','next-plan-date');
+      date.appendChild(el('span','next-plan-label','日期'));
+      date.appendChild(el('b',null,(session.date||'').slice(5)));
+      var day=el('div','next-plan-day');
+      day.appendChild(el('span','next-plan-label',session.weekday||'训练日'));
+      day.appendChild(el('b',null,session.day||'待排期'));
+      var main=el('div','next-plan-main');
+      main.appendChild(el('span','next-plan-label','主项安排'));
+      (session.items||[]).forEach(function(item){
+        var lift=el('div','next-plan-lift');
+        lift.appendChild(el('b',null,item.lift+(item.role?' · '+item.role:'')));
+        lift.appendChild(el('span',null,item.prescription||'待确认'));
+        main.appendChild(lift);
+      });
+      var focus=el('div','next-plan-focus');
+      focus.appendChild(el('span','next-plan-label','本日重点'));
+      var criteria=[];
+      (session.items||[]).forEach(function(item){if(item.criterion&&criteria.indexOf(item.criterion)<0)criteria.push(item.criterion);});
+      focus.appendChild(compactNode('span',null,criteria.join('；')||'按恢复情况执行，不临场加码',46));
+      row.appendChild(date);row.appendChild(day);row.appendChild(main);row.appendChild(focus);
+      table.appendChild(row);
+    });
+    wrap.appendChild(table);
+    container.appendChild(wrap);
+  }
   function renderToday(name){
-    pills.innerHTML=''; advice.innerHTML=''; todayList.innerHTML='';
+    pills.innerHTML=''; advice.innerHTML=''; todayList.innerHTML=''; advice.classList.remove('has-next-plan');
     if(!onboarding.completed){
-      if(onboarding.mode==='needs_calibration'){
-        var calibrationName=Object.keys(D.days||{})[0];
-        var calibrationDay=calibrationName ? D.days[calibrationName] : null;
-        heroHi.textContent = '先完成重量校准';
-        heroSub.textContent = onboarding.message || '按每个动作的引导确定今天的工作重量。';
-        pills.appendChild(el('span','pill','不猜重量 · 逐步校准'));
-        advice.innerHTML = '<b>今天怎么做</b><div>从轻重量试组开始；每次小幅增加。完成目标次数后仍保留约 2—4 次余力、动作稳定时，记录为工作重量。</div>';
-        if(calibrationDay){
-          Object.keys(D.days).forEach(function(key){
-            if(key===calibrationName){ D.days[key].exercises.forEach(function(e){ todayList.appendChild(renderExCard(e)); }); }
-          });
-          todayNote.textContent = '先校准 ' + calibrationName + '；完成后把重量、次数、余力和动作感受告诉 AI，它会写入下一次明确处方。';
-        }
-        return;
-      }
       heroHi.textContent = '待建档';
       heroSub.textContent = onboarding.message || '先确认目标、训练频率、器械与当前状态。';
       pills.appendChild(el('span','pill','未显示正式训练重量'));
@@ -755,7 +2050,7 @@
     var reviewedToday = completedToday && summary && summary.date===todayIso && summary.day===name;
     var upcoming = nextEvent();
     if(name){
-      heroHi.textContent = completedToday ? '今日已完成 · ' + name : (isDefault ? '今日训练 · ' + name : name + ' · ' + displayDayDate(D.days[name]));
+      heroHi.textContent = completedToday ? '今日已完成 · ' + name : (isDefault ? '今日训练 · ' + name : name + ' · ' + (D.days[name].date||D.weekday[name]));
       heroSub.textContent = 'W' + m.current_week + ' / ' + m.phase + '期 · ' + D.days[name].role;
     } else {
       heroHi.textContent = '今日恢复';
@@ -764,9 +2059,8 @@
     function pill(t){ pills.appendChild(el('span','pill',t)); }
     var dt = daysToTest();
     pill('W' + m.current_week + ' / ' + m.total_weeks + ' · ' + m.phase + '期');
-    pill(objectiveLabel + '计划');
-    pill(dt>0 ? '本阶段剩余 ' + dt + ' 天' : '本阶段复盘');
-    if(name && !isDefault) pill(displayDayDate(D.days[name]));
+    pill(dt>0 ? '验证倒计时 ' + dt + ' 天' : '验证周');
+    if(name && !isDefault) pill(D.weekday[name] + ' · ' + ((D.days[name] && D.days[name].date)||'待排期'));
     var adv = el('div',null);
     if(reviewedToday){
       adv.innerHTML = '<div class="today-status"><div><div class="eyebrow">今日关键结果</div><div class="result">' +
@@ -776,8 +2070,12 @@
     } else if(completedToday){
       adv.innerHTML = '<div class="today-status"><div><div class="eyebrow">训练已完成</div><div class="result">完成状态已同步，尚未找到与今天日期和训练日完全匹配的复盘。</div><div class="next">写入复盘后，今日关键结果会自动替换这里。</div></div><span class="mark">待复盘</span></div>';
     } else {
-      adv.appendChild(el('b',null, name ? (isDefault ? '今日处方' : '当日处方') : '恢复安排'));
-      adv.appendChild(el('div',null, name ? '以下为当天完整处方；所有重量均来自当前 ' + m.source_version + ' 或 Notion 最近同动作记录。' : (upcoming ? '下一次：' + upcoming.date.slice(5) + ' · ' + (upcoming.day || upcoming.title) : D.advice)));
+      if(!name && !upcoming && D.next_week && (D.next_week.sessions||[]).length){
+        renderNextWeekSchedule(adv,D.next_week);
+      }else{
+        adv.appendChild(el('b',null, name ? (isDefault ? '今日处方' : '当日处方') : '恢复安排'));
+        adv.appendChild(el('div',null, name ? '以下为当天完整处方；所有重量均来自当前 ' + m.source_version + ' 或 Notion 最近同动作记录。' : (upcoming ? '下一次：' + upcoming.date.slice(5) + ' · ' + (upcoming.day || upcoming.title) : D.advice)));
+      }
     }
     var act = el('div','act');
     if(name){
@@ -796,15 +2094,15 @@
       };
       act.appendChild(btn);
     }
-    adv.appendChild(act);
+    if(act.childNodes.length) adv.appendChild(act);
     advice.appendChild(adv);
     if(name){
       D.days[name].exercises.forEach(function(e){ todayList.appendChild(renderExCard(e)); });
     }
     var eventState = name && D.days[name] ? (D.done[name] || ('计划 ' + (D.days[name].date||'待排期'))) : '';
-    todayNote.textContent = (name ? (eventState + ' · ') : '') + '页面按 ' + m.source_version + ' 实际日期安排匹配今日内容；周次仍以复盘索引为准（当前 W' + m.current_week + '）。';
+    todayNote.textContent = (name ? (eventState + ' · ') : '') + '按实际日期匹配 · 当前 W' + m.current_week + ' · 周次以复盘索引或已确认排程为准';
     var hint = el('div','hint');
-    hint.textContent = '对 AI 说「同步工作台」刷新数据 · 「发布工作台」更新在线版';
+    hint.textContent = '同步工作台：刷新数据 · 发布工作台：更新在线版';
     advice.appendChild(hint);
   }
   renderToday(todayName);
@@ -812,9 +2110,6 @@
   var weekLabel = document.getElementById('weekLabel');
   weekLabel.textContent = 'W' + m.current_week + ' / ' + m.total_weeks;
   document.getElementById('weekMainLabel').textContent = 'W' + m.current_week;
-  document.getElementById('weekDaysHeading').textContent = '本周训练日 · ' + objectiveLabel;
-  document.getElementById('weekFocusHeading').innerHTML = '本周重点 · <span id="weekMainLabel">W' + m.current_week + '</span>';
-  document.getElementById('trendHeading').textContent = Object.keys(D.charts || {}).length ? '训练进展' : objectiveLabel + '执行信号';
 
   var ringBox = document.getElementById('ringBox');
   var completedWeeks = Math.max(0,m.current_week-1);
@@ -834,39 +2129,42 @@
     if(!x||!x.day||!D.days[x.day]) return x ? x.date.slice(5)+' '+(x.title||'待安排') : '等待下一次安排';
     var mains=D.days[x.day].exercises.filter(function(e){return e.main;});
     if(!mains.length) mains=D.days[x.day].exercises.filter(function(e){return e.w;}).slice(0,1);
-    var brief=mains.slice(0,2).map(function(e){return e.name.replace('杠铃','').replace('（容量）','')+' '+prescriptionLabel(e);}).join(' / ');
+    var brief=mains.slice(0,2).map(function(e){return e.name.replace('杠铃','').replace('（容量）','')+' '+(e.w||'见计划');}).join(' / ');
     return x.date.slice(5)+' '+x.day+(brief?' · '+brief:'');
   }
   var nextGates=timeline.filter(function(x){return x.type==='training'&&x.status!=='done'&&x.date>=todayIso;}).slice(0,2);
-  [['当前阶段', m.phase + '期（W' + m.current_week + '）'],['本周进度',weekDone + '/' + weekTotal + ' 次已完成'],['执行重点', activeSignals[0]],['本周下一关',nextGates.length?nextGates.map(eventPrescription).join(' → '):'本周处方已完成']].forEach(function(x){
+  [['当前阶段', m.phase + '期（W' + m.current_week + '）'],['本周进度',weekDone + '/' + weekTotal + ' 次已完成'],['本周下一关',nextGates.length?nextGates.map(eventPrescription).join(' → '):'本周处方已完成']].forEach(function(x){
     var r = el('div','row'); r.appendChild(el('span','k',x[0])); r.appendChild(el('span','v',x[1])); ringInfo.appendChild(r);
   });
   var stageBar = document.getElementById('stageBar');
   D.phases.forEach(function(p){
     var s = el('div','stg' + (p.start_week<=m.current_week && m.current_week<=p.end_week ? ' cur':''));
     s.style.flex = Math.max(1,p.end_week-p.start_week+1);
-    s.innerHTML = '<span><b>' + p.label + '</b>W' + p.start_week + (p.end_week!==p.start_week ? '–' + p.end_week : '') + '</span>';
+    s.innerHTML = '<span><b>' + p.label + '</b><em>W' + p.start_week + (p.end_week!==p.start_week ? '–' + p.end_week : '') + '</em></span>';
     stageBar.appendChild(s);
   });
 
   var dayGrid = document.getElementById('dayGrid');
-  var order = trainingDayOrder();
+  var order = ['上肢A','腿B','上肢B','腿A'];
   function daySummary(name){
     var d = D.days[name];
     var mains = d.exercises.filter(function(e){return e.main;});
     if(!mains.length){ mains=d.exercises.filter(function(e){return e.w;}).slice(0,2); }
-    return mains.map(function(e){return '<span class="day-main"><b>'+esc(e.name.replace('杠铃','').replace('（容量）',''))+'</b><strong>'+esc(prescriptionLabel(e))+'</strong></span>';}).join('');
+    return mains.map(function(e){return '<span class="day-main"><b>'+esc(e.name.replace('杠铃','').replace('（容量）',''))+'</b><strong>'+esc(e.w||'见计划')+'</strong></span>';}).join('');
   }
   order.forEach(function(name,index){
     var dayEvent=timelineTraining(name);
     var done=!!(dayEvent&&dayEvent.status==='done');
     var day = el('div','day ' + (done?'done':'planned') + (name===todayName?' on':''));
     day.dataset.index='0'+(index+1);
+    var reading=el('div','day-reading');
     var dn = el('div','dn'); dn.appendChild(el('span',null,name));
-    dn.appendChild(el('span','st',(done?'已执行 ':'待执行 ') + displayDayDate(D.days[name])));
-    day.appendChild(dn);
-    day.appendChild(el('div','dd',displayDayDate(D.days[name]) + ' · ' + D.days[name].role));
-    day.appendChild(el('div','m',daySummary(name)));
+    dn.appendChild(el('span','st',(done?'已执行 ':'待执行 ')+(D.days[name].date||D.weekday[name]).slice(-5)));
+    reading.appendChild(dn);
+    var dayRole=D.days[name].title||D.days[name].role;
+    reading.appendChild(compactNode('div','dd',(D.days[name].date ? D.days[name].date.slice(5) : D.weekday[name]) + ' · ' + dayRole,42));
+    reading.appendChild(el('div','m',daySummary(name)));
+    day.appendChild(reading);
     day.onclick = function(){
       document.querySelectorAll('.day').forEach(function(x){x.classList.remove('on');});
       day.classList.add('on');
@@ -880,72 +2178,36 @@
   });
   var weekNote=document.getElementById('weekNote');
   function latestActual(name){
-    var rows=((D.charts||{})[name]&&D.charts[name].actual)||[];
+    var rows=(D.charts[name]&&D.charts[name].actual)||[];
     if(!rows.length) return '尚无可核验记录';
     var a=rows[rows.length-1];
     return (a.detail||((a.value!=null?a.value:'—')+'kg'))+(a.date?' · '+a.date:'');
   }
-  var hasStrengthCharts = Object.keys(D.charts || {}).length > 0;
-  var signalCards = hasStrengthCharts ? [
-    ['引体 · 最近记录', latestActual('负重引体')],
-    ['卧推 · 最近记录', latestActual('卧推')],
-    ['深蹲 · 最近记录', latestActual('深蹲')]
-  ] : activeSignals.map(function(signal, index){
-    return [signal, index === 0 ? '按训练日完成处方并记录实际结果' : '复盘时写入可验证的实际数据'];
-  });
-  weekNote.innerHTML='<div><div class="insight-label">W'+m.current_week+' / '+objectiveLabel.toUpperCase()+'</div><div class="insight-lead">本周已完成 '+weekDone+' / '+weekTotal+'，'+(hasStrengthCharts?'继续按门槛验证':'先建立本目标的执行基线')+'</div></div><div class="insight-points">'+
-    signalCards.map(function(item){return '<div class="insight-point"><b>'+esc(item[0])+'</b>'+esc(item[1])+'</div>';}).join('')+'</div>';
-
-  var goalMetricBox = document.getElementById('goalMetricBox');
-  var goalMetrics = D.goal_metrics || [];
-  goalMetricBox.classList.toggle('has-four', goalMetrics.length === 4);
-  document.getElementById('goalMetricsHeading').textContent = objectiveLabel + '目标数据';
-  if(!goalMetrics.length){
-    goalMetricBox.innerHTML = '<div class="goal-metric needs-data" data-state="待记录"><div class="gm-label">目标数据</div><div class="gm-value">待建立</div><div class="gm-detail">当前计划还没有定义专属追踪指标。</div><div class="gm-next">下一步：告诉 AI 你希望长期追踪什么，它会写入计划与工作台。</div></div>';
-  } else {
-    goalMetrics.forEach(function(metric){
-      var stateText = metric.state === 'current' ? '已记录' : (metric.state === 'planned' ? '计划量' : '待记录');
-      var card = el('div','goal-metric ' + (metric.state === 'planned' ? 'planned' : (metric.state === 'needs_data' ? 'needs-data' : '')));
-      card.dataset.state = stateText;
-      card.innerHTML = '<div class="gm-label">'+esc(metric.label || '目标数据')+'</div>'+
-        '<div class="gm-value">'+esc(metric.value || '待记录')+'</div>'+
-        '<div class="gm-detail">'+esc(metric.detail || '无可核验详情')+'</div>'+
-        '<div class="gm-next">下一步：'+esc(metric.next_action || '训练后把实际结果告诉 AI。')+'</div>';
-      goalMetricBox.appendChild(card);
-    });
-  }
+  weekNote.innerHTML='<div><div class="insight-label">W'+m.current_week+' / WEEK SIGNAL</div><div class="insight-lead">本周已完成 '+weekDone+' / '+weekTotal+'，继续按门槛验证</div></div><div class="insight-points">'+
+    '<div class="insight-point"><b>引体 · 最近记录</b><span class="insight-value">'+esc(latestActual('负重引体'))+'</span></div>'+
+    '<div class="insight-point"><b>卧推 · 最近记录</b><span class="insight-value">'+esc(latestActual('卧推'))+'</span></div>'+
+    '<div class="insight-point"><b>深蹲 · 最近记录</b><span class="insight-value">'+esc(latestActual('深蹲'))+'</span></div></div>';
 
   var weekMain = document.getElementById('weekMain');
-  var weeklyFocus = D.week || [];
-  if(!weeklyFocus.length){
-    var seenFocus = {};
-    order.forEach(function(dayName){
-      (D.days[dayName].exercises || []).forEach(function(exercise){
-        if((exercise.main || exercise.w) && !seenFocus[exercise.name] && weeklyFocus.length < 4){
-          seenFocus[exercise.name] = true;
-          weeklyFocus.push({
-            k: exercise.name,
-            v: [exercise.w || '', exercise.d || '按处方执行', exercise.rpe || ''].filter(Boolean).join(' · '),
-            generic: true
-          });
-        }
-      });
-    });
-  }
-  weeklyFocus.forEach(function(w){
+  D.week.forEach(function(w){
     var parts=w.v.split('；');
     var prescription=parts.slice(0,2).join('；');
     var criterion=parts.slice(2).join('；');
-    var role=w.generic ? objectiveLabel + '重点' : (w.k==='硬拉'?'低频暴露':(w.k==='深蹲'?'强度 / 技术':'强度 / 容量'));
+    var role=w.k==='硬拉'?'低频暴露':(w.k==='深蹲'?'强度 / 技术':'强度 / 容量');
     var r = el('div','row');
     r.appendChild(el('span','k',w.k));
     r.appendChild(el('div','plan-meta','<span class="plan-tag">'+role+'</span><span class="plan-tag">W'+m.current_week+'</span>'));
     r.appendChild(el('div','plan-prescription',esc(prescription||w.v)));
-    if(criterion) r.appendChild(el('div','plan-criterion','<b>达标条件</b> · '+esc(criterion)));
+    if(criterion){
+      var criterionShort=compactText(criterion,68),criterionNode=el('div','plan-criterion','<b>达标条件</b> · '+esc(criterionShort));
+      if(criterionShort!==criterion){criterionNode.title=criterion;criterionNode.setAttribute('aria-label','达标条件：'+criterion);}
+      r.appendChild(criterionNode);
+    }
     weekMain.appendChild(r);
   });
 
-  function svgChart(name, ch){
+  function svgChart(name, ch, options){
+    options=options||{};
     var pts = ch.strength.filter(function(p){ return p.v != null; });
     var actualRaw = ch.actual || [];
     var actualByWeek = {};
@@ -958,7 +2220,7 @@
     var vals = pts.map(function(p){return p.v;}).concat(actualRaw.map(function(p){return p.value;}));
     var minV = Math.min.apply(null, vals), maxV = Math.max.apply(null, vals);
     var span=Math.max(1,maxV-minV); minV-=span*.16; maxV+=span*.18;
-    var W=Math.max(320,Math.round((chartBox.clientWidth||600)-48)), H=142, pl=42, pr=34, pt=25, pb=28;
+    var W=options.width||Math.max(320,Math.round((chartBox.clientWidth||600)-48)), H=options.expanded?300:142, pl=options.expanded?58:42, pr=options.expanded?48:34, pt=options.expanded?44:25, pb=options.expanded?42:28;
     var xw = W-pl-pr, yh = H-pt-pb;
     function X(w){ return pl + xw*(w-minW)/(maxW-minW||1); }
     function Y(v){ return pt + yh*(1-(v-minV)/(maxV-minV||1)); }
@@ -970,34 +2232,165 @@
     if(anchorWeek){ future.push({week:anchorWeek,value:actualByWeek[anchorWeek].value}); }
     pts.forEach(function(p){if(p.week>lastExecuted)future.push({week:p.week,value:p.v});});
     if(!lastExecuted){future=pts.map(function(p){return {week:p.week,value:p.v};});}
-    var grid=[0,.25,.5,.75,1].map(function(k){var y=(pt+yh*k).toFixed(1);return '<line x1="'+pl+'" y1="'+y+'" x2="'+(W-pr)+'" y2="'+y+'" stroke="#111" stroke-opacity=".19" stroke-width="1"/>';}).join('');
-    var vgrid='';
-    for(var gi=minW;gi<=maxW;gi++){vgrid+='<line x1="'+X(gi).toFixed(1)+'" y1="'+pt+'" x2="'+X(gi).toFixed(1)+'" y2="'+(pt+yh)+'" stroke="#111" stroke-opacity="'+(gi===m.current_week?'.18':'.07')+'" stroke-width="1"/>';}
-    var bandW=xw/(maxW-minW+1);
-    var currentBand='<rect x="'+Math.max(pl,X(m.current_week)-bandW/2).toFixed(1)+'" y="'+pt+'" width="'+bandW.toFixed(1)+'" height="'+yh+'" rx="7" fill="#fff" fill-opacity=".24" stroke="#111" stroke-opacity=".08"/>';
-    var executedPath=executed.length>1?'<path d="'+pathFor(executed)+'" fill="none" stroke="#0a0a0a" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>':'';
-    var futurePath=future.length>1?'<path d="'+pathFor(future)+'" fill="none" stroke="#4f4f4c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="9 7"/>':'';
-    var planDots=pts.filter(function(p){return p.week>lastExecuted;}).map(function(p){return '<circle cx="'+X(p.week).toFixed(1)+'" cy="'+Y(p.v).toFixed(1)+'" r="4.3" fill="#efefec" fill-opacity=".76" stroke="#4f4f4c" stroke-width="2.4"/>';}).join('');
-    var actualDots=executed.map(function(p){return '<circle cx="'+X(p.week).toFixed(1)+'" cy="'+Y(p.value).toFixed(1)+'" r="4.8" fill="#080808" stroke="#f8f8f5" stroke-width="2.2"/>';}).join('');
+    var executedD=executed.length>1?pathFor(executed):'';
+    var futureD=future.length>1?pathFor(future):'';
+    var planDash=options.expanded?'24 18':'20 16';
+    var pathHalos=(futureD?'<path d="'+futureD+'" fill="none" stroke="rgba(248,248,245,.88)" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="'+planDash+'"/>':'')+
+      (executedD?'<path d="'+executedD+'" fill="none" stroke="rgba(248,248,245,.92)" stroke-width="7.8" stroke-linecap="round" stroke-linejoin="round"/>':'');
+    var executedPath=executedD?'<path d="'+executedD+'" fill="none" stroke="#080808" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>':'';
+    var futurePath=futureD?'<path d="'+futureD+'" fill="none" stroke="#171717" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="'+planDash+'"/>':'';
+    var planDots=pts.filter(function(p){return p.week>lastExecuted;}).map(function(p){
+      var prefix=name==='负重引体'?'+':'';
+      var label='W'+p.week+' · '+prefix+p.v+'kg · 后续计划';
+      return '<g class="chart-point plan-point" data-point-label="'+escAttr(label)+'"><circle class="point-hit" cx="'+X(p.week).toFixed(1)+'" cy="'+Y(p.v).toFixed(1)+'" r="13" fill="transparent"/><circle class="point-dot" cx="'+X(p.week).toFixed(1)+'" cy="'+Y(p.v).toFixed(1)+'" r="4.3" fill="#f7f7f3" stroke="#111" stroke-width="2.5"/><title>'+esc(label)+'</title></g>';
+    }).join('');
+    var actualDots=actualRaw.map(function(p){
+      var href=p.review_href||'';
+      var prefix=name==='负重引体'?'+':'';
+      var detail=p.detail||prefix+p.value+'kg';
+      var label='W'+p.week+' · '+detail+(href?' · 点击打开训练复盘':' · 复盘链接待补充');
+      var focus=href?' tabindex="0" role="link" aria-label="'+escAttr(label)+'"':'';
+      return '<g class="chart-point actual-point'+(href?' has-review':'')+'"'+focus+' data-point-label="'+escAttr(label)+'" data-review-href="'+escAttr(href)+'"><circle class="point-hit" cx="'+X(p.week).toFixed(1)+'" cy="'+Y(p.value).toFixed(1)+'" r="14" fill="transparent"/><circle class="point-dot" cx="'+X(p.week).toFixed(1)+'" cy="'+Y(p.value).toFixed(1)+'" r="4.8" fill="#080808" stroke="#f8f8f5" stroke-width="2.2"/><title>'+esc(label)+'</title></g>';
+    }).join('');
     var labelPoints={};
     pts.forEach(function(p){labelPoints[p.week]={week:p.week,value:p.v};});
     actualRaw.forEach(function(p){labelPoints[p.week]={week:p.week,value:p.value};});
     var valueLabels=Object.keys(labelPoints).map(Number).sort(function(a,b){return a-b;}).map(function(w){
       var p=labelPoints[w], a=actualByWeek[p.week], executed=!!a, value=executed?a.value:p.value;
       var prefix=name==='负重引体'?'+':'';
-      return '<text x="'+X(p.week).toFixed(1)+'" y="'+(Y(value)-11).toFixed(1)+'" text-anchor="middle" font-size="10" font-weight="'+(executed?'750':'650')+'" fill="'+(executed?'#080808':'#4f4f4c')+'">'+esc(prefix+value+'kg')+'</text>';
+      return '<text class="chart-value-label" x="'+X(p.week).toFixed(1)+'" y="'+(Y(value)-11).toFixed(1)+'" text-anchor="middle" font-size="10" font-weight="'+(executed?'750':'700')+'" fill="#111">'+esc(prefix+value+'kg')+'</text>';
     }).join('');
     var labels='';
     for(var wi=minW;wi<=maxW;wi++){
       var on=wi===m.current_week;
-      labels += '<text x="' + X(wi).toFixed(1) + '" y="' + (H-8) + '" text-anchor="middle" font-size="10" font-weight="'+(on?'750':'550')+'" fill="'+(on?'#080808':'#777773')+'">W' + wi + '</text>';
+      labels += '<text class="chart-week-label" x="' + X(wi).toFixed(1) + '" y="' + (H-8) + '" text-anchor="middle" font-size="10" font-weight="'+(on?'780':'650')+'" fill="#171717">W' + wi + '</text>';
     }
-    return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'+currentBand+vgrid+grid+futurePath+executedPath+planDots+actualDots+valueLabels+labels+'</svg>';
+    var axes='';
+    if(options.expanded){
+      var axisStroke='rgba(17,17,17,.88)';
+      var axisHalo='rgba(248,248,245,.92)';
+      var axisLines='<line x1="'+pl+'" y1="'+pt+'" x2="'+pl+'" y2="'+(H-pb)+'" stroke="'+axisHalo+'" stroke-width="6"/>'+
+        '<line x1="'+pl+'" y1="'+(H-pb)+'" x2="'+(W-pr)+'" y2="'+(H-pb)+'" stroke="'+axisHalo+'" stroke-width="6"/>'+
+        '<line x1="'+pl+'" y1="'+pt+'" x2="'+pl+'" y2="'+(H-pb)+'" stroke="'+axisStroke+'" stroke-width="2"/>'+
+        '<line x1="'+pl+'" y1="'+(H-pb)+'" x2="'+(W-pr)+'" y2="'+(H-pb)+'" stroke="'+axisStroke+'" stroke-width="2"/>';
+      var yTicks='';
+      [0,.25,.5,.75,1].forEach(function(k){
+        var y=pt+yh*k, value=maxV-(maxV-minV)*k;
+        var label=Math.abs(value-Math.round(value))<.05?String(Math.round(value)):value.toFixed(1);
+        yTicks+='<line x1="'+(pl-5)+'" y1="'+y.toFixed(1)+'" x2="'+pl+'" y2="'+y.toFixed(1)+'" stroke="'+axisStroke+'" stroke-width="1.5"/>'+
+          '<text class="chart-axis-label" x="'+(pl-9)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="end" font-size="9" font-weight="650" fill="#171717">'+label+'</text>';
+      });
+      var xTicks='';
+      for(var xi=minW;xi<=maxW;xi++){
+        xTicks+='<line x1="'+X(xi).toFixed(1)+'" y1="'+(H-pb)+'" x2="'+X(xi).toFixed(1)+'" y2="'+(H-pb+5)+'" stroke="'+axisStroke+'" stroke-width="1.5"/>';
+      }
+      axes='<g class="chart-axes">'+axisLines+yTicks+xTicks+
+        '<text class="chart-axis-label" x="'+pl+'" y="'+(pt-12)+'" text-anchor="start" font-size="9" font-weight="760" fill="#171717">kg</text>'+
+        '<text class="chart-axis-label" x="'+(W-pr)+'" y="'+(H-pb-8)+'" text-anchor="end" font-size="9" font-weight="760" fill="#171717">周次</text></g>';
+    }
+    return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'+axes+pathHalos+futurePath+executedPath+planDots+actualDots+valueLabels+labels+'</svg>';
   }
   var chartBox = document.getElementById('chartBox');
-  Object.keys(D.charts || {}).forEach(function(name){
+  var activeChartTrigger=null;
+  var chartModalAnimation=null;
+  var chartModalClosing=false;
+  var chartModal=el('div','chart-modal');
+  chartModal.id='chartModal'; chartModal.setAttribute('aria-hidden','true'); chartModal.setAttribute('role','dialog'); chartModal.setAttribute('aria-modal','true');
+  chartModal.innerHTML='<div class="chart-modal-panel"><div class="chart-modal-head"><div><div class="chart-modal-kicker">EXPANDED VIEW / 负荷细节</div><div class="chart-modal-title" id="chartModalTitle"></div><div class="chart-modal-cap" id="chartModalCap"></div></div><button class="chart-modal-close" type="button" aria-label="关闭放大曲线">×</button></div><div class="chart-modal-plot"></div><div class="chart-modal-note"><b>悬停或聚焦节点可查看细节；已执行的实心点可打开对应训练复盘。</b><span>Esc 或点击背景关闭</span></div></div>';
+  document.body.appendChild(chartModal);
+  var chartModalPanel=chartModal.querySelector('.chart-modal-panel');
+  var modalPlot=chartModal.querySelector('.chart-modal-plot');
+  var modalClose=chartModal.querySelector('.chart-modal-close');
+  var chartModalPageSurfaces=[document.querySelector('.appbar'),document.getElementById('syncBar'),document.querySelector('main'),document.getElementById('navBar'),document.querySelector('footer')].filter(Boolean);
+  function setChartModalPageInert(value){
+    chartModalPageSurfaces.forEach(function(node){if(value)node.setAttribute('inert','');else node.removeAttribute('inert');});
+  }
+  function reducedChartMotion(){return !!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);}
+  function cancelChartModalAnimation(){
+    if(!chartModalAnimation)return;
+    chartModalAnimation.onfinish=null;
+    chartModalAnimation.cancel();
+    chartModalAnimation=null;
+  }
+  function chartOriginRect(){
+    var card=activeChartTrigger&&activeChartTrigger.closest('.chartcard');
+    return card?card.getBoundingClientRect():null;
+  }
+  function chartOriginTransform(origin){
+    if(!origin)return 'none';
+    var target=chartModalPanel.getBoundingClientRect();
+    var scaleX=Math.max(.08,Math.min(1,origin.width/Math.max(1,target.width)));
+    var scaleY=Math.max(.08,Math.min(1,origin.height/Math.max(1,target.height)));
+    var dx=(origin.left+origin.width/2)-(target.left+target.width/2);
+    var dy=(origin.top+origin.height/2)-(target.top+target.height/2);
+    return 'translate3d('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px,0) scale('+scaleX.toFixed(4)+','+scaleY.toFixed(4)+')';
+  }
+  function bindChartInteractions(scope){
+    scope.querySelectorAll('.chart-point').forEach(function(point){
+      var plot=point.closest('.plot,.chart-modal-plot');
+      if(!plot)return;
+      var tip=plot.querySelector('.chart-tip');
+      if(!tip){tip=el('div','chart-tip');plot.appendChild(tip);}
+      function positionTip(ev){
+        var box=plot.getBoundingClientRect(), x, y;
+        if(ev&&typeof ev.clientX==='number'){x=ev.clientX-box.left;y=ev.clientY-box.top;}
+        else {var pb=point.getBoundingClientRect();x=pb.left+pb.width/2-box.left;y=pb.top-box.top;}
+        x=Math.max(56,Math.min(box.width-56,x)); y=Math.max(34,Math.min(box.height-8,y));
+        tip.style.left=x+'px';tip.style.top=y+'px';
+      }
+      function showTip(ev){tip.textContent=point.dataset.pointLabel||'';positionTip(ev);tip.classList.add('on');}
+      function hideTip(){tip.classList.remove('on');}
+      point.addEventListener('pointerenter',showTip); point.addEventListener('pointermove',positionTip); point.addEventListener('pointerleave',hideTip);
+      point.addEventListener('focus',showTip); point.addEventListener('blur',hideTip);
+      if(point.dataset.reviewHref){
+        point.addEventListener('click',function(){window.location.href=point.dataset.reviewHref;});
+        point.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();window.location.href=point.dataset.reviewHref;}});
+      }
+    });
+  }
+  function finishExpandedChartClose(){
+    cancelChartModalAnimation();
+    chartModal.classList.remove('on');chartModal.setAttribute('aria-hidden','true');document.body.classList.remove('chart-modal-open');
+    setChartModalPageInert(false);chartModalClosing=false;
+    if(activeChartTrigger){activeChartTrigger.focus();activeChartTrigger=null;}
+  }
+  function closeExpandedChart(){
+    if(!chartModal.classList.contains('on')||chartModalClosing)return;
+    chartModalClosing=true;cancelChartModalAnimation();
+    var destination=chartOriginTransform(chartOriginRect());
+    if(reducedChartMotion()||destination==='none'||!chartModalPanel.animate){finishExpandedChartClose();return;}
+    chartModalAnimation=chartModalPanel.animate([
+      {transform:'translate3d(0,0,0) scale(1,1)',opacity:1},
+      {transform:destination,opacity:.08}
+    ],{duration:190,easing:'cubic-bezier(.55,0,1,.45)',fill:'both'});
+    chartModalAnimation.onfinish=finishExpandedChartClose;
+  }
+  function openExpandedChart(name,ch,trigger){
+    activeChartTrigger=trigger;chartModalClosing=false;cancelChartModalAnimation();
+    var origin=chartOriginRect();
+    document.getElementById('chartModalTitle').textContent=name;document.getElementById('chartModalCap').textContent=ch.cap;
+    modalPlot.innerHTML=svgChart(name,ch,{expanded:true,width:980});bindChartInteractions(chartModal);
+    chartModal.classList.add('on');chartModal.setAttribute('aria-hidden','false');document.body.classList.add('chart-modal-open');setChartModalPageInert(true);modalClose.focus();
+    if(reducedChartMotion()||!origin||!chartModalPanel.animate)return;
+    requestAnimationFrame(function(){
+      var from=chartOriginTransform(origin);
+      chartModalAnimation=chartModalPanel.animate([
+        {transform:from,opacity:.08},
+        {transform:'translate3d(0,0,0) scale(1,1)',opacity:1}
+      ],{duration:270,easing:'cubic-bezier(.16,1,.3,1)',fill:'both'});
+      var openingAnimation=chartModalAnimation;
+      openingAnimation.onfinish=function(){openingAnimation.cancel();if(chartModalAnimation===openingAnimation)chartModalAnimation=null;};
+    });
+  }
+  modalClose.onclick=closeExpandedChart;
+  chartModal.addEventListener('click',function(e){if(e.target===chartModal||e.target===chartModalPanel)closeExpandedChart();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&chartModal.classList.contains('on'))closeExpandedChart();});
+  Object.keys(D.charts).forEach(function(name){
     var c = el('div','chartcard');
-    var t = el('div','ttl'); t.appendChild(el('span','n',name)); t.appendChild(el('span','cap',D.charts[name].cap));
+    var t = el('div','ttl'); t.appendChild(el('span','n',name));
+    var tools=el('div','chart-tools'); tools.appendChild(el('span','cap',D.charts[name].cap));
+    var expand=el('button','chart-expand','放大');expand.type='button';expand.setAttribute('aria-label','放大'+name+'曲线');
+    expand.onclick=function(){openExpandedChart(name,D.charts[name],expand);};tools.appendChild(expand);t.appendChild(tools);
     c.appendChild(t);
     c.appendChild(el('div','plot',svgChart(name, D.charts[name])));
     var lg = el('div','lg');
@@ -1005,17 +2398,10 @@
     lg.innerHTML = '<span><i></i>已执行</span><span><i class="plan"></i>后续计划</span><span class="stat">已记录 '+executedCount+' 周 · 当前 W'+m.current_week+'</span>';
     c.appendChild(lg);
     var actuals = el('div','actuals');
-    (D.charts[name].actual||[]).forEach(function(p){ actuals.appendChild(el('span','actual','W'+p.week+' '+p.detail)); });
+    (D.charts[name].actual||[]).forEach(function(p){ actuals.appendChild(compactNode('span','actual','W'+p.week+' '+p.detail,28)); });
     c.appendChild(actuals);
-    chartBox.appendChild(c);
+    chartBox.appendChild(c);bindChartInteractions(c);
   });
-  if(!Object.keys(D.charts || {}).length){
-    var progress = el('div','chartcard');
-    progress.innerHTML = '<div class="ttl"><span class="n">'+esc(objectiveLabel)+'执行信号</span><span class="cap">先记录，再判断</span></div>' +
-      '<div class="plan-prescription">此计划不强行套用四大项力量曲线。每次训练记录实际重量、次数、余力或对应的非重量指标；完成一周后，AI 根据这些真实数据安排下一周。</div>' +
-      '<div class="actuals">'+activeSignals.map(function(signal){return '<span class="actual">'+esc(signal)+'</span>';}).join('')+'</div>';
-    chartBox.appendChild(progress);
-  }
 
   var bwBox = document.getElementById('bwBox');
   var bw = D.notion.bodyweight;
@@ -1047,7 +2433,8 @@
   base.appendChild(el('div','weight-cell weight-value',D.notion.baseline_kg!=null?D.notion.baseline_kg+' kg':'—'));
   base.appendChild(el('div','weight-cell weight-status','<span>等待新实测</span>'));
   weightTable.appendChild(base); bwBox.appendChild(weightTable);
-  document.getElementById('bwNote').textContent = (D.notion.note || '') + (D.notion.last_sync ? ' ｜ 数据截至 ' + D.notion.last_sync : ' ｜ 数据待同步');
+  var bwNoteFull=(D.notion.note || '') + (D.notion.last_sync ? ' ｜ 数据截至 ' + D.notion.last_sync : ' ｜ 数据待同步');
+  var bwNote=document.getElementById('bwNote');bwNote.textContent=compactText(bwNoteFull,86);if(bwNote.textContent!==bwNoteFull)bwNote.title=bwNoteFull;
 
   var dotBox = document.getElementById('dotBox');
   var dots = el('div','dots');
@@ -1076,67 +2463,75 @@
     var points=(rv.workbench_points||segments.slice(1,3)).slice(0,3);
     return {title:title,lead:lead,points:points,decision:rv.workbench_decision||rv.status};
   }
+  function localRoot(){
+    if(window.location.protocol!=='file:') return '';
+    var path=decodeURIComponent(window.location.pathname||'').replace(/\\/g,'/');
+    if(/^\/[A-Za-z]:\//.test(path)) path=path.slice(1);
+    return path.slice(0,path.lastIndexOf('/'));
+  }
+  function localFilePath(relative){
+    var root=localRoot();
+    if(!root||!relative) return '';
+    var leading=root.match(/^[A-Za-z]:\//)?root.slice(0,3):'/';
+    var parts=(root+'/'+relative).replace(/\\/g,'/').split('/');
+    var clean=[];
+    parts.forEach(function(part){if(!part||part==='.')return;if(part==='..'){clean.pop();}else if(!/^[A-Za-z]:$/.test(part)){clean.push(part);}});
+    return leading+clean.join('/');
+  }
+  function obsidianLocalHref(relative){
+    var absolute=localFilePath(relative);
+    return absolute?'obsidian://open?path='+encodeURIComponent(absolute):'';
+  }
+  var docOverlay=document.getElementById('docOverlay'),docTitle=document.getElementById('docTitle'),docBody=document.getElementById('docBody'),docObsidian=document.getElementById('docObsidian');
+  function openDocument(doc){
+    if(!doc||!doc.content_markdown) return;
+    docTitle.textContent=doc.title||'内容';
+    docBody.innerHTML='<div class="md-raw">'+esc(doc.content_markdown)+'</div>';
+    var editHref=obsidianLocalHref(doc.file_path||'');
+    docObsidian.hidden=!editHref; docObsidian.href=editHref||'#';
+    docOverlay.hidden=false; document.body.style.overflow='hidden';
+  }
+  function closeDocument(){docOverlay.hidden=true;document.body.style.overflow='';}
+  document.getElementById('docClose').onclick=closeDocument;
+  docOverlay.onclick=function(e){if(e.target===docOverlay)closeDocument();};
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!docOverlay.hidden)closeDocument();});
   D.reviews.forEach(function(rv,index){
     var summary=reviewSummary(rv);
-    var r = el(rv.href?'a':'div','row');
+    var hasContent=!!rv.content_markdown;
+    var r = el('div','row');
     r.dataset.seq=String(index+1).padStart(2,'0');
-    if(rv.href){
-      r.href=rv.href;
-      r.onclick=function(e){
-        e.preventDefault();
-        window.location.href=rv.href;
-      };
+    if(hasContent){
+      r.setAttribute('role','button');r.tabIndex=0;
+      r.onclick=function(){openDocument({title:summary.title,file_path:rv.file_path,content_markdown:rv.content_markdown});};
+      r.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();r.click();}};
     }
     r.appendChild(el('div','review-kicker','<span>'+esc(rv.full_date||rv.date)+'</span><span>'+(rv.day==='周训练阶段'?'阶段复盘':'单次复盘')+'</span>'));
     r.appendChild(el('div','review-title',esc(summary.title)));
-    r.appendChild(el('div','review-lead',esc(summary.lead)));
+    r.appendChild(compactNode('div','review-lead',summary.lead,64));
     if(summary.points.length){
-      var ps=el('div','review-points'); summary.points.forEach(function(p){ps.appendChild(el('span','review-point',esc(p)));}); r.appendChild(ps);
+      var ps=el('div','review-points'); summary.points.forEach(function(p){ps.appendChild(compactNode('span','review-point',p,34));}); r.appendChild(ps);
     }
-    r.appendChild(el('div','review-decision','<b>处方决定</b><br>'+esc(summary.decision)));
-    if(rv.href){
-      var openRow=el('div','open','打开完整复盘');
-      if(rv.path){
-        openRow.title=rv.path;
-        var copy=el('button','ghost','复制文件路径');
-        copy.style.marginLeft='10px'; copy.style.padding='5px 9px';
-        copy.onclick=function(e){
-          e.preventDefault(); e.stopPropagation();
-          var value=rv.path;
-          if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(value);}
-          copy.textContent='已复制'; setTimeout(function(){copy.textContent='复制文件路径';},1400);
-        };
-        openRow.appendChild(copy);
-      }
-      r.appendChild(openRow);
-    }
+    var decisionShort=compactText(summary.decision,72),decisionNode=el('div','review-decision','<b>处方决定</b><br>'+esc(decisionShort));
+    if(decisionShort!==summary.decision){decisionNode.title=summary.decision;decisionNode.setAttribute('aria-label','处方决定：'+summary.decision);}
+    r.appendChild(decisionNode);
+    if(hasContent){r.appendChild(el('div','open','直接阅读完整复盘'));}
     reviewBox.appendChild(r);
   });
   var linkBox = document.getElementById('linkBox');
-  function linkCard(n, href, s, ext){
-    var a = el('a','link');
-    if(href){ a.href = href; if(ext) a.target='_blank'; }
+  function linkCard(n, href, s, ext, action){
+    var a = el(action?'button':'a','link');
+    if(action){a.type='button';a.onclick=action;}
+    else if(href){ a.href = href; if(ext) a.target='_blank'; }
     a.appendChild(el('div','n',n)); a.appendChild(el('div','s',s));
     return a;
   }
   var links=D.links||{};
-  linkBox.appendChild(linkCard('完整训练计划', m.plan_href, '在 Obsidian 中打开 ' + m.source_version));
-  linkBox.appendChild(linkCard('训练复盘索引', links.review_index_href||'', links.review_index_href?'在 Obsidian 中打开复盘文件':'复盘索引尚未建立'));
-  linkBox.appendChild(linkCard('状态档案', links.status_index_href||'', links.status_index_href?'在 Obsidian 中打开状态档案':'状态档案尚未建立'));
+  var docs=D.documents||{};
+  linkBox.appendChild(linkCard('完整训练计划', m.plan_href, '直接打开 ' + m.source_version, true));
+  linkBox.appendChild(linkCard('训练复盘索引','',docs.review_index?'直接在工作台阅读':'复盘索引尚未建立',false,docs.review_index?function(){openDocument(docs.review_index);}:null));
+  linkBox.appendChild(linkCard('状态档案','',docs.status_index?'直接在工作台阅读':'状态档案尚未建立',false,docs.status_index?function(){openDocument(docs.status_index);}:null));
   linkBox.appendChild(linkCard('Notion 训练系统', links.notion_url||'', links.notion_url?'训练记录 / 体重（动态数据）':'未配置 Notion 链接', true));
 
-  var setBox = document.getElementById('setBox');
-  [['同步状态', sync.status === 'ok' ? '正常 · 上次 ' + (sync.last_success||'') : (sync.status === 'stale' ? '待同步：' + (sync.reason||'') : '失败：' + (sync.reason||''))],
-   ['建档状态', onboarding.completed ? '已完成' : '待建档：' + (onboarding.missing||[]).join('、')],
-   ['训练状态', (trainingStatus.state||'unknown') + (trainingStatus.reason ? ' · ' + trainingStatus.reason : '')],
-   ['系统版本', (systemInfo.suite_version||'未知') + ' · 工作台 schema ' + (systemInfo.workbench_schema||'—')],
-   ['知识包', (knowledge.public_pack&&knowledge.public_pack.status||'未登记') + ' · 私人包 ' + (knowledge.private_pack&&knowledge.private_pack.count||0)],
-   ['当前计划', m.title + ' · ' + m.source_version],
-   ['当前安排',timeline.map(function(x){return x.date.slice(5)+' '+(x.day||x.title);}).join(' ｜ ')],
-   ['页面更新', m.updated_at],['Notion 同步', D.notion.last_sync || '未同步'],
-   ['完整计划（本地）', m.plan_file]].forEach(function(x){
-    var r = el('div','setrow'); r.appendChild(el('span','k',x[0])); r.appendChild(el('span','v',x[1])); setBox.appendChild(r);
-  });
   var ruleBox = document.getElementById('ruleBox');
   function ruleHighlights(body){
     var parts=(body||'').split(/[；。]/).map(function(x){return x.trim();}).filter(function(x){return x.length>7;});
@@ -1147,7 +2542,21 @@
     var picked=[]; scored.forEach(function(x){if(picked.length<3&&picked.indexOf(x.text)<0)picked.push(x.text);});
     return picked.map(function(x){return x.length>58?x.slice(0,58)+'…':x;});
   }
-  D.rules.forEach(function(rule,index){
+  function rulePriority(rule,index){
+    var score=0;
+    if(/W3 实际|当前|双轨冲刺|v10/.test(rule))score=120;
+    else if(/未完成|退行|锐痛|停止|不得/.test(rule))score=110;
+    else if(/顶组渐进/.test(rule))score=100;
+    else if(/回退组渐进/.test(rule))score=90;
+    else if(/热身与动作标准/.test(rule))score=80;
+    else if(/减量、测试与复盘/.test(rule))score=70;
+    else if(/日常核心/.test(rule))score=30;
+    else if(/历史 PR|校准/.test(rule))score=20;
+    return score-index*.01;
+  }
+  D.rules.map(function(rule,index){return {rule:rule,index:index,score:rulePriority(rule,index)};})
+  .sort(function(a,b){return b.score-a.score;}).forEach(function(entry){
+    var rule=entry.rule,index=entry.index;
     var pos=rule.indexOf('：'), title=pos>0?rule.slice(0,pos):('规则 '+(index+1)), body=pos>0?rule.slice(pos+1):rule;
     var item=el('details','rule-item');
     var head=el('span','rule-head'); head.appendChild(el('span','rule-title',esc(title)));
@@ -1159,10 +2568,10 @@
     '<div class="how-step"><span class="num">01 / TRAIN</span><b>查看训练</b><p>在「训练」确认当天动作、重量、组次和 RPE。</p></div>'+
     '<div class="how-step"><span class="num">02 / RECORD</span><b>记录结果</b><p>复制练后模板，填入实际表现和身体反馈。</p></div>'+
     '<div class="how-step"><span class="num">03 / SYNC</span><b>同步数据</b><p>对 AI 说「同步工作台」，拉取 Notion 最新记录。</p></div>'+
-    '<div class="how-step"><span class="num">04 / REVIEW</span><b>进入复盘</b><p>工作台看重点；完整判断直接打开 Obsidian 文件。</p></div>';
+    '<div class="how-step"><span class="num">04 / REVIEW</span><b>进入复盘</b><p>工作台看重点，也能直接阅读完整复盘；Obsidian 仅用于可选编辑。</p></div>';
 
   var navBar = document.getElementById('navBar');
-  var navs = [['today','训练','今日训练'],['week','计划','周期计划'],['trend','负荷','负荷趋势'],['record','复盘','训练复盘'],['settings','数据','数据与同步']];
+  var navs = [['today','训练','今日训练'],['week','计划','周期计划'],['trend','负荷','负荷趋势'],['record','复盘','训练复盘'],['settings','指南','使用指南与规则']];
   function setNav(k){
     document.querySelectorAll('.nav a').forEach(function(a){ a.classList.toggle('on', a.dataset.k===k); });
   }

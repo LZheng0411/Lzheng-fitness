@@ -1,6 +1,6 @@
 # 视觉契约
 
-工作台唯一视图资产为 `../assets/workbench-template.html`，模板版本为 `lzheng-fitness-workbench-v1`。AI 只生成或刷新 `workbench-data`，不得改写模板导航、组件和视觉。跨页面职责见 `../../lzheng-training-system/references/html-template-contract.md`。
+工作台唯一视图资产为 `../assets/workbench-template.html`，模板版本为 `lzheng-fitness-workbench-v3`。AI 只生成或刷新 `workbench-data`，不得改写模板导航、组件和视觉。跨页面职责见 `../../lzheng-training-system/references/html-template-contract.md`。
 
 ## 固定语言
 
@@ -8,7 +8,7 @@
 - 全局背景、Hero 和桌面侧栏共享同一组图片资产，但各自使用不同遮罩与取景。
 - Hero 是唯一大面积深色信息区；其他卡片使用半透明暖白材质，让背景可见但不干扰阅读。
 - 桌面侧栏为深色玻璃，手机端改为底部导航。
-- 必须使用 Skill 内置的饿狼图片资产；正式 HTML 和发布副本均使用本地相对路径，不使用外链。
+- 必须使用 Skill 内置的项目视觉资产；视频不可播放、用户开启减少动态效果或资源缺失时，自动退回静态背景。正式 HTML 和发布副本均使用本地相对路径，不使用外链。
 
 ## 信息层级
 
