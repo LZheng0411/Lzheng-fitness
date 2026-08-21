@@ -1,6 +1,6 @@
 ---
 name: lzheng-fitness-workbench-builder
-description: 将训练计划 JSON、执行基准、训练复盘、可选 Notion 导出和内置界面素材组装为可离线打开的个人健身工作台，并完成数据刷新、内置文档阅读、可选 Obsidian 编辑、响应式页面、发布副本与自动校验。用于用户要求从零构建、迁移、重建、打包、同步、修复或发布健身工作台，或希望在新电脑上复刻同款个人训练系统时；不用于制定个性化训练处方、单次训练复盘或医疗建议。
+description: 将训练计划 JSON、执行基准、训练复盘、可选 Notion 导出和内置界面素材组装为可离线打开的个人健身工作台，并完成数据刷新、壁纸替换、内置文档阅读、可选 Obsidian 编辑、响应式页面、发布副本与自动校验。用于用户要求从零构建、迁移、重建、替换背景、打包、同步、修复或发布健身工作台，或希望在新电脑上复刻同款个人训练系统时；不用于制定个性化训练处方、单次训练复盘或医疗建议。
 ---
 
 # Lzheng 健身工作台构建器
@@ -15,7 +15,8 @@ description: 将训练计划 JSON、执行基准、训练复盘、可选 Notion 
 - **刷新数据**：保留正式 HTML 视图，只运行数据生成器更新唯一 `workbench-data` 数据块；schema 6 必须包含建档、系统、知识包、状态和来源核验信息。
 - **接入完整计划**：完整计划使用 `plan_contract` 时，先运行 `Adapt-PlanContract.py` 适配为工作台主源；不得要求用户手工重写第二份计划 JSON。
 - **链接打不开 / 跨电脑迁移异常**：完整读取 [路径可迁移修复协议](references/path-portability-repair.md)，先盘点全部入口、配置和发布目标，再修复并执行整体移动回归；不得只修改截图中的单个按钮。
-- **修改界面或更换背景**：读取 [视觉契约](references/visual-contract.md)，修改源工作台后用模板刷新脚本生成脱敏模板。
+- **替换已有工作台壁纸**：完整读取 [壁纸替换](references/background-replacement.md)，调用替换脚本完成备份、静态/动态模式、取景更新和检查；不得让用户手工改 HTML。
+- **修改项目默认界面或默认背景**：读取 [视觉契约](references/visual-contract.md)，修改源模板后用模板刷新脚本生成脱敏模板。
 - **制作发布副本**：读取 [迁移与发布](references/migration-and-release.md)，先校验，再复制 HTML 和全部本地素材。
 - **制定计划或训练复盘**：转交对应训练 Skill；本 Skill 只消费结果，不凭空生成个人处方。
 
@@ -105,12 +106,15 @@ python "<skill>/scripts/Validate-FitnessWorkbenchSkill.py" --skill "<skill>"
 - `scripts/Adapt-PlanContract.py`：将完整计划 Skill 的统一 `plan_contract` 适配为工作台主源。
 - `scripts/Check-FitnessWorkbench.py`：检查结构、事实一致性、资源和发布副本。
 - `scripts/Prepare-FitnessWorkbenchRelease.py`：生成移除本机路径与 Obsidian 深链的分享版并复制素材。
+- `scripts/Replace-FitnessWorkbenchBackground.py`：安全替换已生成工作台的图片/MP4 背景，自动备份、检查并在失败时回滚。
 - `scripts/Refresh-FitnessWorkbenchTemplate.py`：从正式页面刷新脱敏模板。
 - `scripts/Validate-FitnessWorkbenchSkill.py`：检查 Skill 包完整性与可迁移性。
 - `scripts/Test-FitnessWorkbenchWeekTransition.py`：回归验证跨周同步、频率、今日处方与自重语义。
 - `scripts/Test-FitnessWorkbenchPortability.py`：把完整健身系统移动到新目录，验证计划、内置文档、全部页面资源和无 Obsidian 发布副本仍可用。
+- `scripts/Test-FitnessWorkbenchBackgroundReplacement.py`：验证静态、动态、初始化接入、目录移动、发布复制和损坏素材拒绝。
 - `scripts/Migrate-FitnessWorkbenchSchema.py`：将保留的 schema 5 数据块安全迁移为 schema 6；正式页面仍应由数据生成器重新构建。
 - `references/path-portability-repair.md`：AI 处理链接失效、旧绝对路径、系统迁移和发布假通过时的强制修复协议。
+- `references/background-replacement.md`：AI 和用户执行壁纸替换时的命令、备份、取景与验收说明。
 - `assets/workbench-template.html`：不含个人事实的界面模板。
 - `assets/backgrounds/`：工作台内置视频、静态兜底和兼容图片。
 - `assets/examples/`：匿名计划与 Notion 输入示例。

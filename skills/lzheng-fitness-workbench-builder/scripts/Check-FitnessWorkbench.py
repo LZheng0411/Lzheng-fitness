@@ -190,6 +190,19 @@ def check_html(project, notion=None, restore_notion_from_html=None):
         problems.append("schema 必须为 6: %s" % data.get("schema"))
     data_end = html.find("</script>", html.find('id="workbench-data"'))
     view_source = html[data_end + len("</script>"):] if data_end >= 0 else html
+    if html.count("FITNESS_WORKBENCH_BACKGROUND_CONFIG_START") != 1 or html.count("FITNESS_WORKBENCH_BACKGROUND_CONFIG_END") != 1:
+        problems.append("背景配置块数量异常")
+    video_blocks = re.findall(r'<video\s+id="workbenchBgVideo"[\s\S]*?</video>', html)
+    if len(video_blocks) != 1:
+        problems.append("背景视频块数量异常")
+    else:
+        mode_match = re.search(r'data-background-mode="(static|video)"', video_blocks[0])
+        if not mode_match:
+            problems.append("背景模式未声明")
+        elif mode_match.group(1) == "video" and 'id="workbenchVideoSource"' not in video_blocks[0]:
+            problems.append("动态背景模式缺少 MP4 source")
+        elif mode_match.group(1) == "static" and 'id="workbenchVideoSource"' in video_blocks[0]:
+            problems.append("静态背景模式仍引用视频 source")
     if re.search(r"当前\s*v\d+|页面按\s*v\d+|打开\s*v\d+|验证计划-v\d+", view_source):
         problems.append("视图代码仍写死具体计划版本")
     cur = os.path.join(project, "训练与周期", "当前周期")
