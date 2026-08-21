@@ -240,6 +240,33 @@ def build_links(project_root, previous=None, notion=None):
     return links
 
 
+def read_portable_document(path):
+    """Read a local Markdown source for the workbench's built-in reader."""
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8-sig") as fh:
+        return fh.read()
+
+
+def build_portable_documents(project_root):
+    """Embed primary Markdown indexes so reading never depends on Obsidian."""
+    targets = {
+        "review_index": ("训练复盘索引", os.path.join(project_root, "训练复盘与状态", "训练复盘", "INDEX.md")),
+        "status_index": ("状态档案", os.path.join(project_root, "训练复盘与状态", "状态档案", "INDEX.md")),
+    }
+    documents = {}
+    for key, (title, path) in targets.items():
+        content = read_portable_document(path)
+        if content is None:
+            continue
+        documents[key] = {
+            "title": title,
+            "file_path": relative_path(path, project_root),
+            "content_markdown": content,
+        }
+    return documents
+
+
 def build_meta(plan_json, plan_file_name, current_week, baseline, project_root):
     plan = plan_json.get("plan", {})
     plan_rel = "训练与周期/当前周期/" + plan_file_name.replace(".json", ".html")
@@ -951,6 +978,7 @@ def build_reviews(review_rows, project_root):
             if not os.path.isfile(absolute):
                 fail("复盘索引目标不存在: " + absolute)
             item["file_path"] = relative_path(absolute, project_root)
+            item["content_markdown"] = read_portable_document(absolute) or ""
             item.update(read_workbench_summary(absolute))
         else:
             fail("复盘索引缺少可打开的文件链接: %s %s" % (r.get("full_date"), r.get("day")))
@@ -1196,7 +1224,7 @@ def apply_data(html_path, data, backup_dir):
     失败时保留原文件，并把上一版备份到 backup_dir。"""
     with open(html_path, encoding="utf-8") as fh:
         html = fh.read()
-    payload = json.dumps(data, ensure_ascii=False)
+    payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
     replacement = '<script id="workbench-data" type="application/json">' + payload + '</script>'
     new_html, n = re.subn(
         r'<script id="workbench-data" type="application/json">[\s\S]*?</script>',
@@ -1311,6 +1339,7 @@ def main():
         "advice": prev.get("advice") or "按复盘索引的最近一次判定准备下一次训练。",
         "today_summary": build_today_summary(review_rows, timeline),
         "links": build_links(project, prev.get("links", {}), notion),
+        "documents": build_portable_documents(project),
         "notion": notion or {
             "last_sync": None,
             "bodyweight": [],

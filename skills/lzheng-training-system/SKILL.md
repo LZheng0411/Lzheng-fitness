@@ -71,4 +71,5 @@ python scripts/lzheng_training_system.py validate --root "<系统根目录>"
 - `doctor` 显示配置、四个处方 Skill、专家库、工作台构建器、主源目录和工作台均可用；
 - `validate` 通过每个 Skill 的快速校验、工作台数据/HTML 检查和隐私扫描；
 - 在新的隔离空目录 `bootstrap` 成功，并显示“待建档”而不是假重量；
+- 整套系统移动到不同盘符或改名后，旧绝对路径自动迁移，`doctor` 与 `upgrade` 继续通过；
 - 每次正式复盘和接回均生成 `LZHENG_HANDOFF`，经 `process-handoffs` 刷新成功或明确报告失败。

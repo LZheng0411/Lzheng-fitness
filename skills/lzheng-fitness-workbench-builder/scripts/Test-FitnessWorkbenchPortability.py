@@ -39,6 +39,22 @@ def run(command: list[str]) -> str:
     return completed.stdout
 
 
+def run_expect_failure(command: list[str]) -> str:
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
+    completed = subprocess.run(
+        command,
+        env=env,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        capture_output=True,
+    )
+    if completed.returncode == 0:
+        fail("本应失败的缺失资源检查却通过：" + " ".join(command))
+    return completed.stdout + completed.stderr
+
+
 def load_data(project: Path) -> dict:
     html = (project / "健身工作台.html").read_text(encoding="utf-8")
     blocks = DATA_BLOCK.findall(html)
@@ -95,6 +111,46 @@ def main() -> None:
         check_output = run([sys.executable, str(HERE / "Check-FitnessWorkbench.py"), "--project", str(moved)])
         if "FITNESS_WORKBENCH_CHECK: PASS" not in check_output:
             fail("移动目录后的工作台检查未通过")
+
+        release = temp / "发布副本（无 Obsidian）"
+        run([
+            sys.executable,
+            str(HERE / "Prepare-FitnessWorkbenchRelease.py"),
+            "--project",
+            str(moved),
+            "--deploy",
+            str(release),
+        ])
+        release_check = run([
+            sys.executable,
+            str(HERE / "Check-FitnessWorkbench.py"),
+            "--project",
+            str(moved),
+            "--deploy",
+            str(release),
+        ])
+        if "FITNESS_WORKBENCH_CHECK: PASS" not in release_check:
+            fail("无 Obsidian 发布副本检查未通过")
+        release_data = json.loads(DATA_BLOCK.findall((release / "index.html").read_text(encoding="utf-8"))[0])
+        for key in ("review_index", "status_index"):
+            if not release_data.get("documents", {}).get(key, {}).get("content_markdown"):
+                fail("发布副本无法直接阅读文档：" + key)
+
+        video = release / "工作台与工具/健身工作台开发/界面素材/workbench-background.mp4"
+        if not video.is_file():
+            fail("发布副本没有复制动态背景")
+        missing = video.with_suffix(".mp4.missing")
+        video.rename(missing)
+        failure = run_expect_failure([
+            sys.executable,
+            str(HERE / "Check-FitnessWorkbench.py"),
+            "--project",
+            str(moved),
+            "--deploy",
+            str(release),
+        ])
+        if "workbench-background.mp4" not in failure:
+            fail("验收没有明确报告缺失的视频资源")
 
     print("FITNESS_WORKBENCH_PORTABILITY: PASS")
 

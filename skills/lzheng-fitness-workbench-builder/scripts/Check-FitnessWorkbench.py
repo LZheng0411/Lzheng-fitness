@@ -22,6 +22,7 @@ import os
 import re
 import subprocess
 import sys
+from pathlib import Path
 from urllib.parse import unquote, urlparse
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -150,11 +151,16 @@ def resolve_project_entry(project, value):
 
 def extract_asset_paths(html):
     paths = []
-    for raw in re.findall(r'url\(["\']?([^"\')]+)', html):
+    candidates = re.findall(r'url\(["\']?([^"\')]+)', html)
+    candidates += re.findall(r'''(?:src|poster)\s*=\s*["']([^"']+)["']''', html, re.I)
+    for raw in candidates:
         value = raw.strip()
-        if not value or value.startswith(("data:", "http://", "https://", "#")):
+        if not value or value.startswith(("data:", "http://", "https://", "#", "blob:")):
             continue
-        paths.append(unquote(value))
+        parsed = urlparse(value)
+        if parsed.scheme or parsed.netloc or not parsed.path:
+            continue
+        paths.append(unquote(parsed.path))
     return list(dict.fromkeys(paths))
 
 
@@ -227,16 +233,26 @@ def check_html(project, notion=None, restore_notion_from_html=None):
         target = resolve_project_entry(project, review.get("file_path"))
         if not target or not os.path.isfile(target):
             problems.append("复盘入口无效: " + str(review.get("file")))
+        elif review.get("content_markdown") != Path(target).read_text(encoding="utf-8-sig"):
+            problems.append("复盘内置内容不是当前文件: " + str(review.get("file")))
     links = data.get("links", {})
+    documents = data.get("documents", {})
     for key, label in (("review_index", "训练复盘索引"), ("status_index", "状态档案索引")):
         target = resolve_project_entry(project, links.get(key + "_file"))
         if not target or not os.path.isfile(target):
             problems.append(label + "文件入口无效")
+            continue
+        document = documents.get(key) if isinstance(documents, dict) else None
+        if not isinstance(document, dict) or document.get("file_path") != links.get(key + "_file"):
+            problems.append(label + "未嵌入工作台内置阅读器")
+        elif document.get("content_markdown") != Path(target).read_text(encoding="utf-8-sig"):
+            problems.append(label + "内置内容不是当前文件")
     summary = data.get("today_summary")
     if summary and not any(x.get("date") == summary.get("date") and x.get("day") == summary.get("day") and x.get("status") == "done" for x in timeline):
         problems.append("今日复盘与今日时间线不一致")
     for rel in extract_asset_paths(html):
-        if not os.path.isfile(os.path.abspath(os.path.join(project, rel.replace("/", os.sep)))):
+        target = resolve_project_entry(project, rel)
+        if not target or not os.path.isfile(target):
             problems.append("页面资源不存在: " + rel)
     onboarding = data.get("onboarding", {})
     system = data.get("system", {})
@@ -282,6 +298,11 @@ def check_deploy(deploy_dir, source_html=None):
             plan_target = resolve_project_entry(deploy_dir, deploy_data.get("meta", {}).get("plan_href"))
             if not plan_target or not os.path.isfile(plan_target):
                 problems.append("发布目录缺少完整计划 HTML")
+            documents = deploy_data.get("documents", {})
+            for key, label in (("review_index", "训练复盘索引"), ("status_index", "状态档案索引")):
+                document = documents.get(key) if isinstance(documents, dict) else None
+                if not isinstance(document, dict) or not document.get("content_markdown"):
+                    problems.append("发布目录缺少内置" + label)
         except json.JSONDecodeError:
             problems.append("发布目录 workbench-data 无法解析")
     if re.search(r"__[A-Z0-9_]+__", html):
@@ -295,8 +316,8 @@ def check_deploy(deploy_dir, source_html=None):
         if source_view != deploy_view:
             problems.append("发布版视图模板与正式工作台不一致")
     for rel in extract_asset_paths(html):
-        target = os.path.abspath(os.path.join(deploy_dir, rel.replace("/", os.sep)))
-        if not os.path.isfile(target):
+        target = resolve_project_entry(deploy_dir, rel)
+        if not target or not os.path.isfile(target):
             problems.append("发布目录缺少页面资源: " + rel)
     return problems
 

@@ -27,7 +27,10 @@ REQUIRED = [
     "references/input-contract.md",
     "references/visual-contract.md",
     "references/migration-and-release.md",
+    "references/path-portability-repair.md",
     "assets/workbench-template.html",
+    "assets/backgrounds/workbench-background.mp4",
+    "assets/backgrounds/workbench-background.png",
     "assets/backgrounds/garou-cosmic-crouch.png",
     "assets/backgrounds/garou-landscape.png",
     "assets/backgrounds/garou-portrait.png",
@@ -67,12 +70,27 @@ def main():
                 problems.append("模板数据块不是合法 JSON")
         if "__FWB_BRAND__" not in html:
             problems.append("模板缺少品牌占位符")
-        if 'data-ui-template="lzheng-fitness-workbench-v2"' not in html:
+        if 'data-ui-template="lzheng-fitness-workbench-v3"' not in html:
             problems.append("模板缺少固定 UI 模板版本")
-        if "garou-cosmic-crouch.png" not in html:
-            problems.append("模板没有引用正式背景图")
+        if "workbench-background.png" not in html or "workbench-background.mp4" not in html:
+            problems.append("模板没有引用正式动态背景及静态兜底")
         if "onboarding" not in html or "trainingStatus" not in html:
             problems.append("模板未实现 schema 6 建档或状态显示")
+        if "doc-overlay" not in html or "openDocument" not in html:
+            problems.append("模板未实现不依赖 Obsidian 的内置文档阅读")
+
+    skill_path = root / "SKILL.md"
+    if skill_path.is_file():
+        skill_text = skill_path.read_text(encoding="utf-8-sig")
+        if "references/path-portability-repair.md" not in skill_text:
+            problems.append("SKILL 未路由到路径可迁移修复协议")
+
+    repair_path = root / "references/path-portability-repair.md"
+    if repair_path.is_file():
+        repair_text = repair_path.read_text(encoding="utf-8-sig")
+        for marker in ("路径清单", "旧路径迁移", "发布副本", "回归矩阵", "强制验证"):
+            if marker not in repair_text:
+                problems.append("路径修复协议缺少章节: " + marker)
 
     builder_path = root / "scripts" / "Build-FitnessWorkbenchData.py"
     if builder_path.is_file():
@@ -81,6 +99,8 @@ def main():
             problems.append("刷新未保留最近一次已核验的 Notion 数据")
         if "find_latest_status_artifact" not in builder:
             problems.append("构建器未读取状态档案/接回状态")
+        if "build_portable_documents" not in builder or "content_markdown" not in builder:
+            problems.append("构建器未嵌入可迁移文档内容")
         for marker in ("schedule_contract_snapshot", "current_week_from_schedule", "validate_week_transition_contract", "declared_training_frequency"):
             if marker not in builder:
                 problems.append("构建器缺少周切换契约: " + marker)
@@ -129,6 +149,13 @@ def main():
                 problems.append("背景图分辨率过低: %s %dx%d" % (path.name, width, height))
         except ValueError as exc:
             problems.append("背景图无效: %s (%s)" % (path.name, exc))
+
+    video_path = root / "assets/backgrounds/workbench-background.mp4"
+    if video_path.is_file():
+        with video_path.open("rb") as handle:
+            header = handle.read(32)
+        if video_path.stat().st_size < 100_000 or b"ftyp" not in header:
+            problems.append("动态背景不是有效的本地 MP4")
 
     if problems:
         print("FITNESS_WORKBENCH_SKILL: FAIL")

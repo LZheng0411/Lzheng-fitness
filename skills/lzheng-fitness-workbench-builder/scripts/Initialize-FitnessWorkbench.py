@@ -140,8 +140,9 @@ def main():
     write_text(target / "健身工作台.html", template)
 
     image_target = target / "工作台与工具/健身工作台开发/界面素材"
-    for source in sorted((ASSET_DIR / "backgrounds").glob("*.png")):
-        shutil.copy2(source, image_target / source.name)
+    for source in sorted((ASSET_DIR / "backgrounds").iterdir()):
+        if source.is_file() and source.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp", ".mp4"):
+            shutil.copy2(source, image_target / source.name)
 
     supplied_plan = Path(args.plan).resolve() if args.plan else None
     if supplied_plan and not supplied_plan.is_file():

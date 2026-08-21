@@ -34,7 +34,7 @@ def main() -> int:
         for candidate, marker in (
             ("plan", "lzheng-fitness-plan-v4"),
             ("cycle", "lzheng-strength-cycle-v1"),
-            ("workbench", "lzheng-fitness-workbench-v2"),
+            ("workbench", "lzheng-fitness-workbench-v3"),
         ):
             if marker in text:
                 kind = candidate
@@ -64,7 +64,7 @@ def main() -> int:
             "required_text": (),
         },
         "workbench": {
-            "marker": "lzheng-fitness-workbench-v2",
+            "marker": "lzheng-fitness-workbench-v3",
             "sections": ("m-today", "m-week", "m-trend", "m-record", "m-settings"),
             "nav": ("训练", "计划", "负荷", "复盘", "数据"),
             "forbidden": (),

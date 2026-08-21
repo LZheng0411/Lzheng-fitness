@@ -12,7 +12,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-SUITE_VERSION = "2.2.0"
+SUITE_VERSION = "2.3.0"
+PORTABLE_CONFIG_VERSION = 1
+PROJECT_RELATIVE = Path("个人训练系统")
+BACKUP_RELATIVE = Path("系统/backups")
+RUNTIME_SKILLS = "@runtime"
 CORE_SKILLS = (
     "lzheng-fitness-plan",
     "lzheng-strength-cycle-planner",
@@ -48,7 +52,9 @@ def read_json(path: Path) -> dict:
 
 def write_json(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    os.replace(temporary, path)
 
 
 def sha256(path: Path) -> str:
@@ -59,6 +65,76 @@ def config_path(root: Path) -> Path:
     return root / "系统" / "lzheng-system.json"
 
 
+def portable_relative(path: Path, root: Path, field: str) -> str:
+    try:
+        relative = path.resolve().relative_to(root.resolve())
+    except ValueError:
+        stop(f"{field} 必须位于当前系统根目录内：{path}")
+    return relative.as_posix()
+
+
+def safe_relative(root: Path, raw: object, fallback: Path, field: str) -> Path:
+    """Resolve a portable config path and reject absolute paths or traversal."""
+    value = str(raw or fallback.as_posix())
+    candidate = Path(value)
+    if candidate.is_absolute():
+        candidate = fallback
+    target = (root / candidate).resolve()
+    try:
+        target.relative_to(root.resolve())
+    except ValueError:
+        stop(f"配置 {field} 越出当前系统根目录")
+    return target
+
+
+def migrate_config(root: Path, path: Path, data: dict) -> dict:
+    """Convert legacy machine paths to current-root-relative values in place."""
+    desired_project = PROJECT_RELATIVE.as_posix()
+    desired_backup = BACKUP_RELATIVE.as_posix()
+    changed = False
+
+    project_value = str(data.get("project_root") or "")
+    project_candidate = Path(project_value) if project_value else None
+    if not project_candidate or project_candidate.is_absolute():
+        data["project_root"] = desired_project
+        changed = True
+    else:
+        resolved = safe_relative(root, project_value, PROJECT_RELATIVE, "project_root")
+        portable = portable_relative(resolved, root, "project_root")
+        if portable != project_value.replace("\\", "/"):
+            data["project_root"] = portable
+            changed = True
+
+    if data.get("skills_root") != RUNTIME_SKILLS:
+        data["skills_root"] = RUNTIME_SKILLS
+        changed = True
+
+    backup_value = str(data.get("backup_root") or "")
+    backup_candidate = Path(backup_value) if backup_value else None
+    if not backup_candidate or backup_candidate.is_absolute():
+        data["backup_root"] = desired_backup
+        changed = True
+    else:
+        resolved = safe_relative(root, backup_value, BACKUP_RELATIVE, "backup_root")
+        portable = portable_relative(resolved, root, "backup_root")
+        if portable != backup_value.replace("\\", "/"):
+            data["backup_root"] = portable
+            changed = True
+
+    if data.get("portable_config_version") != PORTABLE_CONFIG_VERSION:
+        data["portable_config_version"] = PORTABLE_CONFIG_VERSION
+        changed = True
+
+    if changed:
+        migration_root = root / BACKUP_RELATIVE / "config-migrations"
+        migration_root.mkdir(parents=True, exist_ok=True)
+        stamp = dt.datetime.now().astimezone().strftime("%Y%m%d-%H%M%S-%f")
+        shutil.copy2(path, migration_root / ("lzheng-system-before-portability-" + stamp + ".json"))
+        data["paths_migrated_at"] = dt.datetime.now().astimezone().isoformat(timespec="seconds")
+        write_json(path, data)
+    return data
+
+
 def load_config(root: Path) -> dict:
     path = config_path(root)
     if not path.is_file():
@@ -66,7 +142,15 @@ def load_config(root: Path) -> dict:
     data = read_json(path)
     if data.get("schema") != 1:
         stop(f"不支持的配置 schema：{data.get('schema')}")
-    return data
+    return migrate_config(root, path, data)
+
+
+def project_path(root: Path, config: dict) -> Path:
+    return safe_relative(root, config.get("project_root"), PROJECT_RELATIVE, "project_root")
+
+
+def backup_path(root: Path, config: dict) -> Path:
+    return safe_relative(root, config.get("backup_root"), BACKUP_RELATIVE, "backup_root")
 
 
 def ensure_empty(target: Path) -> None:
@@ -97,8 +181,8 @@ def bootstrap(args: argparse.Namespace) -> None:
     root = Path(args.target).resolve()
     ensure_empty(root)
     root.mkdir(parents=True, exist_ok=True)
-    backup_root = root.parent / (root.name + "-system-backups")
-    project_root = root / "个人训练系统"
+    backup_root = root / BACKUP_RELATIVE
+    project_root = root / PROJECT_RELATIVE
     run([sys.executable, str(workbench_script("Initialize-FitnessWorkbench.py")), "--target", str(project_root), "--brand", args.brand, "--athlete", args.athlete, "--title", args.title])
     knowledge_root = root / "健身知识库"
     for relative, content in {
@@ -118,9 +202,10 @@ def bootstrap(args: argparse.Namespace) -> None:
     config = {
         "schema": 1,
         "suite_version": SUITE_VERSION,
-        "project_root": str(project_root),
-        "skills_root": str(SKILL_ROOT),
-        "backup_root": str(backup_root),
+        "project_root": PROJECT_RELATIVE.as_posix(),
+        "skills_root": RUNTIME_SKILLS,
+        "backup_root": BACKUP_RELATIVE.as_posix(),
+        "portable_config_version": PORTABLE_CONFIG_VERSION,
         "output_locations": OUTPUT_LOCATIONS,
         "created_at": dt.datetime.now().astimezone().isoformat(timespec="seconds"),
         "managed_files": managed,
@@ -131,7 +216,8 @@ def bootstrap(args: argparse.Namespace) -> None:
 
 
 def skill_paths(config: dict) -> Path:
-    path = Path(config.get("skills_root") or SKILL_ROOT)
+    # The running Skill bundle is the source of truth after a computer move.
+    path = SKILL_ROOT
     if not path.is_dir():
         stop("Skill 根目录不可用：" + str(path))
     return path
@@ -141,7 +227,7 @@ def doctor(args: argparse.Namespace) -> None:
     root = Path(args.root).resolve()
     config = load_config(root)
     problems: list[str] = []
-    project_root = Path(config.get("project_root", "")).resolve()
+    project_root = project_path(root, config)
     if not project_root.is_dir():
         problems.append("配置 project_root 不可用")
     for relative in ("健身工作台.html", "训练与周期/当前周期", "训练复盘与状态/训练复盘/INDEX.md", "训练复盘与状态/状态档案/INDEX.md"):
@@ -199,7 +285,7 @@ def import_private_pack(args: argparse.Namespace) -> None:
 def upgrade(args: argparse.Namespace) -> None:
     root = Path(args.root).resolve()
     config = load_config(root)
-    backup_root = Path(config.get("backup_root") or (root.parent / (root.name + "-system-backups")))
+    backup_root = backup_path(root, config)
     backup_root.mkdir(parents=True, exist_ok=True)
     existing = config.get("managed_files", {})
     conflicts = []
@@ -213,7 +299,10 @@ def upgrade(args: argparse.Namespace) -> None:
         return
     config["suite_version"] = SUITE_VERSION
     config["upgraded_at"] = dt.datetime.now().astimezone().isoformat(timespec="seconds")
-    config["backup_root"] = str(backup_root)
+    config["project_root"] = portable_relative(project_path(root, config), root, "project_root")
+    config["skills_root"] = RUNTIME_SKILLS
+    config["backup_root"] = portable_relative(backup_root, root, "backup_root")
+    config["portable_config_version"] = PORTABLE_CONFIG_VERSION
     config["output_locations"] = OUTPUT_LOCATIONS
     for relative in sorted(set(OUTPUT_LOCATIONS.values())):
         (root / relative).mkdir(parents=True, exist_ok=True)
@@ -233,7 +322,7 @@ def validate(args: argparse.Namespace) -> None:
         stop("找不到 Skill 官方校验器：" + str(validator))
     for name in CORE_SKILLS:
         run([sys.executable, str(validator), str(skills / name)])
-    project_root = Path(config["project_root"]).resolve()
+    project_root = project_path(root, config)
     run([sys.executable, str(workbench_script("Check-FitnessWorkbench.py")), "--project", str(project_root)])
     print("LZHENG_TRAINING_SYSTEM_VALIDATE: PASS")
 
@@ -241,7 +330,7 @@ def validate(args: argparse.Namespace) -> None:
 def process_handoffs(args: argparse.Namespace) -> None:
     root = Path(args.root).resolve()
     config = load_config(root)
-    project_root = Path(config["project_root"]).resolve()
+    project_root = project_path(root, config)
     script = HERE / "Process-LzhengHandoffs.py"
     command = [sys.executable, str(script), "--project", str(project_root)]
     if args.notion:

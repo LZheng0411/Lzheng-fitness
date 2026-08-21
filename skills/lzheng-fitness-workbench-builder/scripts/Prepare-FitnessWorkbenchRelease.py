@@ -48,7 +48,7 @@ def sanitize_html(source):
     except json.JSONDecodeError as exc:
         fail("workbench-data 不是合法 JSON: %s" % exc)
     cleaned = scrub(data)
-    payload = json.dumps(cleaned, ensure_ascii=False)
+    payload = json.dumps(cleaned, ensure_ascii=False).replace("</", "<\\/")
     output = source[:match.start()] + match.group(1) + payload + match.group(3) + source[match.end():]
     if WINDOWS_PATH_IN_TEXT.search(output) or re.search(r"obsidian://open\?path=", payload, re.I):
         fail("分享版仍包含本机路径或 Obsidian 深链")

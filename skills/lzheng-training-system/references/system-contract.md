@@ -34,4 +34,4 @@
 
 ## 套件配置
 
-`系统/lzheng-system.json` 使用 schema 1，最少包含 `suite_version`、`project_root`、`skills_root`、`backup_root`、`output_locations`、`managed_files`。使用者可修改路径配置；缺失时先运行 `bootstrap` 或 `doctor`，不猜测其他机器的盘符。
+`系统/lzheng-system.json` 使用 schema 1，最少包含 `suite_version`、`project_root`、`skills_root`、`backup_root`、`portable_config_version`、`output_locations`、`managed_files`。默认值分别为相对当前系统根目录的 `个人训练系统`、运行时标记 `@runtime` 和 `系统/backups`。`doctor`、`upgrade`、`validate` 与 `process-handoffs` 必须先迁移旧电脑绝对路径，并在当前系统内留下可恢复的配置备份；旧路径即使仍存在，也不能覆盖当前位置的事实文件。缺失时先运行 `bootstrap` 或 `doctor`，不猜测其他机器的盘符。详细修复与旧路径迁移遵守 `../../lzheng-fitness-workbench-builder/references/path-portability-repair.md`。
