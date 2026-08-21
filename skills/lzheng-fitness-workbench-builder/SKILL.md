@@ -69,6 +69,7 @@ python "<skill>/scripts/Test-FitnessWorkbenchWeekTransition.py"
 - 当前周来自复盘索引或用户确认，不按日历擅自推算；
 - 今日训练按计划中的真实日期精确匹配；
 - 未知重量显示待确认，不沿用旧值冒充事实；
+- 完整计划 HTML 使用工作台相对链接直接交给浏览器；不得依赖固定盘符或要求项目必须是 Obsidian 仓库；
 - 复盘卡使用 `obsidian://open` 打开实际 Markdown 文件；
 - 图表已执行部分为实线，后续计划为虚线，重合时只显示实线。
 
@@ -89,11 +90,12 @@ python "<skill>/scripts/Validate-FitnessWorkbenchSkill.py" --skill "<skill>"
 
 1. `Validate-FitnessWorkbenchSkill.py` 返回 `FITNESS_WORKBENCH_SKILL: PASS`；
 2. `Test-FitnessWorkbenchWeekTransition.py` 返回 `FITNESS_WORKBENCH_WEEK_TRANSITION: PASS`；
-3. `quick_validate.py <skill>` 返回通过；
-4. 在一个全新的隔离目录运行初始化脚本成功，页面显示“待建档”且不把匿名示例重量当处方；
-5. 新目录的 `Check-FitnessWorkbench.py` 检查为 `FITNESS_WORKBENCH_CHECK: PASS`；
-6. 正式页面所引用的每张图片在项目和发布目录中都存在；
-7. Skill 文本和模板不含原作者训练记录、用户名或固定磁盘路径。
+3. `Test-FitnessWorkbenchPortability.py` 返回 `FITNESS_WORKBENCH_PORTABILITY: PASS`；
+4. `quick_validate.py <skill>` 返回通过；
+5. 在一个全新的隔离目录运行初始化脚本成功，页面显示“待建档”且不把匿名示例重量当处方；
+6. 新目录的 `Check-FitnessWorkbench.py` 检查为 `FITNESS_WORKBENCH_CHECK: PASS`；
+7. 正式页面所引用的每张图片和完整计划 HTML 在项目、移动后目录和发布目录中都存在；
+8. Skill 文本和模板不含原作者训练记录、用户名或固定磁盘路径。
 
 ## 资源
 
@@ -105,6 +107,7 @@ python "<skill>/scripts/Validate-FitnessWorkbenchSkill.py" --skill "<skill>"
 - `scripts/Refresh-FitnessWorkbenchTemplate.py`：从正式页面刷新脱敏模板。
 - `scripts/Validate-FitnessWorkbenchSkill.py`：检查 Skill 包完整性与可迁移性。
 - `scripts/Test-FitnessWorkbenchWeekTransition.py`：回归验证跨周同步、频率、今日处方与自重语义。
+- `scripts/Test-FitnessWorkbenchPortability.py`：把完整健身系统移动到新目录，验证计划 HTML 相对入口和工作台检查仍通过。
 - `scripts/Migrate-FitnessWorkbenchSchema.py`：将保留的 schema 5 数据块安全迁移为 schema 6；正式页面仍应由数据生成器重新构建。
 - `assets/workbench-template.html`：不含个人事实的界面模板。
 - `assets/backgrounds/`：工作台内置图片。

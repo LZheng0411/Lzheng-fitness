@@ -37,7 +37,7 @@
 
 ## 本地记录
 
-- 默认目录：`LZHENG_FITNESS_HOME/reviews/`；未设置时为 `lzheng-fitness-output/reviews/`。
+- 默认目录：优先使用已初始化系统配置中的 `output_locations.reviews`；尚未建立系统配置时才使用 `LZHENG_FITNESS_HOME/reviews/` 或 `lzheng-fitness-output/reviews/`。
 - 文件名：`YYYY-MM-DD-Wn-周训练阶段-lzheng-training-review.md`；日期使用该周结案或正式复盘日期，并在正文写明覆盖的训练日期。
 - `review_mode: weekly`；`training_day: 周训练阶段`；用户体感或关键追问未完成时用 `status: 待补全`。
 - 周复盘应汇总单练结论，不倒改外部原始事实；计划版本在周中更替时，正文明确每段记录对应的生效版本。

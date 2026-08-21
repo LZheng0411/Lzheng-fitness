@@ -21,6 +21,13 @@ CORE_SKILLS = (
     "lzheng-training-expert-library",
     "lzheng-fitness-workbench-builder",
 )
+OUTPUT_LOCATIONS = {
+    "profiles": "个人训练系统/训练复盘与状态/状态档案",
+    "plans": "个人训练系统/训练与周期/当前周期",
+    "cycles": "个人训练系统/训练与周期/力量周期",
+    "reviews": "个人训练系统/训练复盘与状态/训练复盘",
+    "returns": "个人训练系统/训练复盘与状态/状态档案",
+}
 HERE = Path(__file__).resolve().parent
 SKILL_ROOT = HERE.parent.parent
 
@@ -114,6 +121,7 @@ def bootstrap(args: argparse.Namespace) -> None:
         "project_root": str(project_root),
         "skills_root": str(SKILL_ROOT),
         "backup_root": str(backup_root),
+        "output_locations": OUTPUT_LOCATIONS,
         "created_at": dt.datetime.now().astimezone().isoformat(timespec="seconds"),
         "managed_files": managed,
     }
@@ -139,6 +147,10 @@ def doctor(args: argparse.Namespace) -> None:
     for relative in ("健身工作台.html", "训练与周期/当前周期", "训练复盘与状态/训练复盘/INDEX.md", "训练复盘与状态/状态档案/INDEX.md"):
         if not (project_root / relative).exists():
             problems.append("缺少主源：" + relative)
+    configured_outputs = config.get("output_locations") or OUTPUT_LOCATIONS
+    for name, relative in OUTPUT_LOCATIONS.items():
+        if configured_outputs.get(name) != relative or not (root / relative).is_dir():
+            problems.append("正式产物目录不可用：" + name)
     try:
         skills = skill_paths(config)
         for name in CORE_SKILLS:
@@ -202,6 +214,9 @@ def upgrade(args: argparse.Namespace) -> None:
     config["suite_version"] = SUITE_VERSION
     config["upgraded_at"] = dt.datetime.now().astimezone().isoformat(timespec="seconds")
     config["backup_root"] = str(backup_root)
+    config["output_locations"] = OUTPUT_LOCATIONS
+    for relative in sorted(set(OUTPUT_LOCATIONS.values())):
+        (root / relative).mkdir(parents=True, exist_ok=True)
     write_json(config_path(root), config)
     print("LZHENG_TRAINING_SYSTEM_UPGRADE: PASS")
     print("仅升级系统配置；计划、复盘、状态档案和私人知识均未触碰")

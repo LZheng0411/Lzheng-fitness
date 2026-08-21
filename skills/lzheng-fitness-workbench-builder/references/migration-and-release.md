@@ -21,7 +21,7 @@
 - 可选的 `notion-data.json`；
 - 希望继续使用的自定义背景图。
 
-不要复制缓存、浏览器 profile、临时截图、旧发布目录或绝对路径。构建器会在新路径重新生成 Obsidian 深链。
+不要复制缓存、浏览器 profile、临时截图或旧发布目录。完整计划使用相对 HTML 链接，整套目录移动后无需重建即可从浏览器打开；复盘和状态 Markdown 的 Obsidian 深链由页面根据当前位置即时生成，只有目录属于已注册 Obsidian 仓库时才调用 Obsidian。
 
 ## 发布副本
 
@@ -39,7 +39,7 @@ python "<skill>/scripts/Prepare-FitnessWorkbenchRelease.py" --project "<项目�
 python "<skill>/scripts/Check-FitnessWorkbench.py" --project "<项目根>" --deploy "<发布目录>" [--notion "<notion-data.json>"]
 ```
 
-发布准备脚本会移除本机绝对路径和 Obsidian 深链，但保留当前页面数据。只有 `deploy: PASS` 后才部署或分享。
+发布准备脚本会移除本机绝对路径和已保存的 Obsidian 深链，并复制当前完整计划 HTML 与页面素材。只有 `deploy: PASS` 后才部署或分享。
 
 ## 更新模板
 

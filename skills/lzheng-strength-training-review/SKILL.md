@@ -10,7 +10,7 @@ description: 复盘一次力量训练或一个训练周。支持按当前计划�
 ## 必读上下文
 
 - 动态训练事实：用户直接提供的完整当次记录优先；用户授权且当前环境可访问外部训练记录时，再查询最近记录、恢复信息和体重。
-- 当前处方：读取用户明确指定的当前计划；未指定时依次检查 `LZHENG_FITNESS_HOME/plans/` 和当前工作目录的 `lzheng-fitness-output/plans/`。不要把历史 HTML 或保留副本当作当前处方。
+- 当前处方：读取用户明确指定的当前计划；未指定时先读取 `系统/lzheng-system.json` 的 `output_locations.plans`，尚未建立系统配置时再检查 `LZHENG_FITNESS_HOME/plans/` 和当前工作目录的 `lzheng-fitness-output/plans/`。不要把历史 HTML 或保留副本当作当前处方。
 - 周期调整：需要审核或修改多周计划时，读取 [Lzheng 周期调整规则](references/lzheng-cycle-adjustment-rules.md)。即使没有安装周期规划 Skill，本 Skill 也必须能够完成调整判断。
 - 无周期推进：进入滚动或基准模式时，读取 [无周期滚动复盘规则](references/rolling-review-rules.md)。
 - 周训练阶段复盘：读取 [周训练复盘规则](references/weekly-review-rules.md) 和 [周训练复盘模板](references/weekly-review-template.md)。
@@ -77,7 +77,7 @@ description: 复盘一次力量训练或一个训练周。支持按当前计划�
 
 ## 权限边界
 
-- 每次完成复盘后写入可移植的本地 Markdown 记录并更新索引。用户指定目录优先；否则使用 `LZHENG_FITNESS_HOME/reviews/`，未设置时使用当前工作目录的 `lzheng-fitness-output/reviews/`。
+- 每次完成复盘后写入可移植的本地 Markdown 记录并更新索引。用户指定目录优先；否则先使用 `系统/lzheng-system.json` 的 `output_locations.reviews`，尚未建立系统配置时才使用 `LZHENG_FITNESS_HOME/reviews/` 或当前工作目录的 `lzheng-fitness-output/reviews/`。
 - 不得编造、补全或篡改外部原始训练记录；默认不写回外部服务。
 - 周期模式中，改变周次、动作、重量、次数、组数、RPE 路径、测试目标或后续周期，先给完整待确认方案；确认后创建新的 `-vNN.html`，不得覆盖旧版本。
 - 滚动模式中，可以直接给出下一次的小幅调整：一次只改变重量、次数或组数中的一个主要变量；加重不超过最小加重单位，减重通常为 2.5%—7.5%，或减少 1 组。

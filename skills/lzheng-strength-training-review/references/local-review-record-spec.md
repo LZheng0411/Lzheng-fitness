@@ -1,6 +1,6 @@
 # Lzheng 力量训练复盘本地记录规范
 
-每次复盘只创建或修订一个本地 Markdown 记录。用户指定目录时优先使用；否则使用 `LZHENG_FITNESS_HOME/reviews/`，未设置环境变量时使用当前工作目录的 `lzheng-fitness-output/reviews/`。
+每次复盘只创建或修订一个本地 Markdown 记录。用户指定目录时优先使用；否则先使用已初始化系统配置中的 `output_locations.reviews`，尚未建立系统配置时才使用 `LZHENG_FITNESS_HOME/reviews/` 或当前工作目录的 `lzheng-fitness-output/reviews/`。
 
 ## 文件名
 

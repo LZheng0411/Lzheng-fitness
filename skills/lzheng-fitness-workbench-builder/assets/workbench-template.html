@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ui-template="lzheng-fitness-workbench-v1">
+<html lang="zh-CN" data-ui-template="lzheng-fitness-workbench-v2">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -1068,6 +1068,30 @@
   lg.innerHTML = '<span class="b"><i></i>已练</span><span><i></i>休息</span><span class="m"><i></i>训练日未练</span>';
   dotBox.appendChild(lg);
 
+  function localRoot(){
+    if(window.location.protocol!=='file:') return '';
+    var path=decodeURIComponent(window.location.pathname||'').replace(/\\/g,'/');
+    if(/^\/[A-Za-z]:\//.test(path)) path=path.slice(1);
+    return path.slice(0,path.lastIndexOf('/'));
+  }
+  function localFilePath(relative){
+    var root=localRoot();
+    if(!root||!relative) return '';
+    var joined=(root+'/'+relative).replace(/\\/g,'/');
+    var leading=joined.charAt(0)==='/'?'/':'';
+    var parts=[];
+    joined.split('/').forEach(function(part){
+      if(!part||part==='.') return;
+      if(part==='..'){ if(parts.length) parts.pop(); return; }
+      parts.push(part);
+    });
+    return leading+parts.join('/');
+  }
+  function obsidianLocalHref(relative){
+    var absolute=localFilePath(relative);
+    return absolute?'obsidian://open?path='+encodeURIComponent(absolute):'';
+  }
+
   var reviewBox = document.getElementById('reviewBox');
   function reviewSummary(rv){
     var segments=(rv.verdict||'').split(/[；;]/).map(function(x){return x.trim();}).filter(Boolean);
@@ -1078,13 +1102,15 @@
   }
   D.reviews.forEach(function(rv,index){
     var summary=reviewSummary(rv);
-    var r = el(rv.href?'a':'div','row');
+    var reviewFile=rv.file_path||rv.path||'';
+    var reviewHref=rv.href||obsidianLocalHref(reviewFile);
+    var r = el(reviewHref?'a':'div','row');
     r.dataset.seq=String(index+1).padStart(2,'0');
-    if(rv.href){
-      r.href=rv.href;
+    if(reviewHref){
+      r.href=reviewHref;
       r.onclick=function(e){
         e.preventDefault();
-        window.location.href=rv.href;
+        window.location.href=reviewHref;
       };
     }
     r.appendChild(el('div','review-kicker','<span>'+esc(rv.full_date||rv.date)+'</span><span>'+(rv.day==='周训练阶段'?'阶段复盘':'单次复盘')+'</span>'));
@@ -1094,15 +1120,16 @@
       var ps=el('div','review-points'); summary.points.forEach(function(p){ps.appendChild(el('span','review-point',esc(p)));}); r.appendChild(ps);
     }
     r.appendChild(el('div','review-decision','<b>处方决定</b><br>'+esc(summary.decision)));
-    if(rv.href){
+    if(reviewHref){
       var openRow=el('div','open','打开完整复盘');
-      if(rv.path){
-        openRow.title=rv.path;
+      if(reviewFile){
+        var copyPath=localFilePath(reviewFile)||reviewFile;
+        openRow.title=copyPath;
         var copy=el('button','ghost','复制文件路径');
         copy.style.marginLeft='10px'; copy.style.padding='5px 9px';
         copy.onclick=function(e){
           e.preventDefault(); e.stopPropagation();
-          var value=rv.path;
+          var value=copyPath;
           if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(value);}
           copy.textContent='已复制'; setTimeout(function(){copy.textContent='复制文件路径';},1400);
         };
@@ -1120,9 +1147,12 @@
     return a;
   }
   var links=D.links||{};
-  linkBox.appendChild(linkCard('完整训练计划', m.plan_href, '在 Obsidian 中打开 ' + m.source_version));
-  linkBox.appendChild(linkCard('训练复盘索引', links.review_index_href||'', links.review_index_href?'在 Obsidian 中打开复盘文件':'复盘索引尚未建立'));
-  linkBox.appendChild(linkCard('状态档案', links.status_index_href||'', links.status_index_href?'在 Obsidian 中打开状态档案':'状态档案尚未建立'));
+  var planHref=m.plan_href||m.plan_file||'';
+  var reviewIndexHref=links.review_index_href||obsidianLocalHref(links.review_index_file);
+  var statusIndexHref=links.status_index_href||obsidianLocalHref(links.status_index_file);
+  linkBox.appendChild(linkCard('完整训练计划', planHref, '在浏览器中打开 ' + m.source_version, true));
+  linkBox.appendChild(linkCard('训练复盘索引', reviewIndexHref, reviewIndexHref?'在 Obsidian 中打开复盘文件':'复盘索引尚未建立'));
+  linkBox.appendChild(linkCard('状态档案', statusIndexHref, statusIndexHref?'在 Obsidian 中打开状态档案':'状态档案尚未建立'));
   linkBox.appendChild(linkCard('Notion 训练系统', links.notion_url||'', links.notion_url?'训练记录 / 体重（动态数据）':'未配置 Notion 链接', true));
 
   var setBox = document.getElementById('setBox');

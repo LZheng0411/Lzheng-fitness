@@ -1,6 +1,6 @@
 # 视觉契约
 
-工作台唯一视图资产为 `../assets/workbench-template.html`，模板版本为 `lzheng-fitness-workbench-v1`。AI 只生成或刷新 `workbench-data`，不得改写模板导航、组件和视觉。跨页面职责见 `../../lzheng-training-system/references/html-template-contract.md`。
+工作台唯一视图资产为 `../assets/workbench-template.html`，模板版本为 `lzheng-fitness-workbench-v2`。AI 只生成或刷新 `workbench-data`，不得改写模板导航、组件和视觉。跨页面职责见 `../../lzheng-training-system/references/html-template-contract.md`。
 
 ## 固定语言
 

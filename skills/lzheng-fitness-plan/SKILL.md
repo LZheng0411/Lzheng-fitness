@@ -66,7 +66,7 @@ description: 基于用户当前状态、Skill 内置健身知识和最新官方�
 完整问诊结束后，先按参考规范生成状态快照，再生成计划。
 
 - 用户指定输出目录时优先使用该目录。
-- 未指定时，若设置了 `LZHENG_FITNESS_HOME`，保存到其 `profiles/`；否则保存到当前工作目录的 `lzheng-fitness-output/profiles/`。
+- 未指定时，先读取已初始化系统的 `系统/lzheng-system.json`，保存到 `output_locations.profiles`；只有尚未建立系统配置时，才使用 `LZHENG_FITNESS_HOME/profiles/` 或当前工作目录的 `lzheng-fitness-output/profiles/`。
 - 使用 `YYYY-MM-DD-HHmm-lzheng-training-profile.md`；客户模式只使用代号和脱敏资料。
 - 新状态创建新文件，不覆盖历史；计划引用准确的 `snapshot_id` 和路径。
 - 不在快照记录完整病历、账号或无关隐私，只记录会影响训练决策的限制和来源。
@@ -118,7 +118,7 @@ python scripts/audit_html_plan.py <output.html> --plan <plan.json>
 
 除非用户明确只要口头分析或拒绝文件，制定/重做完整计划时同时交付独立 HTML。必须由 `assets/fitness-plan-template.html` 生成；页面只展示阶段目标、周结构、并排训练日简表、统一进阶与周期复盘表，以及可切换的动作模式/健美肌群覆盖。周结构卡补充当天训练重点；覆盖区只显示合计大于 0 的实际项目。复盘节点由 AI 主动向用户确认实际反馈，周期末确认后生成下一阶段计划。完整重量校准、动作理由和短版收进对应训练日的折叠说明；不展示“下一次训练”、完成状态、实时记录、安全筛查、追踪卡、漏练规则、AI 内部判断、来源或假设。
 
-用户指定输出目录时优先使用；否则写入 `LZHENG_FITNESS_HOME/plans/`，未设置环境变量时写入当前工作目录的 `lzheng-fitness-output/plans/`。不得覆盖旧文件，实质修订使用 `-v02`、`-v03`。
+用户指定输出目录时优先使用；否则先读取已初始化系统的 `系统/lzheng-system.json`，把正式 JSON 与 HTML 写入 `output_locations.plans`，并按工作台适配契约接入唯一当前计划；只有尚未建立系统配置时，才写入 `LZHENG_FITNESS_HOME/plans/` 或当前工作目录的 `lzheng-fitness-output/plans/`。不得覆盖旧文件，实质修订使用 `-v02`、`-v03`。
 
 ## 与其他 Skill 的边界
 

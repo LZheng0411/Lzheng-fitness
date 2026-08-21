@@ -130,6 +130,24 @@ def normalize_generated(data):
     return value
 
 
+def resolve_project_entry(project, value):
+    """Resolve a stored relative path/href and reject schemes or path traversal."""
+    parsed = urlparse(str(value or ""))
+    if parsed.scheme or parsed.netloc:
+        return None
+    decoded = unquote(parsed.path).replace("/", os.sep)
+    if not decoded or os.path.isabs(decoded):
+        return None
+    root = os.path.abspath(project)
+    target = os.path.abspath(os.path.join(root, decoded))
+    try:
+        if os.path.commonpath([root, target]) != root:
+            return None
+    except ValueError:
+        return None
+    return target
+
+
 def extract_asset_paths(html):
     paths = []
     for raw in re.findall(r'url\(["\']?([^"\')]+)', html):
@@ -184,7 +202,9 @@ def check_html(project, notion=None, restore_notion_from_html=None):
         problems.append("执行基准版本与当前计划不一致")
     if not meta.get("plan_start") or not meta.get("plan_end"):
         problems.append("周期起止日期缺失")
-    if not meta.get("plan_href") or not os.path.isfile(meta.get("plan_path", "")):
+    plan_target = resolve_project_entry(project, meta.get("plan_href"))
+    plan_file_target = resolve_project_entry(project, meta.get("plan_file"))
+    if not plan_target or not plan_file_target or plan_target != plan_file_target or not os.path.isfile(plan_target):
         problems.append("完整计划入口无效")
     timeline = data.get("timeline", [])
     expected_done = {
@@ -204,14 +224,14 @@ def check_html(project, notion=None, restore_notion_from_html=None):
             if not exercise.get("w") or not exercise.get("d"):
                 problems.append("主项缺少精确处方: %s/%s" % (day, exercise.get("name")))
     for review in data.get("reviews", []):
-        if not review.get("href", "").startswith("obsidian://open?") or not os.path.isfile(review.get("path", "")):
+        target = resolve_project_entry(project, review.get("file_path"))
+        if not target or not os.path.isfile(target):
             problems.append("复盘入口无效: " + str(review.get("file")))
     links = data.get("links", {})
     for key, label in (("review_index", "训练复盘索引"), ("status_index", "状态档案索引")):
-        path = links.get(key + "_path", "")
-        href = links.get(key + "_href", "")
-        if not path or not os.path.isfile(path) or not href.startswith("obsidian://open?"):
-            problems.append(label + "深链无效")
+        target = resolve_project_entry(project, links.get(key + "_file"))
+        if not target or not os.path.isfile(target):
+            problems.append(label + "文件入口无效")
     summary = data.get("today_summary")
     if summary and not any(x.get("date") == summary.get("date") and x.get("day") == summary.get("day") and x.get("status") == "done" for x in timeline):
         problems.append("今日复盘与今日时间线不一致")
@@ -249,10 +269,21 @@ def check_deploy(deploy_dir, source_html=None):
         html = fh.read()
     if re.search(r'href="[^"]*\.md"', html):
         problems.append("发布目录存在指向本地 .md 的链接")
-    if re.search(r"[A-Za-z]:[\\/]", html):
+    if re.search(r'''(?m)(?:^|["'`\s(])([A-Za-z]:[\\/])''', html):
         problems.append("发布目录仍包含本机绝对路径")
-    if re.search(r"obsidian://open\?path=", html, re.I):
-        problems.append("发布目录仍包含本机 Obsidian 深链")
+    blocks = re.findall(r'<script id="workbench-data" type="application/json">([\s\S]*?)</script>', html)
+    if len(blocks) != 1:
+        problems.append("发布目录 workbench-data 数量异常")
+    elif re.search(r"obsidian://open\?path=", blocks[0], re.I):
+        problems.append("发布数据仍包含本机 Obsidian 深链")
+    else:
+        try:
+            deploy_data = json.loads(blocks[0])
+            plan_target = resolve_project_entry(deploy_dir, deploy_data.get("meta", {}).get("plan_href"))
+            if not plan_target or not os.path.isfile(plan_target):
+                problems.append("发布目录缺少完整计划 HTML")
+        except json.JSONDecodeError:
+            problems.append("发布目录 workbench-data 无法解析")
     if re.search(r"__[A-Z0-9_]+__", html):
         problems.append("发布目录仍包含未替换占位符")
     if source_html and os.path.isfile(source_html):

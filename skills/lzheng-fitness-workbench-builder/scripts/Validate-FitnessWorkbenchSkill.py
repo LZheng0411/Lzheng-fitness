@@ -21,6 +21,7 @@ REQUIRED = [
     "scripts/Refresh-FitnessWorkbenchTemplate.py",
     "scripts/Validate-FitnessWorkbenchSkill.py",
     "scripts/Test-FitnessWorkbenchWeekTransition.py",
+    "scripts/Test-FitnessWorkbenchPortability.py",
     "scripts/Migrate-FitnessWorkbenchSchema.py",
     "../lzheng-training-system/scripts/Process-LzhengHandoffs.py",
     "references/input-contract.md",
@@ -66,7 +67,7 @@ def main():
                 problems.append("模板数据块不是合法 JSON")
         if "__FWB_BRAND__" not in html:
             problems.append("模板缺少品牌占位符")
-        if 'data-ui-template="lzheng-fitness-workbench-v1"' not in html:
+        if 'data-ui-template="lzheng-fitness-workbench-v2"' not in html:
             problems.append("模板缺少固定 UI 模板版本")
         if "garou-cosmic-crouch.png" not in html:
             problems.append("模板没有引用正式背景图")
@@ -96,6 +97,19 @@ def main():
         if completed.returncode != 0 or "FITNESS_WORKBENCH_WEEK_TRANSITION: PASS" not in completed.stdout:
             detail = (completed.stdout + completed.stderr).strip()
             problems.append("周切换回归未通过" + (": " + detail if detail else ""))
+
+    portability_test = root / "scripts" / "Test-FitnessWorkbenchPortability.py"
+    if portability_test.is_file():
+        completed = subprocess.run(
+            [sys.executable, str(portability_test)],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        if completed.returncode != 0 or "FITNESS_WORKBENCH_PORTABILITY: PASS" not in completed.stdout:
+            detail = (completed.stdout + completed.stderr).strip()
+            problems.append("目录迁移回归未通过" + (": " + detail if detail else ""))
 
     text_suffixes = {".md", ".py", ".json", ".html", ".yaml", ".yml"}
     for path in root.rglob("*"):
