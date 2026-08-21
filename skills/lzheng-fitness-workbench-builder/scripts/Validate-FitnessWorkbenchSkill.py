@@ -18,15 +18,18 @@ REQUIRED = [
     "scripts/Build-FitnessWorkbenchData.py",
     "scripts/Check-FitnessWorkbench.py",
     "scripts/Prepare-FitnessWorkbenchRelease.py",
+    "scripts/Replace-FitnessWorkbenchBackground.py",
     "scripts/Refresh-FitnessWorkbenchTemplate.py",
     "scripts/Validate-FitnessWorkbenchSkill.py",
     "scripts/Test-FitnessWorkbenchWeekTransition.py",
     "scripts/Test-FitnessWorkbenchPortability.py",
+    "scripts/Test-FitnessWorkbenchBackgroundReplacement.py",
     "scripts/Migrate-FitnessWorkbenchSchema.py",
     "../lzheng-training-system/scripts/Process-LzhengHandoffs.py",
     "references/input-contract.md",
     "references/visual-contract.md",
     "references/migration-and-release.md",
+    "references/background-replacement.md",
     "references/path-portability-repair.md",
     "assets/workbench-template.html",
     "assets/backgrounds/workbench-background.mp4",
@@ -78,6 +81,8 @@ def main():
             problems.append("模板未实现 schema 6 建档或状态显示")
         if "doc-overlay" not in html or "openDocument" not in html:
             problems.append("模板未实现不依赖 Obsidian 的内置文档阅读")
+        if 'data-background-mode="video"' not in html or "FITNESS_WORKBENCH_BACKGROUND_CONFIG_START" not in html:
+            problems.append("模板未声明可管理的背景模式和配置块")
 
     skill_path = root / "SKILL.md"
     if skill_path.is_file():
@@ -91,6 +96,13 @@ def main():
         for marker in ("路径清单", "旧路径迁移", "发布副本", "回归矩阵", "强制验证"):
             if marker not in repair_text:
                 problems.append("路径修复协议缺少章节: " + marker)
+
+    background_guide = root / "references/background-replacement.md"
+    if background_guide.is_file():
+        guide = background_guide.read_text(encoding="utf-8-sig")
+        for marker in ("纯静态背景", "动态背景", "首次初始化", "自动完成", "完成标准", "禁止做法"):
+            if marker not in guide:
+                problems.append("壁纸替换指南缺少章节: " + marker)
 
     builder_path = root / "scripts" / "Build-FitnessWorkbenchData.py"
     if builder_path.is_file():
@@ -130,6 +142,19 @@ def main():
         if completed.returncode != 0 or "FITNESS_WORKBENCH_PORTABILITY: PASS" not in completed.stdout:
             detail = (completed.stdout + completed.stderr).strip()
             problems.append("目录迁移回归未通过" + (": " + detail if detail else ""))
+
+    background_test = root / "scripts" / "Test-FitnessWorkbenchBackgroundReplacement.py"
+    if background_test.is_file():
+        completed = subprocess.run(
+            [sys.executable, str(background_test)],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        if completed.returncode != 0 or "FITNESS_WORKBENCH_BACKGROUND_TEST: PASS" not in completed.stdout:
+            detail = (completed.stdout + completed.stderr).strip()
+            problems.append("壁纸替换回归未通过" + (": " + detail if detail else ""))
 
     text_suffixes = {".md", ".py", ".json", ".html", ".yaml", ".yml"}
     for path in root.rglob("*"):

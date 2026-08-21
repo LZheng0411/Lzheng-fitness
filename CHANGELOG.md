@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.3.1 — 2026-08-21
+
+- Added a supported background-replacement command for generated workbenches: static PNG/JPEG/WebP mode or MP4 mode with a required image fallback.
+- Added automatic HTML/asset backups, safe desktop/mobile crop controls, post-change validation, and rollback when validation fails.
+- Added first-initialization background arguments and regression coverage for static/video replacement, damaged inputs, renamed folders, and release copies.
+
 ## 2.3.0 — 2026-08-21
 
 - Upgraded the offline workbench to the fixed v3 interface with a local motion background, static fallback, responsive layouts, and an in-workbench reader for reviews and status documents.

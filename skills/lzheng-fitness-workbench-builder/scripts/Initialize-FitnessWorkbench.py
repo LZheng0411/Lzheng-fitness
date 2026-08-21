@@ -94,7 +94,16 @@ def main():
     parser.add_argument("--plan", help="可选：用户自己的版本化计划 JSON")
     parser.add_argument("--notion", help="可选：用户自己的 notion-data.json")
     parser.add_argument("--demo-data", action="store_true", help="使用匿名 Notion 示例数据测试界面")
+    parser.add_argument("--background-image", help="可选：首次初始化时使用的 PNG、JPEG 或 WebP 背景")
+    parser.add_argument("--background-video", help="可选：首次初始化时使用的 MP4 动态背景；必须同时提供图片兜底")
+    parser.add_argument("--background-desktop-position", help="可选桌面取景，例如 '60%% center'")
+    parser.add_argument("--background-mobile-position", help="可选手机取景，例如 '66%% center'")
     args = parser.parse_args()
+
+    if args.background_video and not args.background_image:
+        fail("使用动态背景时必须同时提供 --background-image 静态兜底")
+    if (args.background_desktop_position or args.background_mobile_position) and not args.background_image:
+        fail("调整背景取景时必须同时提供 --background-image")
 
     target = Path(args.target).resolve()
     if target.exists() and any(target.iterdir()):
@@ -273,6 +282,23 @@ workbench_decision: 完成首练后用真实复盘替换初始化记录
         checker += ["--notion", str(notion_path)]
     run_checked(builder)
     run_checked(checker)
+
+    if args.background_image:
+        replacement = [
+            sys.executable,
+            str(SCRIPT_DIR / "Replace-FitnessWorkbenchBackground.py"),
+            "--project",
+            str(target),
+            "--image",
+            args.background_image,
+        ]
+        if args.background_video:
+            replacement += ["--video", args.background_video]
+        if args.background_desktop_position:
+            replacement += ["--desktop-position", args.background_desktop_position]
+        if args.background_mobile_position:
+            replacement += ["--mobile-position", args.background_mobile_position]
+        run_checked(replacement)
 
     print("FITNESS_WORKBENCH_INIT: PASS")
     print("project: " + str(target))

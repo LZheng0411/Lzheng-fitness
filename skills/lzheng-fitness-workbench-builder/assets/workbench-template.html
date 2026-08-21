@@ -1811,7 +1811,7 @@
 </head>
 <body class="dark-background-theme">
 
-<video id="workbenchBgVideo" class="workbench-video" muted loop playsinline preload="auto" poster="工作台与工具/健身工作台开发/界面素材/workbench-background.png" aria-hidden="true">
+<video id="workbenchBgVideo" class="workbench-video" data-background-mode="video" muted loop playsinline preload="auto" poster="工作台与工具/健身工作台开发/界面素材/workbench-background.png" aria-hidden="true">
   <source id="workbenchVideoSource" src="工作台与工具/健身工作台开发/界面素材/workbench-background.mp4" type="video/mp4">
 </video>
 <div class="workbench-video-wash" aria-hidden="true"></div>
@@ -1904,6 +1904,7 @@
   var motionPreference=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)');
   function setAmbientVideoState(){
     if(!bgVideo)return;
+    if(bgVideo.dataset.backgroundMode==='static'){bgVideo.pause();document.body.classList.remove('video-background-active');return;}
     if(motionPreference&&motionPreference.matches){bgVideo.pause();document.body.classList.remove('video-background-active');return;}
     bgVideo.muted=true;
     var attempt=bgVideo.play();

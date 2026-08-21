@@ -1,6 +1,6 @@
 # Lzheng Fitness Skills
 
-可独立下载、离线运行的个人训练 Agent Skills。v2.3 将计划、专项周期、训练复盘、停训接回、系统总控与新版健身工作台组合为一个可迁移的本地训练闭环。
+可独立下载、离线运行的个人训练 Agent Skills。v2.3.1 将计划、专项周期、训练复盘、停训接回、系统总控与新版健身工作台组合为一个可迁移、可更换壁纸的本地训练闭环。
 
 完整的阶段、用户输入、读取文件和产出契约见 [Markdown 文档](SYSTEM-FLOW.md)；需要逐项浏览检查时打开 [HTML 检查版](SYSTEM-FLOW.html)。
 
@@ -66,6 +66,24 @@ python <skills目录>/lzheng-training-system/scripts/lzheng_training_system.py d
 工作台中的“完整训练计划”由按钮直接打开，不要求用户填写路径，也不要求目录是 Obsidian 仓库。复盘、复盘索引和状态档案可以直接在工作台中阅读；安装 Obsidian 后才会额外显示可选编辑入口。整套目录复制、移动或改名后，系统会以当前位置解析文件并自动迁移旧配置。
 
 初始化后，正式产物优先收进同一个健身知识库：完整计划位于 `个人训练系统/训练与周期/当前周期`，专项力量周期位于 `个人训练系统/训练与周期/力量周期`，复盘位于 `个人训练系统/训练复盘与状态/训练复盘`，状态快照和接回卡位于 `个人训练系统/训练复盘与状态/状态档案`。临时渲染和备份不进入这些目录。
+
+## 替换工作台壁纸
+
+已经生成工作台后，可以直接交给 AI 一张图片，或一张图片加一个 MP4。脚本会备份原壁纸、更新页面、自动检查，失败时恢复原版本。
+
+纯静态背景：
+
+```bash
+python <skills目录>/lzheng-fitness-workbench-builder/scripts/Replace-FitnessWorkbenchBackground.py --project "<个人训练系统目录>" --image "<新壁纸.png>"
+```
+
+动态背景：
+
+```bash
+python <skills目录>/lzheng-fitness-workbench-builder/scripts/Replace-FitnessWorkbenchBackground.py --project "<个人训练系统目录>" --image "<静态兜底.png>" --video "<动态背景.mp4>"
+```
+
+只传图片时会关闭旧视频。完整参数、桌面/手机取景和首次初始化用法见 [壁纸替换指南](skills/lzheng-fitness-workbench-builder/references/background-replacement.md)。
 
 ## 使用示例
 
