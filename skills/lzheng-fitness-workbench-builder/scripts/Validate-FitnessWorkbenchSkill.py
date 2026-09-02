@@ -17,19 +17,43 @@ REQUIRED = [
     "scripts/Initialize-FitnessWorkbench.py",
     "scripts/Build-FitnessWorkbenchData.py",
     "scripts/Check-FitnessWorkbench.py",
+    "scripts/Inspect-FitnessWorkbench.py",
     "scripts/Prepare-FitnessWorkbenchRelease.py",
     "scripts/Replace-FitnessWorkbenchBackground.py",
+    "scripts/Refresh-FitnessWorkbench.py",
     "scripts/Refresh-FitnessWorkbenchTemplate.py",
     "scripts/Validate-FitnessWorkbenchSkill.py",
     "scripts/Test-FitnessWorkbenchWeekTransition.py",
     "scripts/Test-FitnessWorkbenchPortability.py",
     "scripts/Test-FitnessWorkbenchBackgroundReplacement.py",
+    "scripts/Test-FitnessWorkbenchNotionSync.py",
+    "scripts/Test-FitnessWorkbenchReleaseSafety.py",
+    "scripts/Test-FitnessWorkbenchCheckCliForwarding.py",
+    "scripts/Test-FitnessWorkbenchRefresh.py",
+    "scripts/Test-FitnessWorkbenchReviewProjection.py",
+    "scripts/Test-FitnessWorkbenchDataOnlyRefresh.py",
+    "scripts/Deploy-FitnessWorkbenchCloudBase.py",
+    "scripts/Verify-FitnessWorkbenchCloudBase.py",
+    "scripts/Publish-FitnessWorkbenchCloudBase.py",
+    "scripts/Test-FitnessWorkbenchCloudBaseRelease.py",
+    "scripts/Prepare-FitnessWorkbenchEncryptedRelease.py",
+    "scripts/Deploy-FitnessWorkbenchCloudBaseEncrypted.py",
+    "scripts/Verify-FitnessWorkbenchCloudBaseEncrypted.py",
+    "scripts/Publish-FitnessWorkbenchCloudBasePrivate.py",
+    "scripts/Test-FitnessWorkbenchEncryptedRelease.py",
+    "scripts/Test-FitnessWorkbenchCloudBasePrivatePublish.py",
+    "scripts/Prepare-FitnessWorkbenchPublicPersonalRelease.py",
+    "scripts/Deploy-FitnessWorkbenchCloudBasePublicPersonal.py",
+    "scripts/Verify-FitnessWorkbenchCloudBasePublicPersonal.py",
+    "scripts/Publish-FitnessWorkbenchCloudBasePublicPersonal.py",
+    "scripts/Test-FitnessWorkbenchPublicPersonalRelease.py",
     "scripts/Migrate-FitnessWorkbenchSchema.py",
     "../lzheng-training-system/scripts/Process-LzhengHandoffs.py",
     "references/input-contract.md",
     "references/visual-contract.md",
     "references/migration-and-release.md",
     "references/background-replacement.md",
+    "references/cloudbase-publishing.md",
     "references/path-portability-repair.md",
     "assets/workbench-template.html",
     "assets/backgrounds/workbench-background.mp4",
@@ -75,10 +99,29 @@ def main():
             problems.append("模板缺少品牌占位符")
         if 'data-ui-template="lzheng-fitness-workbench-v3"' not in html:
             problems.append("模板缺少固定 UI 模板版本")
+        if html.count('<nav class="nav" id="navBar"></nav>') != 1 or "navBar.appendChild(a)" not in html:
+            problems.append("模板缺少固定侧栏/底栏导航结构")
         if "workbench-background.png" not in html or "workbench-background.mp4" not in html:
             problems.append("模板没有引用正式动态背景及静态兜底")
         if "onboarding" not in html or "trainingStatus" not in html:
             problems.append("模板未实现 schema 6 建档或状态显示")
+        if re.search(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b", html):
+            problems.append("模板包含 JWT 或 publishable key")
+        if re.search(r"(?:tcb-api|tcloudbase)\.[A-Za-z0-9.-]+", html, re.I):
+            problems.append("模板包含真实 CloudBase 域名")
+        if re.search(r"accessKey\s*:\s*['\"](?!['\"])[^'\"]+", html):
+            problems.append("模板包含非空硬编码 accessKey")
+        if "enabled:integrationConfig.enabled===true" not in html:
+            problems.append("模板没有显式关闭的可选云端配置契约")
+        if "mergeNutritionContract(D.nutrition_contract)" not in html:
+            problems.append("模板没有读取匿名 nutrition_contract")
+        if re.search(r"profile:\{sex:'male',age:\d+,height_cm:\d+", html):
+            problems.append("模板包含个人营养默认资料")
+        if "饮食工作台/营养方案-v" in html:
+            problems.append("模板包含个人营养方案路径")
+        for marker in ("trainingArchiveOverlay", "nutritionAdjustPanel", "nutritionFeelingForm", "增加一组"):
+            if marker not in html:
+                problems.append("模板缺少最新版交互: " + marker)
         if "doc-overlay" not in html or "openDocument" not in html:
             problems.append("模板未实现不依赖 Obsidian 的内置文档阅读")
         if 'data-background-mode="video"' not in html or "FITNESS_WORKBENCH_BACKGROUND_CONFIG_START" not in html:
@@ -116,6 +159,8 @@ def main():
         for marker in ("schedule_contract_snapshot", "current_week_from_schedule", "validate_week_transition_contract", "declared_training_frequency"):
             if marker not in builder:
                 problems.append("构建器缺少周切换契约: " + marker)
+        if '"nutrition_contract": nutrition_contract' not in builder:
+            problems.append("构建器未投影 nutrition_contract")
 
     transition_test = root / "scripts" / "Test-FitnessWorkbenchWeekTransition.py"
     if transition_test.is_file():
@@ -155,6 +200,53 @@ def main():
         if completed.returncode != 0 or "FITNESS_WORKBENCH_BACKGROUND_TEST: PASS" not in completed.stdout:
             detail = (completed.stdout + completed.stderr).strip()
             problems.append("壁纸替换回归未通过" + (": " + detail if detail else ""))
+
+    additional_regressions = (
+        (
+            "Test-FitnessWorkbenchNotionSync.py",
+            "FITNESS_WORKBENCH_NOTION_SYNC: PASS",
+            "Notion 同步回归",
+        ),
+        (
+            "Test-FitnessWorkbenchReleaseSafety.py",
+            "FITNESS_WORKBENCH_RELEASE_SAFETY: PASS",
+            "发布安全回归",
+        ),
+        (
+            "Test-FitnessWorkbenchCheckCliForwarding.py",
+            "FITNESS_WORKBENCH_CHECK_CLI_FORWARDING: PASS",
+            "检查器 CLI 参数转发回归",
+        ),
+        (
+            "Test-FitnessWorkbenchRefresh.py",
+            "FITNESS_WORKBENCH_REFRESH_TEST: PASS",
+            "刷新编排回归",
+        ),
+        (
+            "Test-FitnessWorkbenchReviewProjection.py",
+            "FITNESS_WORKBENCH_REVIEW_PROJECTION: PASS",
+            "完整复盘投影回归",
+        ),
+        (
+            "Test-FitnessWorkbenchDataOnlyRefresh.py",
+            "FITNESS_WORKBENCH_DATA_ONLY_REFRESH: PASS",
+            "规划修改数据块刷新与侧边栏防回退回归",
+        ),
+    )
+    for filename, pass_marker, label in additional_regressions:
+        test_path = root / "scripts" / filename
+        if not test_path.is_file():
+            continue
+        completed = subprocess.run(
+            [sys.executable, str(test_path)],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        if completed.returncode != 0 or pass_marker not in completed.stdout:
+            detail = (completed.stdout + completed.stderr).strip()
+            problems.append(label + "未通过" + (": " + detail if detail else ""))
 
     text_suffixes = {".md", ".py", ".json", ".html", ".yaml", ".yml"}
     for path in root.rglob("*"):

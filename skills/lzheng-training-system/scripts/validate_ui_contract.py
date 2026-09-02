@@ -66,7 +66,7 @@ def main() -> int:
         "workbench": {
             "marker": "lzheng-fitness-workbench-v3",
             "sections": ("m-today", "m-week", "m-trend", "m-record", "m-settings"),
-            "nav": ("训练", "计划", "负荷", "复盘", "数据"),
+            "nav": ("训练", "计划", "负荷", "复盘", "指南"),
             "forbidden": (),
             "required_text": (),
         },
@@ -87,6 +87,21 @@ def main() -> int:
         for pattern in contract["forbidden"]:
             if re.search(pattern, text):
                 errors.append("包含工作台专属操作")
+        if kind == "workbench":
+            nav_tags = re.findall(r"<nav\b[^>]*>", text, re.I)
+            nav_containers = [
+                tag for tag in nav_tags
+                if re.search(r'\bid=["\']navBar["\']', tag, re.I)
+                and re.search(r'\bclass=["\'][^"\']*\bnav\b[^"\']*["\']', tag, re.I)
+            ]
+            if len(nav_containers) != 1:
+                errors.append("固定导航容器 navBar 缺失或重复")
+            nav_match = re.search(r"var navs\s*=\s*\[([\s\S]*?)\];", text)
+            nav_items = tuple(re.findall(r"\[['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]", "[" + nav_match.group(1))) if nav_match else ()
+            if nav_items != (("today", "训练"), ("week", "计划"), ("trend", "负荷"), ("record", "复盘"), ("settings", "指南")):
+                errors.append("固定导航配置缺失或顺序异常")
+            if "navBar.appendChild(a)" not in text:
+                errors.append("固定导航初始化逻辑缺失")
         if kind == "plan" and re.search(r"--green\b|#174f3d|#e7f0ec|#bdd1c6", text, re.I):
             errors.append("计划页包含旧绿色视觉令牌")
     else:

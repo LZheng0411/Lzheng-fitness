@@ -93,6 +93,7 @@ def main():
     parser.add_argument("--start-date", help="周期所在周的任意日期，YYYY-MM-DD；默认今天")
     parser.add_argument("--plan", help="可选：用户自己的版本化计划 JSON")
     parser.add_argument("--notion", help="可选：用户自己的 notion-data.json")
+    parser.add_argument("--integration-config", help="可选：公开客户端同步配置 JSON；默认本地模式")
     parser.add_argument("--demo-data", action="store_true", help="使用匿名 Notion 示例数据测试界面")
     parser.add_argument("--background-image", help="可选：首次初始化时使用的 PNG、JPEG 或 WebP 背景")
     parser.add_argument("--background-video", help="可选：首次初始化时使用的 MP4 动态背景；必须同时提供图片兜底")
@@ -136,11 +137,19 @@ def main():
         "训练复盘与状态/训练复盘",
         "训练复盘与状态/当前执行基准",
         "训练复盘与状态/状态档案",
+        "工作台与工具/饮食工作台",
         "工作台与工具/健身工作台开发/界面素材",
         "历史与治理",
     ]
     for relative in fixed_dirs:
         (target / relative).mkdir(parents=True, exist_ok=True)
+
+    nutrition_example = ASSET_DIR.parent.parent / "lzheng-nutrition-system" / "assets" / "examples" / "nutrition-contract.example.json"
+    if nutrition_example.is_file():
+        shutil.copy2(
+            nutrition_example,
+            target / "工作台与工具/饮食工作台/nutrition-contract-v01.json",
+        )
 
     template = (ASSET_DIR / "workbench-template.html").read_text(encoding="utf-8")
     brand = safe_brand(args.brand)
@@ -280,6 +289,8 @@ workbench_decision: 完成首练后用真实复盘替换初始化记录
     if notion_path:
         builder += ["--notion", str(notion_path)]
         checker += ["--notion", str(notion_path)]
+    if args.integration_config:
+        builder += ["--integration-config", args.integration_config]
     run_checked(builder)
     run_checked(checker)
 

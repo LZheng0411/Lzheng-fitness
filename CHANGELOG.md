@@ -1,5 +1,35 @@
 # Changelog
 
+## 3.1.0 — 2026-09-02
+
+- Added the v3 anonymous local-first recorder: plan snapshots and actual sets
+  are separated, cardio supports stairs/run/swim/custom entries, and the meal
+  flow keeps pre-meal estimates, after-meal candidates, and user confirmation
+  distinct.
+- Added an optional generic CloudBase adapter with owner-only RLS, disabled
+  example configuration, and a public local Agent boundary that has no trigger,
+  startup work, or model call on an empty queue.
+- Added the eighth portable Skill, `lzheng-nutrition-system`, with an anonymous
+  schema-2 nutrition contract and a strict estimate → consumed candidate →
+  user-confirmed ledger boundary.
+- Added training calendar/history correction with revision snapshots, nutrition
+  macro adjustment/undo, subjective check-ins, and an explicit local-archive
+  queue contract. The web now performs one task-status read per user refresh;
+  no background polling window remains.
+- Added an optional Windows protocol handoff that registers only after an
+  explicit install command and starts one hidden `-Once` run. It creates no
+  scheduler, login trigger, or browser-supplied local path.
+
+- Added a compact read-only workbench inspector and token-efficient plan revision route so routine agents read current JSON/Markdown sources instead of the 100 KB+ generated HTML and unrelated publishing references.
+- Added fixed workbench shell validation so a missing desktop sidebar/mobile bottom navigation can no longer pass the formal checker or UI contract gate.
+- Removed the five-review projection cap so every valid review indexed by the user is retained in the workbench, with regression coverage for count and order.
+- Added an end-to-end plan-change regression proving routine refreshes change only `workbench-data`, preserve the entire sidebar/view shell byte-for-byte, and reject a missing navigation container.
+- Made compact training-system inspection strictly read-only, aligned the workbench navigation contract to `指南`, and preserved review links on actual chart points.
+- Added an evidence-backed one-command workbench refresh pipeline with separate formal-refresh, local-release, deployment, and online-verification claims.
+- Added incremental/full Notion snapshot semantics, full-date history keys, conflict detection, and regression coverage that preserves verified session and main-lift history across refreshes and training cycles.
+- Added manifest-owned private and public-anonymized release modes, exact-tree and hash validation, Windows junction/reparse protection, and an identity-neutral public shell that cannot copy personal media.
+- Added installer drift verification, external recoverable backups, and path-containment protections for managed Skill destinations.
+
 ## 2.3.1 — 2026-08-21
 
 - Added a supported background-replacement command for generated workbenches: static PNG/JPEG/WebP mode or MP4 mode with a required image fallback.

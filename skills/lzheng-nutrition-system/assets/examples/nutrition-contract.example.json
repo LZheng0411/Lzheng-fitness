@@ -1,0 +1,51 @@
+{
+  "schema_version": 2,
+  "meta": {
+    "version": "v01",
+    "status": "awaiting_profile",
+    "goal": "maintenance",
+    "created_at": "2026-01-01T00:00:00Z",
+    "training_plan_source": "个人训练系统/训练与周期/当前周期/current-plan.json"
+  },
+  "profile": {
+    "age": null,
+    "sex": null,
+    "height_cm": null,
+    "current_weight_kg": null,
+    "diet_environment": null,
+    "confirmed_restrictions": []
+  },
+  "calculation": {
+    "method": "mifflin_st_jeor",
+    "activity_factor": null,
+    "energy_adjustment_percent": 0,
+    "protein_g_per_kg": null,
+    "fat_g_per_kg": null,
+    "carbohydrate_g_per_kg": {
+      "heavy_training": null,
+      "normal_training": null,
+      "rest": null
+    },
+    "minimum_observation_days": 14
+  },
+  "day_type_rules": {
+    "heavy_training": {"match": []},
+    "normal_training": {"match": []},
+    "rest": {"match": ["休息", "恢复"]},
+    "needs_confirmation": {"match": []}
+  },
+  "tracking": {
+    "confirmed_meals_only": true,
+    "bodyweight": true,
+    "waist": true,
+    "adherence": true,
+    "training_performance": true
+  },
+  "review_rules": {
+    "minimum_days": 14,
+    "minimum_adherence_days_per_week": 5,
+    "max_single_adjustment_kcal": 150,
+    "single_variable_only": true
+  },
+  "sources": []
+}

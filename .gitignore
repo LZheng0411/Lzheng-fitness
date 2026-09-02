@@ -5,3 +5,12 @@ Thumbs.db
 .venv/
 lzheng-fitness-output/
 validation-output/
+
+# Generated personal workbench inputs and release folders.
+# Anonymous examples under skills/**/assets/examples keep distinct *.example.json names.
+**/notion-data.json
+**/workbench-data.json
+fitness-workbench-deploy/
+fitness-workbench-release/
+健身工作台发布/
+个人训练系统/

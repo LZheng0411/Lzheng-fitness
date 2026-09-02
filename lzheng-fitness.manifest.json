@@ -1,6 +1,6 @@
 {
   "name": "Lzheng-fitness",
-  "version": "2.3.1",
+  "version": "3.1.0",
   "license": "MIT",
   "language": "zh-CN",
   "skills": [
@@ -30,6 +30,11 @@
       "standalone": true
     },
     {
+      "name": "lzheng-nutrition-system",
+      "path": "skills/lzheng-nutrition-system",
+      "standalone": true
+    },
+    {
       "name": "lzheng-training-system",
       "path": "skills/lzheng-training-system",
       "standalone": false
@@ -43,6 +48,14 @@
   "runtime": {
     "python": ">=3.10",
     "third_party_dependencies": []
+  },
+  "integrations": {
+    "cloudbase": {
+      "path": "integrations/cloudbase",
+      "optional": true,
+      "default_mode": "local",
+      "local_agent_mode": "manual-on-demand-once"
+    }
   },
   "knowledge": "knowledge/00-lzheng-knowledge-map.md",
   "validator": "tools/validate_bundle.py"

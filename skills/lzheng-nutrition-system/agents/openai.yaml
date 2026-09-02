@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lzheng 通用营养系统"
+  short_description: "与训练计划联动的营养建档、餐食确认和趋势复盘"
+  default_prompt: "使用 $lzheng-nutrition-system 读取当前训练计划和已确认饮食事实，生成或复盘通用 nutrition_contract；未知数据保持待确认。"

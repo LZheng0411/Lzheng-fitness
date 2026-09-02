@@ -1,0 +1,1 @@
+{"type":"object","required":["foods","confidence"],"properties":{"foods":{"type":"array"},"confidence":{"type":"number","minimum":0,"maximum":1}}}

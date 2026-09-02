@@ -8,13 +8,13 @@ Build-FitnessWorkbenchData.py — 健身工作台 workbench-data 生成器与校
 本脚本不修改页面视图；校验不通过时不得替换。
 
 用法：
-  python Build-FitnessWorkbenchData.py --project <训练项目根目录> [--notion <notion-data.json>] [--check-only] [--out <workbench-data.json>]
+  python Build-FitnessWorkbenchData.py --project <训练项目根目录> [--notion <notion-data.json> --notion-mode incremental|full] [--check-only] [--out <workbench-data.json>]
 
 约定：
 - 当前周期 JSON：自动发现 <project>/训练与周期/当前周期 下版本号最大的 *-vNN.json。
 - 复盘索引：<project>/训练复盘与状态/训练复盘/INDEX.md
 - 执行基准：<project>/训练复盘与状态/当前执行基准/ 下的 md（作为约束说明，不解析数据）
-- Notion 结果：--notion 指定 JSON（bodyweight/sessions/last_sync），缺失时输出 sync 非 ok。
+- Notion 结果：--notion 指定 JSON；历史按稳定键合并，查询时间与本地构建时间分离。
 - 输出 schema=6；失败保护：无法核验的字段用 null/空态，绝不继承旧值冒充新数据。
 """
 import argparse
@@ -24,6 +24,8 @@ import math
 import os
 import re
 import sys
+import uuid
+from pathlib import Path
 from urllib.parse import quote, unquote, urlparse
 
 SCHEMA_VERSION = 6
@@ -32,6 +34,283 @@ DEFAULT_WEEKDAY = {"上肢A": "周一", "腿B": "周二", "上肢B": "周四", "
 MAX_NOTION_AGE_DAYS = 2
 
 WEEKDAY_CN = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"]
+
+NOTION_SYNC_MODES = {"incremental", "full"}
+MAIN_LIFT_ALIASES = {
+    "负重引体": "负重引体",
+    "负重引体向上": "负重引体",
+    "卧推": "卧推",
+    "杠铃卧推": "卧推",
+    "深蹲": "深蹲",
+    "杠铃深蹲": "深蹲",
+    "硬拉": "硬拉",
+    "杠铃硬拉": "硬拉",
+}
+MAIN_LIFT_NAMES = ("负重引体", "卧推", "深蹲", "硬拉")
+NOTION_HISTORY_KEYS = {
+    "bodyweight": ("date",),
+    "sessions": ("date", "day"),
+    "main_lifts": ("name", "date"),
+    "activity": ("date",),
+}
+NOTION_MONOTONIC_FIELDS = (
+    "source_queried_at",
+    "snapshot_generated_at",
+    "latest_training_record_date",
+    "latest_bodyweight_record_date",
+)
+
+
+class NotionSyncConflict(ValueError):
+    """Raised when a new snapshot would silently rewrite verified history."""
+
+
+def canonical_main_lift_name(name):
+    """Normalize portable aliases without turning accessory variants into main lifts."""
+    text = str(name or "").strip()
+    return MAIN_LIFT_ALIASES.get(text, text)
+
+
+def normalized_session_date(value, default_year=None):
+    """Return a full ISO date; legacy MM-DD requires a metadata-derived year."""
+    text = str(value or "").strip()
+    full = re.match(r"^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$", text)
+    if full:
+        try:
+            return dt.date(int(full.group(1)), int(full.group(2)), int(full.group(3))).isoformat()
+        except ValueError:
+            return text
+    legacy = re.match(r"^(\d{2})-(\d{2})$", text)
+    if legacy and default_year:
+        try:
+            return dt.date(int(default_year), int(legacy.group(1)), int(legacy.group(2))).isoformat()
+        except ValueError:
+            return text
+    return text
+
+
+def normalized_full_date(value):
+    text = str(value or "").strip()
+    match = re.match(r"^(\d{4}-\d{2}-\d{2})(?:[T ].*)?$", text)
+    return match.group(1) if match else text
+
+
+def _year_from_temporal(value):
+    match = re.match(r"^(\d{4})[-/]", str(value or "").strip())
+    return int(match.group(1)) if match else None
+
+
+def history_default_year(notion, field):
+    """Choose the record-domain year before falling back to snapshot/query metadata."""
+    domain_field = "latest_bodyweight_record_date" if field == "bodyweight" else "latest_training_record_date"
+    for candidate in (
+        notion.get(domain_field),
+        notion.get("source_queried_at"),
+        notion.get("snapshot_generated_at"),
+        notion.get("last_sync"),
+    ):
+        year = _year_from_temporal(candidate)
+        if year:
+            return year
+    return None
+
+
+def normalized_day_label(value):
+    return re.sub(r"[\s　]+", "", str(value or "").strip()).replace("（", "(").replace("）", ")")
+
+
+def _meaningful(value):
+    return value not in (None, "", [], {})
+
+
+def _same_value(left, right):
+    if isinstance(left, (int, float)) and not isinstance(left, bool) and isinstance(right, (int, float)) and not isinstance(right, bool):
+        return float(left) == float(right)
+    return left == right
+
+
+def _is_iso_date(value):
+    try:
+        return dt.date.fromisoformat(str(value)).isoformat() == str(value)
+    except ValueError:
+        return False
+
+
+def _history_key(field, row):
+    if field == "bodyweight":
+        key = (normalized_full_date(row.get("date")),)
+    elif field == "sessions":
+        key = (normalized_full_date(row.get("date")), normalized_day_label(row.get("day")))
+    elif field == "main_lifts":
+        key = (canonical_main_lift_name(row.get("name")), normalized_full_date(row.get("date")))
+    elif field == "activity":
+        key = (normalized_full_date(row.get("date")),)
+    else:
+        raise NotionSyncConflict("未知历史字段: %s" % field)
+    if any(value in (None, "") for value in key):
+        raise NotionSyncConflict("%s 记录缺少稳定键 %s: %r" % (field, "+".join(NOTION_HISTORY_KEYS[field]), row))
+    record_date = key[-1] if field == "main_lifts" else key[0]
+    if field in ("bodyweight", "sessions", "main_lifts", "activity") and not _is_iso_date(record_date):
+        raise NotionSyncConflict("%s 记录日期必须是 YYYY-MM-DD；旧 MM-DD 需要查询元数据提供默认年份: %r" % (field, row))
+    return key
+
+
+def _merge_compatible_record(field, key, previous, incoming):
+    """Allow enrichment, but reject changing an already verified non-empty value."""
+    key_fields = set(NOTION_HISTORY_KEYS[field])
+    result = dict(previous)
+    for name, value in incoming.items():
+        old = result.get(name)
+        if name not in key_fields and _meaningful(old) and _meaningful(value) and not _same_value(old, value):
+            correction_hint = "；权威纠错需使用 full + --replace-main-lift-history" if field == "main_lifts" else ""
+            raise NotionSyncConflict(
+                "%s 历史发生冲突：稳定键 %s 的 %s 已核验为 %r，本次为 %r%s"
+                % (field, key, name, old, value, correction_hint)
+            )
+        if _meaningful(value) or name not in result:
+            result[name] = value
+    return result
+
+
+def _normalize_history_row(field, row, default_year=None):
+    item = dict(row)
+    if field == "bodyweight":
+        item["date"] = normalized_session_date(item.get("date"), default_year)
+    elif field == "sessions":
+        item["date"] = normalized_session_date(item.get("date"), default_year)
+        item["day"] = normalized_day_label(item.get("day"))
+    elif field == "main_lifts":
+        item["name"] = canonical_main_lift_name(item.get("name"))
+        item["date"] = normalized_session_date(item.get("date"), default_year)
+        if isinstance(item.get("week"), str) and item["week"].isdigit():
+            item["week"] = int(item["week"])
+    elif field == "activity":
+        item["date"] = normalized_session_date(item.get("date"), default_year)
+    return item
+
+
+def _index_history(field, rows, default_year=None):
+    indexed = {}
+    for raw in rows or []:
+        if not isinstance(raw, dict):
+            raise NotionSyncConflict("%s 历史包含非对象记录" % field)
+        row = _normalize_history_row(field, raw, default_year)
+        key = _history_key(field, row)
+        indexed[key] = _merge_compatible_record(field, key, indexed[key], row) if key in indexed else row
+    return indexed
+
+
+def _history_sort_key(field, item):
+    key, _row = item
+    if field == "main_lifts":
+        return (MAIN_LIFT_NAMES.index(key[0]) if key[0] in MAIN_LIFT_NAMES else len(MAIN_LIFT_NAMES), str(key[1]))
+    return tuple(str(value) for value in key)
+
+
+def _normalize_latest_by_exercise(raw):
+    latest = {}
+    for name, value in (raw or {}).items():
+        canonical = canonical_main_lift_name(name)
+        if canonical in latest and _meaningful(latest[canonical]) and _meaningful(value) and latest[canonical] != value:
+            raise NotionSyncConflict("latest_by_exercise 别名归一化后发生冲突: %s" % canonical)
+        latest[canonical] = value
+    return latest
+
+
+def normalize_notion_payload(notion):
+    if not isinstance(notion, dict):
+        return notion
+    value = dict(notion)
+    source_queried_at = value.get("source_queried_at") or value.get("last_sync")
+    if source_queried_at:
+        value["source_queried_at"] = source_queried_at
+        # Compatibility alias for schema-6 views that still render last_sync.
+        value["last_sync"] = source_queried_at
+    value["latest_by_exercise"] = _normalize_latest_by_exercise(value.get("latest_by_exercise"))
+    for field in NOTION_HISTORY_KEYS:
+        indexed = _index_history(field, value.get(field) or [], history_default_year(value, field))
+        value[field] = [row for _key, row in sorted(indexed.items(), key=lambda item: _history_sort_key(field, item))]
+    return value
+
+
+def resolve_notion_mode(cli_mode, notion):
+    payload_mode = (notion or {}).get("sync_mode") if isinstance(notion, dict) else None
+    if payload_mode is not None:
+        payload_mode = str(payload_mode).strip().lower()
+        if payload_mode not in NOTION_SYNC_MODES:
+            raise NotionSyncConflict("sync_mode 必须是 incremental 或 full")
+    if cli_mode and payload_mode and cli_mode != payload_mode:
+        raise NotionSyncConflict("--notion-mode 与 JSON sync_mode 不一致")
+    mode = cli_mode or payload_mode
+    return (mode or "incremental"), bool(mode)
+
+
+def _comparable_time(value):
+    if not value:
+        return None
+    text = str(value).strip().replace("Z", "+00:00")
+    try:
+        parsed = dt.datetime.fromisoformat(text)
+        if parsed.tzinfo:
+            parsed = parsed.astimezone(dt.timezone.utc).replace(tzinfo=None)
+        return parsed
+    except ValueError:
+        for pattern in ("%Y/%m/%d %H:%M:%S", "%Y/%m/%d %H:%M", "%Y/%m/%d"):
+            try:
+                return dt.datetime.strptime(text, pattern)
+            except ValueError:
+                continue
+        try:
+            return dt.datetime.combine(dt.date.fromisoformat(text[:10]), dt.time.min)
+        except ValueError:
+            return None
+
+
+def _reject_metadata_regression(previous, incoming):
+    for field in NOTION_MONOTONIC_FIELDS:
+        old = _comparable_time(previous.get(field))
+        new = _comparable_time(incoming.get(field))
+        if old and new and new < old:
+            raise NotionSyncConflict("%s 倒退：已有 %s，本次 %s" % (field, previous.get(field), incoming.get(field)))
+
+
+def merge_notion_history(previous, incoming, mode="incremental", replace_main_lifts=False):
+    """Merge verified histories by stable key; only full+replace may rewrite main-lift history."""
+    if mode not in NOTION_SYNC_MODES:
+        raise NotionSyncConflict("Notion 输入模式必须是 incremental 或 full")
+    if replace_main_lifts and mode != "full":
+        raise NotionSyncConflict("--replace-main-lift-history 只允许用于 full 输入")
+    previous = normalize_notion_payload(previous) or {}
+    incoming = normalize_notion_payload(incoming) or {}
+    _reject_metadata_regression(previous, incoming)
+
+    merged = dict(previous)
+    for name, value in incoming.items():
+        if name in NOTION_HISTORY_KEYS or name == "latest_by_exercise":
+            continue
+        if _meaningful(value) or name not in merged:
+            merged[name] = value
+    merged["sync_mode"] = mode
+
+    for field in NOTION_HISTORY_KEYS:
+        old_rows = _index_history(field, previous.get(field) or [])
+        new_rows = _index_history(field, incoming.get(field) or [])
+        if field == "main_lifts" and replace_main_lifts:
+            combined = new_rows
+        else:
+            if mode == "full":
+                missing = sorted(set(old_rows) - set(new_rows), key=str)
+                if missing:
+                    raise NotionSyncConflict("full 输入缺少既有 %s 稳定键，拒绝缩短历史: %s" % (field, missing))
+            combined = dict(old_rows)
+            for key, row in new_rows.items():
+                combined[key] = _merge_compatible_record(field, key, combined[key], row) if key in combined else row
+        merged[field] = [row for _key, row in sorted(combined.items(), key=lambda item: _history_sort_key(field, item))]
+
+    previous_latest = previous.get("latest_by_exercise") or {}
+    incoming_latest = incoming.get("latest_by_exercise") or {}
+    merged["latest_by_exercise"] = dict(incoming_latest) if mode == "full" else {**previous_latest, **incoming_latest}
+    return normalize_notion_payload(merged)
 
 
 def fail(msg):
@@ -190,6 +469,167 @@ def declared_training_frequency(plan_json):
         return value if value > 0 else None
     match = re.search(r"(\d+)\s*练", str(value or "")) or re.search(r"(\d+)", str(value or ""))
     return int(match.group(1)) if match and int(match.group(1)) > 0 else None
+
+
+def schedule_day_key(item):
+    explicit = normalized_day_label(item.get("day_key"))
+    if explicit:
+        return explicit
+    text = normalized_day_label(" ".join(str(item.get(key) or "") for key in ("theme", "label", "title", "role")))
+    for key in DEFAULT_WEEKDAY:
+        if normalized_day_label(key) in text:
+            return normalized_day_label(key)
+    match = re.search(r"(上肢|下肢|腿|推|拉)([A-DＡ-Ｄ])", text, re.I)
+    if match:
+        suffix = chr(ord(match.group(2).upper()) - 0xFEE0) if "Ａ" <= match.group(2).upper() <= "Ｄ" else match.group(2).upper()
+        return match.group(1) + suffix
+    return None
+
+
+def _lift_from_text(value):
+    text = normalized_day_label(value)
+    for alias in sorted(MAIN_LIFT_ALIASES, key=len, reverse=True):
+        if text.startswith(normalized_day_label(alias)):
+            return MAIN_LIFT_ALIASES[alias]
+    return None
+
+
+def _segment_mentions_lift(segment, lift):
+    text = normalized_day_label(segment)
+    return any(normalized_day_label(alias) in text for alias, canonical in MAIN_LIFT_ALIASES.items() if canonical == lift)
+
+
+def build_main_lift_day_map(plan_json):
+    """Resolve main-lift duties from the plan instead of assuming one global split."""
+    explicit = plan_json.get("main_lift_day_map")
+    if not isinstance(explicit, dict):
+        explicit = plan_json.get("plan", {}).get("main_lift_day_map")
+    mapping = {}
+    for name, day in (explicit or {}).items():
+        canonical = canonical_main_lift_name(name)
+        if canonical in MAIN_LIFT_NAMES and normalized_day_label(day):
+            mapping[canonical] = normalized_day_label(day)
+
+    role_candidates = {name: set() for name in MAIN_LIFT_NAMES}
+    exercise_candidates = {name: set() for name in MAIN_LIFT_NAMES}
+    known_days = set()
+    for item in plan_json.get("schedule", []):
+        if "exercises" not in item:
+            continue
+        day = schedule_day_key(item)
+        if not day:
+            continue
+        known_days.add(day)
+        segments = re.split(r"[/／;；,，+＋]", str(item.get("role") or ""))
+        for lift in MAIN_LIFT_NAMES:
+            for segment in segments:
+                normalized = normalized_day_label(segment)
+                is_strength_duty = any(marker in normalized for marker in ("强度", "主项", "暴露", "重硬拉", "硬拉日"))
+                is_secondary = any(marker in normalized for marker in ("容量", "技术", "辅助"))
+                if is_strength_duty and not is_secondary and _segment_mentions_lift(segment, lift):
+                    role_candidates[lift].add(day)
+        for exercise in item.get("exercises") or []:
+            if not isinstance(exercise, dict):
+                continue
+            lift = canonical_main_lift_name(exercise.get("name"))
+            if lift in MAIN_LIFT_NAMES:
+                exercise_candidates[lift].add(day)
+
+    cycle_candidates = {name: set() for name in MAIN_LIFT_NAMES}
+    for cycle in plan_json.get("cycles", []):
+        lift = _lift_from_text(cycle.get("title"))
+        if not lift:
+            continue
+        for header in cycle.get("headers") or []:
+            normalized = normalized_day_label(header)
+            if not any(marker in normalized for marker in ("强度", "主项", "硬拉日")):
+                continue
+            for day in known_days:
+                if day in normalized:
+                    cycle_candidates[lift].add(day)
+
+    for lift in MAIN_LIFT_NAMES:
+        if lift in mapping:
+            continue
+        preferred = role_candidates[lift] | cycle_candidates[lift]
+        if len(preferred) == 1:
+            mapping[lift] = next(iter(preferred))
+        elif not preferred and len(exercise_candidates[lift]) == 1:
+            mapping[lift] = next(iter(exercise_candidates[lift]))
+    return mapping
+
+
+def day_labels_match(expected, actual):
+    expected = normalized_day_label(expected)
+    actual = normalized_day_label(actual)
+    return bool(expected and actual and (expected == actual or expected in actual))
+
+
+def strength_history_validation_enabled(plan_json):
+    """Respect an explicit objective first; infer only for legacy plans with a clear strength contract."""
+    plan = plan_json.get("plan", {})
+    objective_mode = str(plan.get("objective_mode") or "").strip().lower()
+    if objective_mode:
+        return objective_mode == "strength"
+    tracking_flag = plan.get("main_lift_tracking", plan_json.get("main_lift_tracking"))
+    if isinstance(tracking_flag, bool):
+        return tracking_flag
+    explicit_map = plan.get("main_lift_day_map") or plan_json.get("main_lift_day_map")
+    if isinstance(explicit_map, dict) and explicit_map:
+        return True
+    cycle_lifts = {_lift_from_text(cycle.get("title")) for cycle in plan_json.get("cycles", []) if cycle.get("chart")}
+    strength_text = " ".join(str(plan.get(key) or "") for key in ("title", "subtitle", "goal"))
+    return "力量" in strength_text and bool(cycle_lifts & set(MAIN_LIFT_NAMES))
+
+
+def validate_main_lift_history(notion, current_week, plan_json):
+    """Verify actual strength points against the plan-declared duty mapping and executed sessions."""
+    problems = []
+    if not strength_history_validation_enabled(plan_json) or not notion or not notion.get("main_lifts"):
+        return problems
+    plan_mapping = build_main_lift_day_map(plan_json)
+    sessions = {}
+    for row in notion.get("sessions") or []:
+        if isinstance(row, dict) and row.get("date") and row.get("day"):
+            sessions.setdefault(normalized_session_date(row.get("date")), set()).add(normalized_day_label(row.get("day")))
+    seen = set()
+    for row in notion.get("main_lifts") or []:
+        if not isinstance(row, dict):
+            problems.append("主项实际记录必须是对象")
+            continue
+        name = canonical_main_lift_name(row.get("name"))
+        week = row.get("week")
+        date = normalized_full_date(row.get("date"))
+        key = (name, date)
+        if name not in MAIN_LIFT_NAMES:
+            problems.append("主项实际记录名称无法识别: %s" % (row.get("name") or "空"))
+            continue
+        if key in seen:
+            problems.append("主项实际记录重复: %s %s" % key)
+        seen.add(key)
+        if not isinstance(week, int) or week < 1:
+            problems.append("主项实际记录周次非法: %s W%s" % (name, week))
+        if not isinstance(row.get("value"), (int, float)) or isinstance(row.get("value"), bool):
+            problems.append("主项实际记录重量非法: %s W%s" % (name, week))
+        expected_day = plan_mapping.get(name)
+        if not expected_day:
+            problems.append("当前计划无法确定主项职责映射: %s；请在 plan.main_lift_day_map 显式声明" % name)
+            continue
+        actual_days = sessions.get(date, set())
+        if not date or not actual_days:
+            problems.append("主项实际记录缺少对应训练场次: %s W%s %s" % (name, week, date or "无日期"))
+        else:
+            try:
+                if dt.date.fromisoformat(date) > dt.date.today():
+                    problems.append("主项实际记录来自未来日期: %s W%s %s" % (name, week, date))
+            except ValueError:
+                problems.append("主项实际记录日期非法: %s W%s %s" % (name, week, date))
+        if actual_days and not any(day_labels_match(expected_day, actual_day) for actual_day in actual_days):
+            problems.append(
+                "主项实际记录职责不匹配: %s W%s %s 属于%s，不是计划映射%s"
+                % (name, week, date, "/".join(sorted(actual_days)), expected_day)
+            )
+    return problems
 
 
 def relative_path(path, project_root):
@@ -475,11 +915,19 @@ def build_status_info(baseline, meta, onboarding, artifact=None):
 
 def build_provenance(plan_path, baseline, review_rows, sync, project_root):
     checked = dt.datetime.now().astimezone().isoformat(timespec="minutes")
+    source_state = sync.get("source_state")
+    notion_trust = sync.get("status")
+    if source_state == "queried" and sync.get("status") == "ok":
+        notion_trust = "verified"
+    elif source_state == "cached":
+        notion_trust = "cached"
+    elif source_state == "restored":
+        notion_trust = "restored"
     return {
         "plan": {"source": relative_path(plan_path, project_root), "verified_at": checked, "trust": "local_verified"},
         "baseline": {"source": relative_path(baseline.get("path"), project_root), "verified_at": checked, "trust": "local_verified"},
         "reviews": {"source": "训练复盘与状态/训练复盘/INDEX.md", "verified_at": checked, "trust": "local_verified", "count": len(review_rows)},
-        "notion": {"source": "optional_notion_export", "verified_at": sync.get("last_attempt"), "trust": "verified" if sync.get("status") == "ok" else sync.get("status")},
+        "notion": {"source": "optional_notion_export", "verified_at": sync.get("source_queried_at"), "trust": notion_trust},
     }
 
 
@@ -562,8 +1010,8 @@ def build_days(plan_json, current_week, plan_start, notion=None):
 
     def session_is_done(date, day_key):
         for session in (notion or {}).get("sessions", []):
-            raw_date = str(session.get("date", ""))
-            if raw_date and date.endswith(raw_date[-5:]) and day_key in str(session.get("day", "")):
+            session_date = normalized_full_date(session.get("date"))
+            if session_date == date and day_key in str(session.get("day", "")):
                 return True
         return False
 
@@ -791,8 +1239,43 @@ def build_week(plan_json, current_week):
     return out
 
 
-def build_charts(plan_json, notion=None):
+def review_candidates_for_chart_point(point, review_rows, plan_mapping):
+    """Resolve one actual chart point to one session review by date and duty."""
+    date = normalized_full_date(point.get("date"))
+    if not date:
+        return []
+    candidates = [r for r in (review_rows or []) if r.get("full_date") == date]
+    if not candidates:
+        return []
+    expected_day = plan_mapping.get(canonical_main_lift_name(point.get("name")))
+    if expected_day:
+        duty_matches = [r for r in candidates if day_labels_match(expected_day, r.get("day", ""))]
+        if duty_matches:
+            candidates = duty_matches
+    non_weekly = [r for r in candidates if r.get("day") != "周训练阶段"]
+    return non_weekly or candidates
+
+
+def attach_chart_review(point, review_rows, plan_mapping):
+    """Add a portable review reference without copying review content into chart points."""
+    enriched = dict(point)
+    candidates = review_candidates_for_chart_point(point, review_rows, plan_mapping)
+    if len(candidates) > 1:
+        labels = ", ".join(str(r.get("file") or r.get("day") or "未知") for r in candidates)
+        fail("曲线实际点无法唯一关联复盘: %s %s (%s)" % (point.get("name"), point.get("date"), labels))
+    if candidates:
+        review = candidates[0]
+        # The current formal reader resolves review_title against D.reviews.
+        # Keep review_href as a compatibility field for older templates.
+        enriched["review_title"] = review.get("workbench_title") or review.get("file")
+        enriched["review_href"] = review.get("file")
+        enriched["review_file"] = review.get("file")
+    return enriched
+
+
+def build_charts(plan_json, notion=None, review_rows=None):
     charts = {}
+    plan_mapping = build_main_lift_day_map(plan_json)
     for c in plan_json.get("cycles", []):
         title = c.get("title", "")
         key = None
@@ -804,7 +1287,11 @@ def build_charts(plan_json, notion=None):
             continue
         ch = c["chart"]
         strength = [{"week": p.get("week"), "v": p.get("value")} for p in ch.get("strength", [])]
-        actual = [p for p in (notion or {}).get("main_lifts", []) if p.get("name") == key]
+        actual = [
+            attach_chart_review(p, review_rows, plan_mapping)
+            for p in (notion or {}).get("main_lifts", [])
+            if p.get("name") == key
+        ]
         charts[key] = {"cap": ch.get("strength_label", "强度"), "strength": strength, "actual": actual}
     return charts
 
@@ -971,7 +1458,10 @@ def build_goal_metrics(plan_json, days, timeline, notion):
 def build_reviews(review_rows, project_root):
     review_dir = os.path.join("训练复盘与状态", "训练复盘")
     out = []
-    for r in review_rows[:5]:
+    # The review index is the authoritative display set. Do not impose a UI or
+    # builder-side item cap: every indexed review must remain available in the
+    # workbench, in the same order as the index.
+    for r in review_rows:
         item = dict(r)
         if r.get("file"):
             absolute = os.path.abspath(os.path.join(project_root, review_dir, r["file"] + ".md"))
@@ -1033,11 +1523,18 @@ def load_notion(notion_file):
             raise ValueError("根节点必须是对象")
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         return {
-            "last_sync": None, "bodyweight": [], "baseline_kg": None,
+            "last_sync": None, "source_queried_at": None, "snapshot_generated_at": None,
+            "latest_training_record_date": None, "latest_bodyweight_record_date": None,
+            "bodyweight": [], "baseline_kg": None,
             "baseline_note": None, "sessions": [], "note": "Notion 数据文件解析失败。",
             "latest_by_exercise": {}, "main_lifts": [], "activity": [], "notion_url": None, "_load_error": str(exc),
         }
-    return {
+    return normalize_notion_payload({
+        "sync_mode": data.get("sync_mode"),
+        "source_queried_at": data.get("source_queried_at"),
+        "latest_training_record_date": data.get("latest_training_record_date"),
+        "latest_bodyweight_record_date": data.get("latest_bodyweight_record_date"),
+        "snapshot_generated_at": data.get("snapshot_generated_at"),
         "last_sync": data.get("last_sync"),
         "bodyweight": data.get("bodyweight", []),
         "baseline_kg": data.get("baseline_kg"),
@@ -1048,7 +1545,7 @@ def load_notion(notion_file):
         "main_lifts": data.get("main_lifts", []),
         "activity": data.get("activity", []),
         "notion_url": data.get("notion_url"),
-    }
+    })
 
 
 def load_notion_from_workbench(html_file):
@@ -1063,34 +1560,27 @@ def load_notion_from_workbench(html_file):
         notion = data.get("notion")
         if not isinstance(notion, dict):
             raise ValueError("备份中没有 Notion 数据")
-        return notion
+        return normalize_notion_payload(notion)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         fail("无法从备份恢复 Notion 数据：%s" % exc)
 
 
 def parse_sync_date(value):
-    if not value:
-        return None
-    try:
-        return dt.datetime.fromisoformat(str(value).replace("Z", "+00:00")).date()
-    except ValueError:
-        try:
-            return dt.date.fromisoformat(str(value)[:10])
-        except ValueError:
-            return None
+    parsed = _comparable_time(value)
+    return parsed.date() if parsed else None
 
 
 def notion_sync_state(notion, objective_mode="general_fitness"):
     if not notion:
         return "stale", "Notion 数据文件缺失，使用本地复盘与计划数据", ["notion.bodyweight", "notion.sessions"]
     if notion.get("_load_error"):
-        return "failed", "Notion 数据文件无法解析", ["notion.last_sync", "notion.sessions", "notion.main_lifts"]
+        return "failed", "Notion 数据文件无法解析", ["notion.source_queried_at", "notion.sessions", "notion.main_lifts"]
     stale = []
-    sync_date = parse_sync_date(notion.get("last_sync"))
+    sync_date = parse_sync_date(notion.get("source_queried_at") or notion.get("last_sync"))
     if sync_date is None:
-        stale.append("notion.last_sync")
+        stale.append("notion.source_queried_at")
     elif (dt.date.today() - sync_date).days > MAX_NOTION_AGE_DAYS:
-        stale.append("notion.last_sync")
+        stale.append("notion.source_queried_at")
     if not isinstance(notion.get("sessions"), list) or not notion.get("sessions"):
         stale.append("notion.sessions")
     if objective_mode == "strength":
@@ -1105,6 +1595,34 @@ def notion_sync_state(notion, objective_mode="general_fitness"):
     if stale:
         return "stale", "Notion 数据不完整或已过期", stale
     return "ok", None, []
+
+
+def build_sync_metadata(notion, previous_sync, source_state, merge_mode, objective_mode="general_fitness", attempted_at=None):
+    """Separate source-query freshness from a local workbench rebuild."""
+    previous_sync = previous_sync if isinstance(previous_sync, dict) else {}
+    sync_status, sync_reason, stale_fields = notion_sync_state(notion, objective_mode)
+    source_queried_at = (notion or {}).get("source_queried_at") or (notion or {}).get("last_sync")
+    cached = source_state == "cached"
+    if cached:
+        cache_reason = "未提供新 Notion 快照；cached/preserved，保留上次已核验数据。"
+        sync_reason = cache_reason + ((" " + sync_reason) if sync_reason else "")
+    return {
+        "status": sync_status,
+        "source_state": source_state,
+        "merge_mode": merge_mode,
+        "source_queried_at": source_queried_at,
+        "snapshot_generated_at": (notion or {}).get("snapshot_generated_at"),
+        "latest_training_record_date": (notion or {}).get("latest_training_record_date"),
+        "latest_bodyweight_record_date": (notion or {}).get("latest_bodyweight_record_date"),
+        "last_success": (
+            previous_sync.get("last_success") or source_queried_at
+            if cached
+            else source_queried_at or previous_sync.get("last_success")
+        ),
+        "last_attempt": attempted_at if source_state == "queried" else previous_sync.get("last_attempt"),
+        "reason": sync_reason,
+        "stale_fields": stale_fields,
+    }
 
 
 def build_done(timeline):
@@ -1124,6 +1642,17 @@ def build_today_summary(review_rows, timeline):
     if not review:
         return None
     return {"date": today, "day": event.get("day"), "result": review.get("verdict", ""), "next": None}
+
+
+def build_advice(timeline, _previous_advice=None):
+    """Generate schedule-bound guidance; never carry a dated instruction across rebuilds."""
+    today = dt.date.today().isoformat()
+    event = next((item for item in timeline if item.get("date") == today), None)
+    if event and event.get("type") == "training":
+        return "按当前计划排程执行今日%s；训练后按复盘索引记录结果。" % (event.get("day") or "训练")
+    if event and event.get("type") == "recovery":
+        return "今日按当前计划恢复；如训练条件变化，先更新排程再刷新工作台。"
+    return "按当前计划排程执行；训练后按复盘索引记录结果。"
 
 
 def inherit_previous(html_path):
@@ -1263,14 +1792,29 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--project", required=True)
     ap.add_argument("--notion")
+    ap.add_argument(
+        "--notion-mode",
+        choices=sorted(NOTION_SYNC_MODES),
+        help="Notion 输入语义：incremental 按稳定键增量合并；full 声明为完整历史快照",
+    )
     ap.add_argument("--restore-notion-from-html", help="仅从已知本地备份恢复 Notion 动态数据")
+    ap.add_argument(
+        "--replace-main-lift-history",
+        action="store_true",
+        help="仅与 full Notion 输入一起使用：人工核验后权威替换整份主项实际历史",
+    )
     ap.add_argument("--check-only", action="store_true")
     ap.add_argument("--apply", action="store_true", help="校验通过后替换正式 HTML 数据块")
     ap.add_argument("--backup-dir", help="替换前上一版备份目录（建议 tmp 临时层）")
     ap.add_argument("--out")
+    ap.add_argument("--integration-config", help="可选公开客户端配置 JSON；缺省时保留已有配置或保持 local")
     args = ap.parse_args()
     if args.notion and args.restore_notion_from_html:
         fail("--notion 与 --restore-notion-from-html 不能同时使用")
+    if args.notion_mode and not args.notion:
+        fail("--notion-mode 只能与 --notion 一起使用")
+    if args.replace_main_lift_history and not args.notion:
+        fail("--replace-main-lift-history 只能与 --notion 一起使用")
 
     project = os.path.abspath(args.project)
     plan_path, plan_name = find_active_plan_json(project)
@@ -1303,25 +1847,81 @@ def main():
     # 仅保留带有成功同步时间的旧动态数据。匿名初始化页中的空占位对象
     # 不是可继承事实，否则第二次检查会把“未提供”误判为“不完整导出”。
     prior_notion = prev.get("notion") if isinstance(prev.get("notion"), dict) else None
-    retained_notion = prior_notion if prior_notion and prior_notion.get("last_sync") else None
-    notion = load_notion(args.notion) if args.notion else (load_notion_from_workbench(args.restore_notion_from_html) if args.restore_notion_from_html else retained_notion)
-    sync_status, sync_reason, stale_fields = notion_sync_state(notion, plan_json.get("plan", {}).get("objective_mode", "general_fitness"))
-    sync = {
-        "status": sync_status,
-        "last_success": (notion or {}).get("last_sync") or prev.get("sync", {}).get("last_success"),
-        "last_attempt": dt.datetime.now().isoformat(timespec="minutes"),
-        "reason": sync_reason,
-        "stale_fields": stale_fields,
-    }
+    try:
+        retained_notion = normalize_notion_payload(prior_notion)
+        retained_notion = retained_notion if retained_notion and (
+            retained_notion.get("source_queried_at") or retained_notion.get("last_sync")
+        ) else None
+        if args.notion:
+            incoming_notion = load_notion(args.notion)
+            notion_mode, explicit_mode = resolve_notion_mode(args.notion_mode, incoming_notion)
+            if not explicit_mode:
+                warn("旧 Notion 输入未声明 sync_mode；为兼容按 incremental 处理")
+            notion = merge_notion_history(
+                retained_notion,
+                incoming_notion,
+                mode=notion_mode,
+                replace_main_lifts=args.replace_main_lift_history,
+            )
+            notion_source_state = "queried"
+            notion_merge_mode = notion_mode
+            attempted_at = dt.datetime.now().astimezone().isoformat(timespec="minutes")
+        elif args.restore_notion_from_html:
+            notion = load_notion_from_workbench(args.restore_notion_from_html)
+            notion_source_state = "restored"
+            notion_merge_mode = "preserved"
+            attempted_at = None
+        else:
+            notion = retained_notion
+            notion_source_state = "cached" if notion else "missing"
+            notion_merge_mode = "preserved"
+            attempted_at = None
+    except NotionSyncConflict as exc:
+        fail(str(exc))
+    history_problems = validate_main_lift_history(notion, current_week, plan_json)
+    if history_problems:
+        fail("；".join(history_problems))
+    sync = build_sync_metadata(
+        notion,
+        prev.get("sync", {}),
+        notion_source_state,
+        notion_merge_mode,
+        plan_json.get("plan", {}).get("objective_mode", "general_fitness"),
+        attempted_at,
+    )
 
     days, timeline = build_days(plan_json, current_week, baseline.get("week_start") or baseline["period_start"], notion)
     meta = build_meta(plan_json, plan_name, current_week, baseline, project)
     onboarding = build_onboarding(plan_json, baseline, review_rows)
+    review_documents = build_reviews(review_rows, project)
+    nutrition_contract = None
+    nutrition_root = Path(project) / "工作台与工具" / "饮食工作台"
+    nutrition_candidates = sorted(nutrition_root.glob("nutrition-contract-v*.json")) if nutrition_root.is_dir() else []
+    if nutrition_candidates:
+        try:
+            nutrition_contract = json.loads(nutrition_candidates[-1].read_text(encoding="utf-8-sig"))
+        except Exception as exc:
+            fail("nutrition contract 无法读取: " + str(exc))
+        if not isinstance(nutrition_contract, dict) or nutrition_contract.get("schema_version") != 2:
+            fail("nutrition contract 必须是 schema_version=2 的对象")
+    elif isinstance(prev.get("nutrition_contract"), dict):
+        nutrition_contract = prev.get("nutrition_contract")
+    integration_config = prev.get("integrations") if isinstance(prev.get("integrations"), dict) else {"cloudbase": {"enabled": False, "env_id": "", "publishable_key": "", "sdk": None, "region": "", "bucket_name": ""}}
+    if args.integration_config:
+        try:
+            integration_config = json.loads(Path(args.integration_config).read_text(encoding="utf-8"))
+        except Exception as exc:
+            fail("integration config 无法读取: " + str(exc))
+    cloud_config = integration_config.get("cloudbase", {}) if isinstance(integration_config, dict) else {}
+    if not isinstance(cloud_config, dict):
+        fail("integration config.cloudbase 必须是对象")
+    if cloud_config.get("enabled") is not True:
+        integration_config = {"cloudbase": {"enabled": False, "env_id": "", "publishable_key": "", "sdk": None, "region": "", "bucket_name": ""}}
     data = {
         "schema": SCHEMA_VERSION,
         "meta": meta,
         "onboarding": onboarding,
-        "system": build_system_info(),
+        "system": dict(build_system_info(), instance_id=(prev.get("system", {}).get("instance_id") if isinstance(prev.get("system"), dict) else None) or str(uuid.uuid4())),
         "knowledge": build_knowledge_info(project),
         "status": build_status_info(baseline, meta, onboarding, find_latest_status_artifact(project)),
         "calendar": DEFAULT_CALENDAR,
@@ -1332,15 +1932,20 @@ def main():
         "timeline": timeline,
         "week": build_week(plan_json, current_week),
         "phases": plan_json.get("phases", []),
-        "charts": build_charts(plan_json, notion),
+        "charts": build_charts(plan_json, notion, review_documents),
         "goal_metrics": build_goal_metrics(plan_json, days, timeline, notion),
-        "reviews": build_reviews(review_rows, project),
+        "reviews": review_documents,
         "rules": ["%s：%s" % (r.get("title"), r.get("body")) for r in plan_json.get("rules", [])],
-        "advice": prev.get("advice") or "按复盘索引的最近一次判定准备下一次训练。",
+        "advice": build_advice(timeline, prev.get("advice")),
         "today_summary": build_today_summary(review_rows, timeline),
         "links": build_links(project, prev.get("links", {}), notion),
         "documents": build_portable_documents(project),
         "notion": notion or {
+            "sync_mode": None,
+            "source_queried_at": None,
+            "latest_training_record_date": None,
+            "latest_bodyweight_record_date": None,
+            "snapshot_generated_at": None,
             "last_sync": None,
             "bodyweight": [],
             "baseline_kg": None,
@@ -1350,6 +1955,8 @@ def main():
             "note": "Notion 数据未提供；页面将显示待同步状态。",
         },
         "sync": sync,
+        "nutrition_contract": nutrition_contract,
+        "integrations": integration_config,
         "provenance": build_provenance(plan_path, baseline, review_rows, sync, project),
     }
     if not onboarding["completed"]:

@@ -7,9 +7,9 @@ description: 基于用户当前状态、Skill 内置健身知识和最新官方�
 
 把计划视为基于某一时间点用户状态的可验证训练假设。先建档、再分层、再选动作和训练变量，最后从同一份结构化数据生成文字与 HTML。
 
-## 必读参考
+## 读取模式
 
-每次制定完整计划时依次读取：
+从零建档、结构性重做，或目标、频率、训练条件、安全限制、动作选择、训练量发生变化时，依次读取：
 
 1. [知识路由](references/knowledge-routing.md)：确定本次应读取的内置知识与联网来源。
 2. [问诊与状态快照](references/intake-and-state-snapshot.md)：收集必要信息并生成不可覆盖的时间快照。
@@ -23,6 +23,18 @@ description: 基于用户当前状态、Skill 内置健身知识和最新官方�
 10. [训练专家选择协议](../lzheng-training-expert-library/references/expert-selection-contract.md)：仅在专家变量会改变计划时选择最少必要来源模块。
 
 不要凭模型记忆代替 Skill 内置资料。只读取知识路由为当前问题指定的参考文件；涉及容易变化的安全或公共指南时再联网核验官方来源。
+
+### 低 token 局部修订
+
+如果只修改已确认的日期排程、计划版本、训练周次、工作重量、次数/RPE 或由正式复盘明确给出的下一次处方，并且目标、频率、器械、健康限制、动作结构和周训练量均不变，则使用局部修订模式：
+
+1. 先运行 `lzheng-training-system inspect --root "<系统根目录或训练项目根目录>"`，不得读取整份 `健身工作台.html`。
+2. 只读取摘要中 `authoritative_sources` 指向的当前计划 JSON、当前执行基准和本次复盘/交接；不扫描历史计划、全部复盘、完整专家库或工作台模板。
+3. 必读 `references/plan-contract.md`；只有被修改变量涉及对应规则时，才读取动作、计划设计或证据参考。
+4. 在同一份当前计划结构上产生新版本 JSON，并重新运行完整 JSON 校验、HTML 渲染和 HTML 审计；校验完整不等于重新读取全部资料。
+5. 独立计划 HTML 只能写入计划目录，绝不得覆盖 `健身工作台.html`。创建 `LZHENG_HANDOFF` 后由 `process-handoffs` 刷新工作台数据块。
+
+无法确认是否属于局部修订时，按结构性重做处理。出现疼痛、疾病、停训或训练条件变化时不得使用低 token 模式绕过安全分流。
 
 ## 专家知识路由
 
@@ -118,7 +130,7 @@ python scripts/audit_html_plan.py <output.html> --plan <plan.json>
 
 除非用户明确只要口头分析或拒绝文件，制定/重做完整计划时同时交付独立 HTML。必须由 `assets/fitness-plan-template.html` 生成；页面只展示阶段目标、周结构、并排训练日简表、统一进阶与周期复盘表，以及可切换的动作模式/健美肌群覆盖。周结构卡补充当天训练重点；覆盖区只显示合计大于 0 的实际项目。复盘节点由 AI 主动向用户确认实际反馈，周期末确认后生成下一阶段计划。完整重量校准、动作理由和短版收进对应训练日的折叠说明；不展示“下一次训练”、完成状态、实时记录、安全筛查、追踪卡、漏练规则、AI 内部判断、来源或假设。
 
-用户指定输出目录时优先使用；否则先读取已初始化系统的 `系统/lzheng-system.json`，把正式 JSON 与 HTML 写入 `output_locations.plans`，并按工作台适配契约接入唯一当前计划；只有尚未建立系统配置时，才写入 `LZHENG_FITNESS_HOME/plans/` 或当前工作目录的 `lzheng-fitness-output/plans/`。不得覆盖旧文件，实质修订使用 `-v02`、`-v03`。
+用户指定输出目录时优先使用；否则先读取已初始化系统的 `系统/lzheng-system.json`，把正式 JSON 与 HTML 写入 `output_locations.plans`，并通过 `LZHENG_HANDOFF` → `process-handoffs` 接入唯一当前计划；只有尚未建立系统配置时，才写入 `LZHENG_FITNESS_HOME/plans/` 或当前工作目录的 `lzheng-fitness-output/plans/`。不得覆盖旧文件，实质修订使用 `-v02`、`-v03`；任何计划渲染器都不得写入或替换根目录 `健身工作台.html`。
 
 ## 与其他 Skill 的边界
 

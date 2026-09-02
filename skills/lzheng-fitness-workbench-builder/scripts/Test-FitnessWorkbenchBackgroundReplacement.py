@@ -120,12 +120,41 @@ def main() -> None:
         assert_check(moved)
 
         release = temp / "分享副本"
-        execute([sys.executable, str(RELEASE), "--project", str(moved), "--deploy", str(release)])
+        execute(
+            [
+                sys.executable,
+                str(RELEASE),
+                "--project",
+                str(moved),
+                "--deploy",
+                str(release),
+                "--mode",
+                "public-anonymized",
+            ]
+        )
         output = execute(
-            [sys.executable, str(CHECK), "--project", str(moved), "--deploy", str(release)]
+            [
+                sys.executable,
+                str(CHECK),
+                "--project",
+                str(moved),
+                "--deploy",
+                str(release),
+                "--expect-release-mode",
+                "public-anonymized",
+            ]
         ).stdout
         if "FITNESS_WORKBENCH_CHECK: PASS" not in output:
-            fail("自定义动态背景没有进入发布副本")
+            fail("自定义背景后的 public-anonymized 固定静态壳未通过检查")
+        released_files = {
+            path.relative_to(release).as_posix()
+            for path in release.rglob("*")
+            if path.is_file()
+        }
+        if released_files != {"index.html", "release-manifest.json"}:
+            fail("public-anonymized 复制了自定义背景或其他本地媒体")
+        if "workbench-background" in (release / "index.html").read_text(encoding="utf-8"):
+            fail("public-anonymized 静态壳仍引用私人工作台背景")
 
         bad_image = temp / "损坏壁纸.png"
         bad_image.write_bytes(b"not-an-image")

@@ -112,7 +112,34 @@ def main() -> None:
         if "FITNESS_WORKBENCH_CHECK: PASS" not in check_output:
             fail("移动目录后的工作台检查未通过")
 
-        release = temp / "发布副本（无 Obsidian）"
+        unmanaged_release = temp / "旧发布副本（无所有权）"
+        unmanaged_release.mkdir()
+        leaked_windows_path = "C:" + "\\private\\review.md"
+        leaked_obsidian_uri = "obsidian:" + "//open?path=C%3A%5Cprivate"
+        leaked_html = f'<a href="{leaked_obsidian_uri}">{leaked_windows_path}</a>'
+        (unmanaged_release / "健身工作台.html").write_text(
+            leaked_html,
+            encoding="utf-8",
+        )
+        stale_dir = unmanaged_release / "旧发布备份"
+        stale_dir.mkdir()
+        (stale_dir / "backup.html").write_text("stale", encoding="utf-8")
+        unmanaged_failure = run_expect_failure([
+            sys.executable,
+            str(HERE / "Prepare-FitnessWorkbenchRelease.py"),
+            "--project",
+            str(moved),
+            "--deploy",
+            str(unmanaged_release),
+        ])
+        if "manifest" not in unmanaged_failure and "所有权" not in unmanaged_failure:
+            fail("无所有权旧发布目录没有被明确拒绝")
+        if (unmanaged_release / "健身工作台.html").read_text(encoding="utf-8") != leaked_html:
+            fail("拒绝无所有权目录时修改了旧健身工作台")
+        if (stale_dir / "backup.html").read_text(encoding="utf-8") != "stale":
+            fail("拒绝无所有权目录时修改了陈旧备份")
+
+        release = temp / "受管发布副本（无 Obsidian）"
         run([
             sys.executable,
             str(HERE / "Prepare-FitnessWorkbenchRelease.py"),
@@ -121,6 +148,21 @@ def main() -> None:
             "--deploy",
             str(release),
         ])
+        manifest = json.loads((release / "release-manifest.json").read_text(encoding="utf-8"))
+        if manifest.get("release_mode") != "private-portable":
+            fail("默认发布模式没有明确标记为 private-portable")
+        if manifest.get("anonymized") is not False or manifest.get("contains_personal_data") is not True:
+            fail("private-portable 被错误标记为匿名或无个人数据")
+        private_gate = run_expect_failure([
+            sys.executable,
+            str(HERE / "Check-FitnessWorkbench.py"),
+            "--project",
+            str(moved),
+            "--deploy",
+            str(release),
+        ])
+        if "--allow-private-portable" not in private_gate:
+            fail("private-portable 没有经过显式私有访问确认闸门")
         release_check = run([
             sys.executable,
             str(HERE / "Check-FitnessWorkbench.py"),
@@ -128,6 +170,9 @@ def main() -> None:
             str(moved),
             "--deploy",
             str(release),
+            "--allow-private-portable",
+            "--expect-release-mode",
+            "private-portable",
         ])
         if "FITNESS_WORKBENCH_CHECK: PASS" not in release_check:
             fail("无 Obsidian 发布副本检查未通过")
@@ -148,6 +193,7 @@ def main() -> None:
             str(moved),
             "--deploy",
             str(release),
+            "--allow-private-portable",
         ])
         if "workbench-background.mp4" not in failure:
             fail("验收没有明确报告缺失的视频资源")

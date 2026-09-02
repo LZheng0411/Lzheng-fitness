@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "mode": "local",
+  "cloudbase": {
+    "enabled": false,
+    "endpoint": "",
+    "env_id": "",
+    "auth_mode": "phone_otp"
+  },
+  "agent": {
+    "enabled": false,
+    "mode": "manual-on-demand-once"
+  }
+}

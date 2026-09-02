@@ -13,7 +13,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-SUITE_VERSION = "2.3.1"
+SUITE_VERSION = "3.1.0"
 PORTABLE_CONFIG_VERSION = 1
 PROJECT_RELATIVE = Path("个人训练系统")
 BACKUP_RELATIVE = Path("系统/backups")
@@ -25,6 +25,7 @@ CORE_SKILLS = (
     "lzheng-strength-training-review",
     "lzheng-training-return",
     "lzheng-training-expert-library",
+    "lzheng-nutrition-system",
     "lzheng-fitness-workbench-builder",
 )
 OUTPUT_LOCATIONS = {
@@ -33,6 +34,7 @@ OUTPUT_LOCATIONS = {
     "cycles": "个人训练系统/训练与周期/力量周期",
     "reviews": "个人训练系统/训练复盘与状态/训练复盘",
     "returns": "个人训练系统/训练复盘与状态/状态档案",
+    "nutrition": "个人训练系统/工作台与工具/饮食工作台",
 }
 HERE = Path(__file__).resolve().parent
 SKILL_ROOT = HERE.parent.parent
@@ -152,6 +154,21 @@ def load_config(root: Path) -> dict:
     return migrate_config(root, path, data)
 
 
+def load_config_readonly(root: Path) -> dict:
+    """Load enough portable config for inspection without migration or backups."""
+    path = config_path(root)
+    if not path.is_file():
+        stop("找不到系统配置；请先在空目录运行 bootstrap，或用 --root 指向已有系统")
+    data = read_json(path)
+    if data.get("schema") != 1:
+        stop(f"不支持的配置 schema：{data.get('schema')}")
+    data = dict(data)
+    project_value = str(data.get("project_root") or "")
+    if not project_value or is_machine_absolute(project_value):
+        data["project_root"] = PROJECT_RELATIVE.as_posix()
+    return data
+
+
 def project_path(root: Path, config: dict) -> Path:
     return safe_relative(root, config.get("project_root"), PROJECT_RELATIVE, "project_root")
 
@@ -264,7 +281,7 @@ def install_skill(args: argparse.Namespace) -> None:
     config = load_config(root)
     name = args.name
     if name not in CORE_SKILLS:
-        stop("仅允许安装六个运行依赖 Skill：" + ", ".join(CORE_SKILLS))
+        stop("仅允许安装已登记的运行依赖 Skill：" + ", ".join(CORE_SKILLS))
     source = skill_paths(config) / name / "SKILL.md"
     if not source.is_file():
         stop("本机未发现请求的 Skill：" + name)
@@ -339,13 +356,75 @@ def process_handoffs(args: argparse.Namespace) -> None:
     config = load_config(root)
     project_root = project_path(root, config)
     script = HERE / "Process-LzhengHandoffs.py"
-    command = [sys.executable, str(script), "--project", str(project_root)]
+    selected_backup = Path(args.backup_dir).resolve() if args.backup_dir else backup_path(root, config) / "workbench-refresh"
+    command = [
+        sys.executable,
+        str(script),
+        "--project",
+        str(project_root),
+        "--backup-dir",
+        str(selected_backup),
+    ]
     if args.notion:
         command += ["--notion", args.notion]
-    if args.backup_dir:
-        command += ["--backup-dir", args.backup_dir]
+    if args.notion_mode:
+        command += ["--notion-mode", args.notion_mode]
     if args.dry_run:
         command += ["--dry-run"]
+    run(command)
+
+
+def refresh_workbench(args: argparse.Namespace) -> None:
+    root = Path(args.root).resolve()
+    config = load_config(root)
+    project_root = project_path(root, config)
+    script = workbench_script("Refresh-FitnessWorkbench.py")
+    selected_backup = Path(args.backup_dir).resolve() if args.backup_dir else backup_path(root, config) / "workbench-refresh"
+    command = [
+        sys.executable,
+        str(script),
+        "--project",
+        str(project_root),
+        "--backup-dir",
+        str(selected_backup),
+    ]
+    if args.notion:
+        command += ["--notion", args.notion]
+    if args.notion_mode:
+        command += ["--notion-mode", args.notion_mode]
+    if args.replace_main_lift_history:
+        command += ["--replace-main-lift-history"]
+    if args.confirm_replace_main_lift_history:
+        command += ["--confirm-replace-main-lift-history"]
+    if args.receipt:
+        command += ["--receipt", args.receipt]
+    if args.deploy:
+        command += ["--deploy", args.deploy]
+    if args.release_mode:
+        command += ["--release-mode", args.release_mode]
+    if args.confirm_private_portable:
+        command += ["--confirm-private-portable"]
+    run(command)
+
+
+def inspect_system(args: argparse.Namespace) -> None:
+    """Print a compact workbench summary without loading its full HTML into AI context."""
+    root = Path(args.root).resolve()
+    if config_path(root).is_file():
+        config = load_config_readonly(root)
+        project_root = project_path(root, config)
+    elif (root / "健身工作台.html").is_file():
+        project_root = root
+    else:
+        stop("inspect 需要系统根目录，或直接包含健身工作台.html 的训练项目根目录")
+    command = [
+        sys.executable,
+        str(workbench_script("Inspect-FitnessWorkbench.py")),
+        "--project",
+        str(project_root),
+    ]
+    if args.pretty:
+        command.append("--pretty")
     run(command)
 
 
@@ -360,7 +439,9 @@ def main() -> None:
     p.set_defaults(func=bootstrap)
     for action, fn in (("doctor", doctor), ("upgrade", upgrade), ("validate", validate)):
         p = subs.add_parser(action); p.add_argument("--root", required=True); p.set_defaults(func=fn)
-    p = subs.add_parser("process-handoffs"); p.add_argument("--root", required=True); p.add_argument("--notion"); p.add_argument("--backup-dir"); p.add_argument("--dry-run", action="store_true"); p.set_defaults(func=process_handoffs)
+    p = subs.add_parser("inspect"); p.add_argument("--root", required=True); p.add_argument("--pretty", action="store_true"); p.set_defaults(func=inspect_system)
+    p = subs.add_parser("process-handoffs"); p.add_argument("--root", required=True); p.add_argument("--notion"); p.add_argument("--notion-mode", choices=("incremental", "full")); p.add_argument("--backup-dir"); p.add_argument("--dry-run", action="store_true"); p.set_defaults(func=process_handoffs)
+    p = subs.add_parser("refresh-workbench"); p.add_argument("--root", required=True); p.add_argument("--notion"); p.add_argument("--notion-mode", choices=("incremental", "full")); p.add_argument("--replace-main-lift-history", action="store_true"); p.add_argument("--confirm-replace-main-lift-history", action="store_true"); p.add_argument("--backup-dir"); p.add_argument("--receipt"); p.add_argument("--deploy"); p.add_argument("--release-mode", choices=("private-portable", "public-anonymized")); p.add_argument("--confirm-private-portable", action="store_true"); p.set_defaults(func=refresh_workbench)
     p = subs.add_parser("install-skill"); p.add_argument("--root", required=True); p.add_argument("--name", required=True); p.set_defaults(func=install_skill)
     p = subs.add_parser("import-private-pack"); p.add_argument("--root", required=True); p.add_argument("--source", required=True); p.set_defaults(func=import_private_pack)
     args = parser.parse_args()

@@ -1,0 +1,8 @@
+{
+  "accepted_free_tier": true,
+  "env_id": "replace-with-your-cloudbase-env-id",
+  "free_tier_env_id": "replace-with-the-same-cloudbase-env-id",
+  "free_tier_checked_at": "YYYY-MM-DDTHH:MM:SS+08:00",
+  "cloud_path": "/",
+  "notes": "仅用于 public-anonymized 发布目录。在腾讯云控制台确认该环境没有付费或按量计费资源后，才填写 free_tier_env_id/free_tier_checked_at。该声明不替代控制台核验。密钥、令牌和密码不得写入此文件。"
+}
