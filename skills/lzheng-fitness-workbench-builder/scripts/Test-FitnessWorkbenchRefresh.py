@@ -473,7 +473,12 @@ def test_deploy_target_safety(builder_scripts: Path, root: Path) -> None:
         )
         require(result.returncode != 0, "symlink deploy target must be rejected")
         require(symlink_sentinel.read_bytes() == sentinel_before, "symlink/junction target was changed")
-        symlink_deploy.rmdir()
+        if symlink_deploy.is_symlink():
+            symlink_deploy.unlink()
+        else:
+            symlink_deploy.rmdir()
+        require(not os.path.lexists(symlink_deploy), "test directory link was not removed")
+        require(symlink_sentinel.read_bytes() == sentinel_before, "link cleanup changed its target")
     else:
         raise AssertionError("host could create neither directory symlink nor Windows junction for regression")
 
@@ -494,7 +499,12 @@ def test_deploy_target_safety(builder_scripts: Path, root: Path) -> None:
     require(result.returncode != 0, "deploy path through junction parent must be rejected")
     require(parent_sentinel.read_bytes() == parent_before, "junction parent target was changed")
     require(not (parent_target / "nested-deploy").exists(), "junction parent was traversed before rejection")
-    parent_link.rmdir()
+    if parent_link.is_symlink():
+        parent_link.unlink()
+    else:
+        parent_link.rmdir()
+    require(not os.path.lexists(parent_link), "test parent link was not removed")
+    require(parent_sentinel.read_bytes() == parent_before, "parent link cleanup changed its target")
 
 
 def test_checker_failure_rolls_back(builder_scripts: Path, root: Path) -> None:

@@ -155,7 +155,9 @@ def create_directory_link(link: Path, target: Path) -> None:
 
 
 def remove_directory_link(link: Path) -> None:
-    if os.path.lexists(link):
+    if link.is_symlink():
+        link.unlink()
+    elif os.path.lexists(link):
         os.rmdir(link)
 
 
@@ -190,6 +192,9 @@ def assert_link_guard(project: Path, temp: Path) -> None:
                 fail("Prepare 通过 junction 父路径创建了发布目录")
         finally:
             remove_directory_link(link)
+        if os.path.lexists(link):
+            fail("测试目录链接未清理")
+        assert_tree_unchanged(target, before, "目录链接清理不得触及目标")
 
 
 def assert_post_swap_rollback(project: Path, temp: Path) -> None:
