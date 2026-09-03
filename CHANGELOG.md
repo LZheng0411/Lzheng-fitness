@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Fixed CI invoking Windows PowerShell on Ubuntu. Both Ubuntu and Windows now
+  run the portable bundle gates; Windows also runs the required local-Agent
+  safety and concurrency processes. Added regression coverage for platform
+  routing and fail-closed behavior when Windows PowerShell is missing.
+
 ## 3.1.0 — 2026-09-02
 
 - Added the v3 anonymous local-first recorder: plan snapshots and actual sets

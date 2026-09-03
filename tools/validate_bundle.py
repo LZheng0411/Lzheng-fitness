@@ -244,18 +244,30 @@ def validate_v3_local_first_contract() -> None:
         fail("Template RPC missing from migration: " + ", ".join(missing_rpcs))
     if "enable row level security" not in migration_text or "owner_only" not in migration_text:
         fail("Migration is missing owner-only RLS contract")
-    output = run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(safety)])
-    if not re.search(r'"passed"\s*:\s*true', output):
-        fail("Local Agent safety regression did not pass")
     contract = run([sys.executable, str(integration / "Test-MigrationContract.py")])
     if "CLOUDBASE_MIGRATION_CONTRACT: PASS" not in contract:
         fail("CloudBase migration contract regression did not pass")
     isolation = run([sys.executable, str(integration / "Test-InstanceIsolation.py")])
     if "INSTANCE_ISOLATION: PASS" not in isolation:
         fail("Instance-isolation regression did not pass")
-    concurrency = run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(integration / "local-agent" / "Test-LocalAgentConcurrency.ps1")])
-    if not re.search(r'"passed"\s*:\s*true', concurrency):
-        fail("Local Agent concurrency regression did not pass")
+    validate_windows_local_agent(integration)
+
+
+def validate_windows_local_agent(integration: Path) -> None:
+    """Keep Windows-only execution in Windows CI, without skipping core gates."""
+    if sys.platform != "win32":
+        print("SKIP: Windows local-Agent execution (covered by the Windows CI job); "
+              "portable, privacy and static integration checks remain enabled.")
+        return
+    powershell = shutil.which("powershell")
+    if not powershell:
+        fail("Windows PowerShell is required for the local-Agent safety and concurrency tests")
+    for script in ("Test-LocalAgentSafety.ps1", "Test-LocalAgentConcurrency.ps1"):
+        output = run([powershell, "-NoProfile", "-ExecutionPolicy", "Bypass",
+                      "-File", str(integration / "local-agent" / script)])
+        if not re.search(r'"passed"\s*:\s*true', output):
+            fail("Local Agent regression did not pass: " + script)
+        print("PASS: " + script)
 
 
 def validate_nutrition_system() -> None:
@@ -499,6 +511,9 @@ def validate_install(temp: Path) -> None:
 def main() -> None:
     validate_beginner_guide()
     validate_repository_hygiene()
+    platform_test = run([sys.executable, str(ROOT / "tools" / "test_validation_platform.py")])
+    if "VALIDATION_PLATFORM_TEST: PASS" not in platform_test:
+        fail("Validation platform-routing regression did not pass")
     validate_v3_local_first_contract()
     validate_nutrition_system()
     manifest = json.loads(read_text(ROOT / "lzheng-fitness.manifest.json"))
