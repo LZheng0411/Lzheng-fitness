@@ -6,6 +6,8 @@
   run the portable bundle gates; Windows also runs the required local-Agent
   safety and concurrency processes. Added regression coverage for platform
   routing and fail-closed behavior when Windows PowerShell is missing.
+- Fixed regression-fixture cleanup to unlink POSIX directory symlinks and
+  remove Windows junctions without touching their target directories.
 
 ## 3.1.0 — 2026-09-02
 
