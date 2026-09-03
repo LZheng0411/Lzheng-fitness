@@ -137,7 +137,7 @@ def validate_skill(skill: Path) -> None:
 def validate_repository_hygiene() -> None:
     for path in ROOT.rglob("*"):
         rel = path.relative_to(ROOT)
-        if any(part in {".git", "validation-output", "__pycache__"} for part in rel.parts):
+        if any(part in {".git", "validation-output", "__pycache__", "node_modules", "test-results", "playwright-report"} for part in rel.parts):
             continue
         if path.resolve() == Path(__file__).resolve():
             continue
@@ -217,6 +217,8 @@ def validate_v3_local_first_contract() -> None:
         "training-entry-button", "cardio-entry-button", "nutrition-entry-button",
         "confirmed_nutrition", "trainingWeightGroups", "trainingArchiveOverlay",
         "nutritionAdjustPanel", "nutritionFeelingForm", "增加一组",
+        'id="fitness-local-store"', "offlineStore.saveSession", "offlineStore.saveMeal",
+        "offlineStore.importBackup", "offlineStore.exportBackup", "lzheng-fitness-agent://run",
     ):
         if marker not in template_text:
             fail(f"Workbench template missing v3 local module: {marker}")
@@ -530,6 +532,18 @@ def main() -> None:
 
     with tempfile.TemporaryDirectory(prefix="lzheng-fitness-validation-") as raw:
         temp = Path(raw)
+        template = SKILLS_ROOT / "lzheng-fitness-workbench-builder" / "assets" / "workbench-template.html"
+        protected = temp / "protected-template.html"
+        protected.write_bytes(template.read_bytes())
+        old_source = temp / "old-source.html"
+        old_source.write_text('<script id="workbench-data" type="application/json">{}</script>', encoding="utf-8")
+        run_expect_failure(
+            [sys.executable, str(template.parent.parent / "scripts" / "Refresh-FitnessWorkbenchTemplate.py"),
+             "--source", str(old_source), "--out", str(protected)],
+            "源页面缺少当前离线记录层",
+        )
+        if protected.read_bytes() != template.read_bytes():
+            fail("Rejected template refresh modified the protected offline template")
         validate_renderers(temp)
         validate_install(temp)
         installer_test = run([sys.executable, str(ROOT / "tools" / "test_installer.py")])

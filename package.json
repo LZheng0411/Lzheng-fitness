@@ -1,0 +1,7 @@
+{
+  "name": "lzheng-fitness-checks",
+  "private": true,
+  "version": "3.1.1",
+  "scripts": { "test": "playwright test" },
+  "devDependencies": { "@playwright/test": "1.62.1" }
+}
