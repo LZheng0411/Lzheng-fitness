@@ -3,6 +3,9 @@ __pycache__/
 .DS_Store
 Thumbs.db
 .venv/
+node_modules/
+test-results/
+playwright-report/
 lzheng-fitness-output/
 validation-output/
 

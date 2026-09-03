@@ -1,6 +1,17 @@
 # Changelog
 
-## Unreleased
+## 3.1.1 — 2026-09-03
+
+- Completed the offline training flow: transactional IndexedDB records, immutable
+  plan snapshots, calendar and weekly completed-set totals, correction history,
+  restore, stale-write rejection and instance isolation.
+- Added persistent local meal photos, source-labelled manual nutrition candidates,
+  separate served/consumed estimates, explicit confirmation and undo, plus private
+  backup export and empty-store-only restoration. No model result is fabricated.
+- Aligned the webpage and Windows installer protocol; rejected URI arguments and
+  preserved spaces in private runner/configuration paths.
+- Added real Chromium regressions to both CI platforms. Protected the offline
+  implementation from being erased by refreshing an older source template.
 
 - Fixed CI invoking Windows PowerShell on Ubuntu. Both Ubuntu and Windows now
   run the portable bundle gates; Windows also runs the required local-Agent

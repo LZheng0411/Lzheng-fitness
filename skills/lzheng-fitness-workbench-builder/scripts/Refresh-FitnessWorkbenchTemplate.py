@@ -56,7 +56,7 @@ GENERIC_SDK_LOADER = r"""  function loadCloudbaseSdk(){
   }
   async function initNutritionCloud(){
     if(!nutritionCloud.enabled||!nutritionCloud.env||!nutritionCloud.accessKey||!integrationConfig.sdk){enterNutritionLocalMode(null,'未配置可选同步 · 当前使用本机模式');return false;}
-    if(!await loadCloudbaseSdk()){enterNutritionLocalMode(null,'云端组件未加载 · 已切换本机模式');return false;}"""
+    if(!await loadCloudbaseSdk()){enterNutritionLocalMode(null,'云端组件未加载 · 尚未同步，请检查配置');return false;}"""
 
 
 GENERIC_NUTRITION_CONTRACT = r"""  function nutritionDefaults(){
@@ -102,6 +102,8 @@ def main():
         fail("源 HTML 不存在: " + str(source))
 
     html = source.read_text(encoding="utf-8")
+    if output.exists() and 'id="fitness-local-store"' in output.read_text(encoding="utf-8") and 'id="fitness-local-store"' not in html:
+        fail("源页面缺少当前离线记录层，拒绝覆盖已有模板；请先显式迁移离线功能")
     if len(DATA_RE.findall(html)) != 1:
         fail("源 HTML 必须且只能包含一个 workbench-data 数据块")
 

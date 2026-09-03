@@ -22,3 +22,11 @@ jobs:
           python-version: "3.12"
       - name: Validate Lzheng Fitness bundle
         run: python tools/validate_bundle.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Verify offline user flows in a real browser
+        run: npm test

@@ -2140,6 +2140,20 @@
   .ta-legend span{color:#111!important;text-shadow:none!important;-webkit-text-stroke:0 transparent!important}
   @media(max-width:700px){.ta-heading,.ta-heading h1{color:#fff}.ta-heading p{color:rgba(255,255,255,.76)}}
 
+  /* Offline additions reuse the nutrition card layout and its light-surface contrast. */
+  #nutritionPreview.local-no-photo{grid-template-columns:minmax(0,1fr)}
+  #nutritionPreview.local-no-photo #nutritionPreviewImage{display:none!important}
+  #offlineMealCandidate{margin-top:18px;min-width:0}
+  #offlineMealCandidate .nutrition-profile-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  #offlineMealCandidate .nutrition-field:last-child{grid-column:1/-1}
+  body.dark-background-theme #offlineMealCandidate p,body.dark-background-theme #offlineMealMessage{color:#45433f!important;text-shadow:none!important;font-size:12px;line-height:1.65}
+  #offlineMealCandidate h3{margin-bottom:10px}
+  #offlineMealPhotos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+  #offlineMealPhotos figure{margin:0;min-width:0}
+  #offlineMealPhotos img{width:100%;height:140px;object-fit:contain;background:#eee}
+  #offlineMealPhotos figcaption{font-size:12px;color:#45433f;text-shadow:none}
+  #offlineMealDateLabel{margin-top:12px}
+  @media(max-width:430px){#offlineMealCandidate .nutrition-profile-fields{grid-template-columns:1fr}}
 </style>
 </head>
 <body class="dark-background-theme">
@@ -2419,7 +2433,22 @@
         <div class="nutrition-stack">
           <article class="nutrition-card nutrition-meals" id="nutritionMealsCard">
             <div class="nutrition-kicker">MEALS / 今日记录</div><h3>今天吃了什么</h3>
+            <label class="nutrition-field" id="offlineMealDateLabel" hidden><span>查看本地餐食日期</span><input id="offlineMealDate" type="date"></label>
             <div class="nutrition-meal-list" id="nutritionMealList"></div>
+            <div id="offlineMealPhotos" aria-label="这餐保存在本机的照片"></div>
+            <form id="offlineMealCandidate" hidden>
+              <h3 id="offlineMealCandidateTitle">填写本地餐食候选</h3>
+              <p>不会自动识别照片。可填写食品标签、自己的估算或外部 AI 给出的数值；保存候选后，还需单独确认入账。</p>
+              <div class="nutrition-profile-fields">
+                <label class="nutrition-field"><span>热量 kcal</span><input id="offlineCalories" type="number" min="0" max="100000" step="any" required></label>
+                <label class="nutrition-field"><span>碳水 g</span><input id="offlineCarbs" type="number" min="0" max="100000" step="any" required></label>
+                <label class="nutrition-field"><span>蛋白质 g</span><input id="offlineProtein" type="number" min="0" max="100000" step="any" required></label>
+                <label class="nutrition-field"><span>脂肪 g</span><input id="offlineFat" type="number" min="0" max="100000" step="any" required></label>
+                <label class="nutrition-field"><span>数值来源 / 不确定性说明</span><input id="offlineSource" maxlength="1000" placeholder="例如食品包装标签；或自己的粗略估算" required></label>
+              </div>
+              <button type="submit">保存候选（暂不入账）</button>
+            </form>
+            <p id="offlineMealMessage" role="status"></p>
           </article>
 
           <article class="nutrition-card nutrition-review" id="nutritionReviewCard">
@@ -2516,6 +2545,117 @@
 </footer>
 
 <script id="workbench-data" type="application/json">{}</script>
+<script id="fitness-local-store">
+/* Local records and photos share one transactional database. No network or model client. */
+(function(root){
+  'use strict';
+  var MACROS=['calories','carbs_g','protein_g','fat_g'];
+  function copy(value){return JSON.parse(JSON.stringify(value));}
+  function requireValue(ok,message){if(!ok)throw new Error(message);}
+  function numbers(values){
+    var result={};MACROS.forEach(function(key){var n=values&&values[key];requireValue(n!==''&&n!==null&&n!==undefined&&Number.isFinite(Number(n))&&Number(n)>=0&&Number(n)<=100000,'请完整填写非负的热量和碳蛋脂数值');result[key]=Number(n);});return result;
+  }
+  function sessionValid(session){
+    requireValue(session&&session.status==='completed'&&/^\d{4}-\d{2}-\d{2}$/.test(session.training_date)&&Array.isArray(session.exercises)&&session.exercises.length>0,'训练记录格式不完整');
+    session.exercises.forEach(function(ex){requireValue(Array.isArray(ex.sets),'缺少逐组记录');if(ex.is_skipped)return;requireValue(ex.sets.length>0,'未跳过动作必须有逐组记录');ex.sets.forEach(function(set){requireValue(set.is_completed&&Number.isInteger(set.reps)&&set.reps>=0&&set.reps<=10000&&typeof set.rpe==='number'&&Number.isFinite(set.rpe)&&set.rpe>=0&&set.rpe<=10,'请完整填写每组次数和 RPE');requireValue(set.weight===null||(typeof set.weight==='number'&&Number.isFinite(set.weight)&&set.weight>=0),'重量必须是非负数或自重');});});
+  }
+  function create(instance){
+    requireValue(typeof instance==='string'&&instance.length>0,'缺少本地实例标识');
+    var dbPromise=null;
+    function db(){
+      if(!dbPromise)dbPromise=new Promise(function(resolve,reject){
+        if(!root.indexedDB){reject(new Error('浏览器不支持本地数据库；记录未保存'));return;}
+        var req=root.indexedDB.open('fitness.records.v1.'+encodeURIComponent(instance),1);
+        req.onupgradeneeded=function(){req.result.createObjectStore('records',{keyPath:'key'});};
+        req.onsuccess=function(){var conn=req.result;conn.onversionchange=function(){conn.close();dbPromise=null;};resolve(conn);};
+        req.onerror=function(){dbPromise=null;reject(new Error('本地数据库无法打开，记录未保存'));};
+        req.onblocked=function(){reject(new Error('请关闭旧版页面后重试'));};
+      });return dbPromise;
+    }
+    async function transaction(mode,work){
+      var conn=await db();return new Promise(function(resolve,reject){
+        var tx=conn.transaction('records',mode),store=tx.objectStore('records'),result,error;
+        function done(value){result=value;}
+        function fail(err){error=err;try{tx.abort();}catch(ignore){reject(err);}}
+        tx.oncomplete=function(){resolve(result);};
+        tx.onabort=tx.onerror=function(){reject(error||new Error('本地保存失败（可能空间不足）；原记录未改变'));};
+        try{work(store,done,fail);}catch(err){fail(err);}
+      });
+    }
+    function read(kind,id){return transaction('readonly',function(s,done){var req=s.get(kind+'/'+id);req.onsuccess=function(){done(req.result?req.result.value:null);};});}
+    function all(kind){return transaction('readonly',function(s,done){var req=s.getAll();req.onsuccess=function(){done(req.result.filter(function(row){return row.kind===kind;}).map(function(row){return row.value;}));};});}
+    function update(kind,id,revision,transform,photos){
+      return transaction('readwrite',function(s,done,fail){var req=s.get(kind+'/'+id);req.onsuccess=function(){try{
+        var old=req.result&&req.result.value;
+        requireValue(old?old.revision===revision:revision===null,'记录已在其他页面更新，请刷新后重试');
+        var next=transform(old?copy(old):null);next.id=id;next.local=true;next.revision=old?old.revision+1:1;next.updated_at=new Date().toISOString();
+        s.put({key:kind+'/'+id,kind:kind,value:next});
+        (photos||[]).forEach(function(photo){requireValue(photo.blob instanceof Blob&&/^image\/(jpeg|png|webp)$/.test(photo.blob.type)&&photo.blob.size<=8388608,'照片格式或大小无效');s.put({key:'photo/'+photo.id,kind:'photo',value:{id:photo.id,blob:photo.blob}});});
+        done(next);
+      }catch(err){fail(err);}};});
+    }
+    function saveSession(session){
+      sessionValid(session);
+      return transaction('readwrite',function(s,done,fail){var req=s.get('session/'+session.id);req.onsuccess=function(){try{
+        requireValue(!req.result,'本次训练已有完成记录，请刷新查看；不会覆盖另一页面已保存的结果');
+        var value=copy(session);value.local=true;value.revision=1;value.revisions=[];value.updated_at=new Date().toISOString();s.add({key:'session/'+value.id,kind:'session',value:value});done(value);
+      }catch(error){fail(error);}};});
+    }
+    function snapshot(session){var value=copy(session);delete value.revisions;return value;}
+    function correctSession(id,revision,changes){return update('session',id,revision,function(old){
+      requireValue(old&&Array.isArray(changes)&&changes.length>0,'没有可保存的修改');var before=snapshot(old);
+      changes.forEach(function(change){var set=null;old.exercises.forEach(function(ex){ex.sets.forEach(function(row){if(row.id===change.set_id)set=row;});});requireValue(set,'找不到原始训练组');
+        Object.keys(change).forEach(function(key){if(key==='set_id')return;requireValue(['weight','reps','rpe'].indexOf(key)>=0,'不允许修改计划或未知字段');set[key]=change[key];if(key==='weight'){var meta={};try{meta=JSON.parse(set.note||'{}');}catch(ignore){}meta.weight_text=change[key]===null?'自重':String(change[key]);set.note=JSON.stringify(meta);}});
+      });sessionValid(old);old.revisions.push(before);old.correction_count=Number(old.correction_count||0)+1;return old;
+    });}
+    function restoreSession(id,revision){return update('session',id,revision,function(old){
+      requireValue(old&&old.revisions&&old.revisions.length,'没有可恢复的版本');var previous=copy(old.revisions[old.revisions.length-1]);sessionValid(previous);previous.revisions=old.revisions.concat([snapshot(old)]);previous.correction_count=Number(old.correction_count||0)+1;return previous;
+    });}
+    function saveMeal(draft,photos){return update('meal',draft.id,draft.revision===undefined?null:draft.revision,function(old){
+      requireValue(!old||old.status!=='confirmed','先撤销入账，再修改餐食');
+      requireValue(typeof draft.meal_name==='string'&&draft.meal_name.trim()&&/^\d{4}-\d{2}-\d{2}$/.test(draft.consumed_on),'请填写餐次名称和日期');
+      var meal=old||{captured_at:new Date().toISOString(),photos:[],after_photos:[],estimate:null,consumed_estimate:null,consumption_status:'not_requested'};
+      meal.meal_name=draft.meal_name;meal.meal_type=draft.meal_type;meal.consumed_on=draft.consumed_on;
+      if(draft.stage==='after'){
+        meal.consumption_note=draft.note||'';meal.after_photos=meal.after_photos.concat((photos||[]).map(function(p){return p.id;}));meal.consumed_estimate=null;meal.consumption_status='awaiting_manual';
+      }else{
+        meal.pre_meal_note=draft.note||'';meal.photos=meal.photos.concat((photos||[]).map(function(p){return p.id;}));meal.estimate=null;meal.consumed_estimate=null;meal.consumption_status='not_requested';
+      }
+      requireValue(meal.photos.length<=6&&meal.after_photos.length<=6,'每个照片阶段最多保存 6 张');meal.photo_count=meal.photos.length;meal.status='saved_local';meal.confirmed_nutrition=null;meal.confirmed_at=null;return meal;
+    },photos);}
+    function candidate(id,revision,stage,values,note){var macro=numbers(values);requireValue(typeof note==='string'&&note.trim(),'请说明数值来源，例如食品标签或自己的估算');requireValue(stage==='before'||stage==='after','未知餐食阶段');return update('meal',id,revision,function(old){
+      requireValue(old&&old.status!=='confirmed','请先撤销入账');
+      var value={best_estimate:macro,source:'user_entered',source_note:note.trim(),foods:[],recorded_at:new Date().toISOString()};
+      if(stage==='after'){old.consumed_estimate=value;old.consumption_status='needs_confirmation';}else{old.estimate=value;old.consumed_estimate=null;old.consumption_status='not_requested';}
+      old.status='needs_confirmation';old.confirmed_nutrition=null;return old;
+    });}
+    function confirmMeal(id,revision){return update('meal',id,revision,function(old){
+      requireValue(old&&old.status==='needs_confirmation','只有待确认候选才能入账');requireValue(old.consumption_status!=='awaiting_manual','饭后情况尚未补全，不沿用餐前数值');var value=old.consumed_estimate||old.estimate;requireValue(value&&value.source==='user_entered','缺少明确来源的候选');old.confirmed_nutrition=Object.assign(numbers(value.best_estimate),{confirmed_source:'user_entered',source_note:value.source_note});old.status='confirmed';old.confirmed_at=new Date().toISOString();return old;
+    });}
+    function unconfirmMeal(id,revision){return update('meal',id,revision,function(old){requireValue(old&&old.status==='confirmed','这餐尚未入账');old.status='needs_confirmation';old.confirmed_nutrition=null;old.confirmed_at=null;return old;});}
+    async function exportBackup(){
+      var rows=await transaction('readonly',function(s,done){var req=s.getAll();req.onsuccess=function(){done(req.result);};});
+      for(var i=0;i<rows.length;i++){if(rows[i].kind==='photo'){var photo=rows[i].value;photo.data=await new Promise(function(resolve,reject){var reader=new FileReader();reader.onload=function(){resolve(reader.result);};reader.onerror=reject;reader.readAsDataURL(photo.blob);});delete photo.blob;}}
+      return {kind:'fitness-local-backup',schema:1,instance:instance,created_at:new Date().toISOString(),contains_personal_data:true,records:rows};
+    }
+    async function importBackup(backup){
+      requireValue(backup&&backup.kind==='fitness-local-backup'&&backup.schema===1&&Array.isArray(backup.records)&&backup.records.length<=20000,'不是受支持的本地备份');
+      var keys=new Set(),rows=backup.records.map(function(row){
+        requireValue(row&&['session','meal','photo'].indexOf(row.kind)>=0&&row.value&&typeof row.value.id==='string'&&row.key===row.kind+'/'+row.value.id&&!keys.has(row.key),'备份条目格式无效');keys.add(row.key);var value=copy(row.value);
+        if(row.kind==='session'){sessionValid(value);requireValue(Array.isArray(value.revisions),'训练备份缺少修订历史');value.revisions.forEach(sessionValid);}
+        if(row.kind==='meal'){requireValue(typeof value.meal_name==='string'&&Array.isArray(value.photos)&&Array.isArray(value.after_photos)&&['saved_local','needs_confirmation','confirmed'].indexOf(value.status)>=0,'餐食格式无效');[value.estimate,value.consumed_estimate].forEach(function(c){if(c)numbers(c.best_estimate);});if(value.status==='confirmed')numbers(value.confirmed_nutrition);}
+        if(row.kind==='photo'){requireValue(typeof value.data==='string'&&value.data.length<=12000000,'照片大小无效');var match=/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(value.data);requireValue(match,'照片编码无效');var decoded=atob(match[2]),bytes=new Uint8Array(decoded.length);for(var j=0;j<decoded.length;j++)bytes[j]=decoded.charCodeAt(j);value.blob=new Blob([bytes],{type:match[1]});delete value.data;}
+        else{requireValue(Number.isInteger(value.revision)&&value.revision>0,'缺少记录版本');value.local=true;}
+        return {key:row.key,kind:row.kind,value:value};
+      });
+      rows.forEach(function(row){if(row.kind==='meal')row.value.photos.concat(row.value.after_photos).forEach(function(id){requireValue(keys.has('photo/'+id),'备份缺少引用照片');});});
+      return transaction('readwrite',function(s,done,fail){var req=s.count();req.onsuccess=function(){try{requireValue(req.result===0,'为保护已有记录，导入只允许空的本地记录库；不会覆盖或合并现有数据');rows.forEach(function(row){s.add(row);});done(rows.length);}catch(err){fail(err);}};});
+    }
+    return {read:read,all:all,saveSession:saveSession,correctSession:correctSession,restoreSession:restoreSession,saveMeal:saveMeal,candidate:candidate,confirmMeal:confirmMeal,unconfirmMeal:unconfirmMeal,exportBackup:exportBackup,importBackup:importBackup};
+  }
+  root.FitnessLocal={create:create,agentUri:'lzheng-fitness-agent://run'};
+})(window);
+</script>
 <script>
 (function(){
   var D = JSON.parse(document.getElementById('workbench-data').textContent);
@@ -2878,7 +3018,7 @@
 
   function trainingClone(value){try{return JSON.parse(JSON.stringify(value));}catch(error){return value;}}
   function trainingSessionDate(name){var day=D.days&&D.days[name];return day&&day.date||todayIso;}
-  function trainingLocalKey(name){return 'lzheng.training.draft.v3.'+trainingSessionDate(name)+'.'+String(name||'unknown');}
+  function trainingLocalKey(name){return 'fitness.training.draft.v4.'+encodeURIComponent((D.system&&D.system.instance_id)||'anonymous-shell')+'.'+trainingSessionDate(name)+'.'+String(name||'unknown');}
   function trainingLegacyPrefix(name){return 'lzheng.training.draft.v2.'+trainingSessionDate(name)+'.'+String(name||'unknown')+'.';}
   function trainingUnit(weight){var text=String(weight||'');if(text.indexOf('/手')>=0)return 'kg/手';if(text.indexOf('自重')>=0)return '自重';return 'kg';}
   function trainingTrimWeight(weight){var text=String(weight==null?'':weight).trim();if(text.indexOf('自重')>=0)return '自重';return text.replace(/\s*kg(?:\/手)?/ig,'').trim();}
@@ -2997,6 +3137,7 @@
     try{
       var direct=localStorage.getItem(trainingLocalKey(name));
       if(direct){var current=JSON.parse(direct);if(current&&Array.isArray(current.exercises))return current;}
+      if(isOffline())return null; // Unscoped legacy drafts cannot be attributed to this instance safely.
       var prefix=trainingLegacyPrefix(name),best=null,bestTime=0,bestVersion=null;
       for(var i=0;i<localStorage.length;i++){
         var key=localStorage.key(i);if(!key||key.indexOf(prefix)!==0)continue;
@@ -3015,7 +3156,7 @@
   function trainingResult(result){if(result&&result.error)throw result.error;return result&&Object.prototype.hasOwnProperty.call(result,'data')?result.data:result;}
   function trainingNotice(message){var node=document.getElementById('trainingSaveState');if(node)node.textContent=message;}
   function trainingToast(message){var node=document.getElementById('trainingToast');if(!node)return;node.textContent=message;node.classList.add('on');clearTimeout(trainingToast.timer);trainingToast.timer=setTimeout(function(){node.classList.remove('on');},2300);}
-  function trainingCloudUi(){var button=document.getElementById('trainingCloudAction');if(!button)return;if(nutritionCloud&&nutritionCloud.ready){button.textContent='云端已登录';button.disabled=true;if(trainingState.status==='draft')trainingNotice('云端草稿已同步 · 手机电脑共用');}else if(nutritionCloud&&nutritionCloud.session){button.textContent='刷新云端';button.disabled=false;if(trainingState.status==='draft')trainingNotice('云端暂不可用 · 已加载记录可查看，新记录仅保存在本机且尚未同步');}else{button.textContent='登录同步';button.disabled=false;if(trainingState.status==='draft')trainingNotice('仅本机草稿 · 登录后同步');}}
+  function trainingCloudUi(){var button=document.getElementById('trainingCloudAction');if(!button)return;if(isOffline()){button.textContent='本机模式';button.disabled=true;trainingNotice(trainingState.completed?'本机正式记录已保存 · 未上传':'本机草稿 · 完成后保存到本地训练档案');return;}if(nutritionCloud&&nutritionCloud.ready){button.textContent='云端已登录';button.disabled=true;if(trainingState.status==='draft')trainingNotice('云端草稿已同步 · 手机电脑共用');}else if(nutritionCloud&&nutritionCloud.session){button.textContent='刷新云端';button.disabled=false;if(trainingState.status==='draft')trainingNotice('云端暂不可用 · 已加载记录可查看，新记录仅保存在本机且尚未同步');}else{button.textContent='登录同步';button.disabled=false;if(trainingState.status==='draft')trainingNotice('仅本机草稿 · 登录后同步');}}
   function trainingCurrent(){return trainingState.exercises[trainingState.current]||null;}
   function trainingWeightLabel(group,item){var weight=String(group.weight||'').trim();if(weight==='自重'||group.unit==='自重')return '自重';return (weight||'—')+(group.unit||item.unit||'kg');}
   function trainingGroupSummary(item){return item.groups.map(function(group){var row=group.rows[0]||{};return group.label+' '+trainingWeightLabel(group,item)+' · '+group.rows.length+'×'+(row.targetReps||'自定')+(row.targetRpe?' @'+row.targetRpe:'');}).join('；');}
@@ -3126,6 +3267,7 @@
     var host=document.getElementById('trainingFeedbackOptions');host.innerHTML='';trainingFeedbacks.forEach(function(value){var button=el('button',trainingState.feedback===value?'selected':'',value);button.type='button';button.onclick=function(){trainingState.feedback=value;trainingRenderFeedback();trainingScheduleSave();};host.appendChild(button);});
     var changed=trainingState.exercises.filter(function(item){return item.replaced||item.skipped;});
     document.getElementById('trainingAgentNote').innerHTML=changed.length?'<strong>发现 '+changed.length+' 项与计划不同</strong><span>完成后进入 Agent 待复核队列；这里只记录差异，不会自动修改后续计划。</span>':'<strong>没有发现动作替换</strong><span>训练结果仍会保存；不会生成无意义的后续计划调整任务。</span>';
+    if(isOffline()&&changed.length)document.getElementById('trainingAgentNote').innerHTML='<strong>本次存在与计划不同的执行</strong><span>只保存差异，不自动调用 AI。可导出本地备份交给 AI 复盘，后续计划保持不变。</span>';
     var total=trainingState.exercises.reduce(function(sum,item){return sum+(item.skipped?0:trainingGroupSetCount(item));},0);document.getElementById('trainingFeedbackSummary').textContent=trainingState.exercises.length+' 个动作 · '+total+' 组'+(changed.length?' · '+changed.length+' 项差异':'');
   }
   function trainingGoFeedback(){var missing=trainingState.exercises.findIndex(function(item){return !trainingExerciseProcessed(item);});if(missing>=0){trainingToast('还有 '+trainingState.exercises.filter(function(item){return !trainingExerciseProcessed(item);}).length+' 个动作未记录或标记未做');trainingOpenExercise(missing);return;}trainingShowFeedback();document.getElementById('m-training').scrollTop=0;}
@@ -3222,7 +3364,7 @@
   function trainingScheduleSave(item){if(item)trainingState.dirty[item.key]=true;trainingWriteLocal();if(trainingState.saveTimer)clearTimeout(trainingState.saveTimer);if(nutritionCloud&&nutritionCloud.ready&&!trainingState.completed){trainingNotice('正在自动保存');trainingState.saveTimer=setTimeout(function(){trainingSaveCloud(false);},700);}else trainingNotice(trainingState.completed?'已读取正式训练记录':'仅本机草稿 · 登录后同步');}
   async function trainingSyncAfterAuth(){if(!document.body.classList.contains('training-record-open'))return;try{await trainingEnsureCloudDraft(true);if(!trainingState.completed&&(trainingState.cloudCreated||Object.keys(trainingState.dirty).length))await trainingSaveCloud(trainingState.cloudCreated);trainingShowWork();trainingRenderOverview();if(trainingState.completed)trainingNotice('已从云端读取正式记录');}catch(error){console.warn('Training cloud read failed',error);handleNutritionCloudError(error);trainingNotice('云端读取失败 · 当前保留本机草稿');}}
 
-  async function openTraining(name){if(!name||!D.days[name])return;trainingHydrateLocal(name);document.querySelectorAll('main>section').forEach(function(section){section.classList.remove('on');});var trainingView=document.getElementById('m-training');trainingView.classList.add('on');trainingView.scrollTop=0;document.body.classList.add('training-record-open');document.body.classList.remove('nutrition-open');trainingShowWork();trainingRenderOverview();window.scrollTo(0,0);if(nutritionCloud&&nutritionCloud.ready)await trainingSyncAfterAuth();}
+  async function openTraining(name){if(!name||!D.days[name])return;trainingHydrateLocal(name);try{await trainingReadCompletedLocal(name);}catch(error){trainingToast(offlineMessage(error));}document.querySelectorAll('main>section').forEach(function(section){section.classList.remove('on');});var trainingView=document.getElementById('m-training');trainingView.classList.add('on');trainingView.scrollTop=0;document.body.classList.add('training-record-open');document.body.classList.remove('nutrition-open');trainingShowWork();trainingRenderOverview();window.scrollTo(0,0);if(nutritionCloud&&nutritionCloud.ready)await trainingSyncAfterAuth();}
   function closeTraining(){trainingCloseExercise();trainingWriteLocal();if(nutritionCloud&&nutritionCloud.ready&&!trainingState.completed)trainingSaveCloud(false);document.body.classList.remove('training-record-open');document.querySelectorAll('main>section').forEach(function(section){section.classList.remove('on');});document.getElementById('m-today').classList.add('on');setNav('today');window.scrollTo({top:0,behavior:'smooth'});}
 
   function trainingOpenAdjust(){var item=trainingCurrent();if(!item||trainingState.completed)return;trainingAdjustReason=item.reason;document.getElementById('trainingOriginalPlan').textContent=item.plannedName+' · '+item.plan;document.getElementById('trainingActualName').value=item.actualName;document.getElementById('trainingActualUnit').value=item.unit;var host=document.getElementById('trainingAdjustReasons');host.innerHTML='';trainingReasons.forEach(function(reason){var button=el('button',trainingAdjustReason===reason?'selected':'',reason);button.type='button';button.onclick=function(){trainingAdjustReason=reason;host.querySelectorAll('button').forEach(function(node){node.classList.toggle('selected',node===button);});};host.appendChild(button);});trainingModal('trainingAdjustModal',true);}
@@ -3235,6 +3377,7 @@
   async function trainingFinish(){
     if(trainingState.completed)return;
     if(trainingState.exercises.some(function(item){return !trainingExerciseProcessed(item);})){trainingToast('还有动作未记录或标记未做');trainingShowWork();return;}
+    if(isOffline()){await trainingFinishLocal();return;}
     if(!nutritionCloud.ready){document.getElementById('trainingAuthPanel').classList.add('on');document.getElementById('trainingFinishStatus').textContent='请先登录，才能形成正式训练记录。当前草稿仍保存在本机。';return;}
     var button=document.getElementById('trainingFinish');button.disabled=true;button.textContent='正在保存';document.getElementById('trainingFinishStatus').textContent='正在写入动作、逐组结果和训练反馈。';if(trainingState.saveTimer)clearTimeout(trainingState.saveTimer);
     try{
@@ -3267,7 +3410,7 @@
   document.getElementById('trainingExerciseProblem').oninput=function(){var item=trainingCurrent();if(!item||trainingState.completed)return;item.problemNote=this.value;trainingTouch(item);};
   document.getElementById('trainingAdjustOpen').onclick=trainingOpenAdjust;document.getElementById('trainingAdjustClose').onclick=function(){trainingModal('trainingAdjustModal',false);};document.getElementById('trainingAdjustConfirm').onclick=trainingApplyAdjust;document.getElementById('trainingAdjustReset').onclick=trainingResetAdjust;document.getElementById('trainingAdjustModal').onclick=function(event){if(event.target===this)trainingModal('trainingAdjustModal',false);};
   document.getElementById('trainingSkipToggle').onclick=trainingToggleSkip;
-  document.getElementById('trainingHistoryOpen').onclick=function(){trainingModal('trainingHistoryModal',true);trainingRenderHistory();};document.getElementById('trainingHistoryClose').onclick=function(){trainingModal('trainingHistoryModal',false);};document.getElementById('trainingHistoryModal').onclick=function(event){if(event.target===this)trainingModal('trainingHistoryModal',false);};document.getElementById('trainingFinish').onclick=trainingFinish;
+  document.getElementById('trainingHistoryOpen').onclick=function(){openTrainingArchive();};document.getElementById('trainingHistoryClose').onclick=function(){trainingModal('trainingHistoryModal',false);};document.getElementById('trainingHistoryModal').onclick=function(event){if(event.target===this)trainingModal('trainingHistoryModal',false);};document.getElementById('trainingFinish').onclick=trainingFinish;
   document.addEventListener('keydown',function(event){if(event.key!=='Escape')return;if(document.getElementById('trainingAdjustModal').classList.contains('on'))trainingModal('trainingAdjustModal',false);else if(document.getElementById('trainingExerciseModal').classList.contains('on'))trainingCloseExercise();else if(document.getElementById('trainingHistoryModal').classList.contains('on'))trainingModal('trainingHistoryModal',false);});
 
   var CARDIO_RECORDS_KEY='lzheng.cardio.records.v1';
@@ -3453,6 +3596,84 @@
     checkins:storagePrefix+'nutrition.checkins',
     checkinsPending:storagePrefix+'nutrition.checkins.pending'
   };
+  var offlineStore=FitnessLocal.create(String((D.system&&D.system.instance_id)||'anonymous-shell')),offlinePhotoUrls={},offlineSelectedMeal=null;
+  function isOffline(){return !nutritionCloud||!nutritionCloud.enabled;}
+  function offlineMessage(error){return error&&error.message||'本地保存未完成，请重试或先导出备份';}
+  function offlineSessionId(name,version){return 'local-'+trainingSessionDate(name)+'-'+encodeURIComponent(name)+'-'+encodeURIComponent(version||m.source_version);}
+  async function trainingReadCompletedLocal(name){
+    if(!isOffline())return;
+    var session=await offlineStore.read('session',offlineSessionId(name,trainingState.planVersion));if(!session)return;
+    trainingState.sessionId=session.id;trainingState.status='completed';trainingState.completed=true;trainingState.feedback=session.overall_feeling;
+    trainingState.exercises=session.exercises.map(function(ex,index){return trainingNormalizeExercise({plannedName:ex.planned_name,actualName:ex.actual_name,plannedSnapshot:ex.planned_snapshot,unit:ex.weight_unit,groups:trainingGroupsFromCloudSets(ex.planned_snapshot,ex.sets,ex.weight_unit),done:!ex.is_skipped,skipped:ex.is_skipped,replaced:ex.is_replaced,reason:ex.adjustment_reason,problemNote:ex.problem_note},index,name);});
+    document.getElementById('trainingBodyweight').value=session.bodyweight_kg==null?'':session.bodyweight_kg;document.getElementById('trainingAbnormal').value=session.pain_or_abnormal||'';document.getElementById('trainingNotes').value=session.notes||'';
+  }
+  async function trainingFinishLocal(){
+    var button=document.getElementById('trainingFinish'),status=document.getElementById('trainingFinishStatus');button.disabled=true;
+    try{
+      if(!trainingState.exercises.every(trainingValidExercise))throw new Error('请补全每个未跳过动作的逐组记录');
+      var id=offlineSessionId(trainingState.dayName,trainingState.planVersion),now=new Date().toISOString();
+      var session={id:id,training_date:trainingSessionDate(trainingState.dayName),training_day:trainingState.dayName,plan_version:trainingState.planVersion,week_number:Number(m.current_week),status:'completed',completed_at:now,overall_feeling:trainingState.feedback,bodyweight_kg:Number(document.getElementById('trainingBodyweight').value)||null,pain_or_abnormal:document.getElementById('trainingAbnormal').value.trim(),notes:document.getElementById('trainingNotes').value.trim(),correction_count:0};
+      session.exercises=trainingState.exercises.map(function(item,index){var ex=Object.assign(trainingExercisePayload(item),{id:id+'-ex-'+index,planned_name:item.plannedName,planned_snapshot:trainingSnapshotWithPlan(item.plannedSnapshot)});ex.sets=trainingSetRows(item).map(function(set,i){return Object.assign({},set,{id:ex.id+'-set-'+i});});return ex;});
+      session.needs_plan_review=trainingState.exercises.some(function(item){return item.replaced||item.skipped;});
+      await offlineStore.saveSession(session);trainingState.sessionId=id;trainingState.status='completed';trainingState.completed=true;trainingWriteLocal();
+      button.textContent='本次训练已完成';status.textContent='已保存本机正式记录，可在训练日历查看、纠错和恢复。'+(session.needs_plan_review?'本次与计划有差异，尚未经过 AI 复盘；后续计划未修改。':'');trainingNotice('本机正式记录已保存 · 未上传');
+    }catch(error){button.disabled=false;status.textContent='保存未完成：'+offlineMessage(error);}
+  }
+  async function offlinePhotoUrl(id){
+    if(!id)return '';if(offlinePhotoUrls[id])return offlinePhotoUrls[id];var photo=await offlineStore.read('photo',id);if(!photo)return '';return offlinePhotoUrls[id]=URL.createObjectURL(photo.blob);
+  }
+  async function refreshOfflineMeals(){
+    if(!isOffline())return;
+    try{var meals=await offlineStore.all('meal');for(var i=0;i<meals.length;i++){meals[i].photo_urls=await Promise.all(meals[i].photos.map(offlinePhotoUrl));meals[i].after_photo_urls=await Promise.all(meals[i].after_photos.map(offlinePhotoUrl));meals[i].preview_url=meals[i].photo_urls[0]||'';meals[i].after_preview_url=meals[i].after_photo_urls[0]||'';}nutritionCloudMeals=meals;nutritionCloudMealsSynced=true;renderNutrition();}
+    catch(error){nutritionCloudMealsSynced=false;document.getElementById('offlineMealMessage').textContent=offlineMessage(error);}
+  }
+  async function saveOfflineMeal(files,draft,stage){
+    var status=document.getElementById('nutritionPreviewStatus'),button=document.getElementById('nutritionMealSave');button.disabled=true;
+    try{
+      var existing=draft.id?nutritionCloudMeals.find(function(row){return row.id===draft.id;}):null,id=existing?existing.id:nutritionUuid(),photos=[];
+      for(var i=0;i<files.length;i++){if(!await nutritionValidImageFile(files[i]))throw new Error('请选择 JPEG、PNG 或 WebP 照片');photos.push({id:nutritionUuid(),blob:await nutritionImageBlob(files[i])});}
+      await offlineStore.saveMeal({id:id,revision:existing?draft.revision:null,meal_name:draft.name,meal_type:draft.key,consumed_on:existing?existing.consumed_on:todayIso,stage:stage,note:draft.note},photos);
+      closeNutritionMealDraft();closeNutritionConsumptionPanel();await refreshOfflineMeals();openOfflineMeal(nutritionCloudMeals.find(function(row){return row.id===id;}));
+    }catch(error){status.textContent='尚未保存：'+offlineMessage(error);document.getElementById('offlineMealMessage').textContent=status.textContent;}
+    finally{button.disabled=false;}
+  }
+  function renderOfflineMeals(){
+    var host=document.getElementById('nutritionMealList');host.innerHTML='';document.getElementById('offlineMealDateLabel').hidden=false;
+    var date=document.getElementById('offlineMealDate');if(!date.value)date.value=todayIso;
+    var meals=nutritionCloudMeals.filter(function(row){return row.consumed_on===date.value;}).sort(function(a,b){return nutritionTime(b.captured_at)-nutritionTime(a.captured_at);});
+    if(!meals.length)host.appendChild(el('p',null,'这一天尚无本地餐食。可只写说明，不必上传照片。'));
+    meals.forEach(function(meal){var row=el('button','nutrition-meal');row.type='button';row.style.width='100%';row.style.textAlign='left';var thumb=el('div','nutrition-meal-thumb');if(meal.preview_url){var img=document.createElement('img');img.src=meal.preview_url;img.alt='本地餐食照片';thumb.appendChild(img);}else thumb.textContent='餐';row.appendChild(thumb);var text=el('div');text.appendChild(el('b',null,meal.meal_name));text.appendChild(el('p',null,meal.status==='confirmed'?'已确认入账 · '+meal.confirmed_nutrition.calories+' kcal':meal.status==='needs_confirmation'?'手动候选已保存 · 待确认入账':'已保存本机 · 尚无营养数值，未进行 AI 识别'));row.appendChild(text);row.onclick=function(){openOfflineMeal(meal);};host.appendChild(row);});
+  }
+  function openOfflineMeal(meal){
+    if(!meal)return;offlineSelectedMeal=meal;
+    var gallery=document.getElementById('offlineMealPhotos');gallery.innerHTML='';[[meal.photo_urls||[],'餐前'],[meal.after_photo_urls||[],'饭后']].forEach(function(group){group[0].forEach(function(url,index){if(!url)return;var figure=el('figure'),img=document.createElement('img');img.src=url;img.alt=group[1]+'照片 '+(index+1);figure.appendChild(img);figure.appendChild(el('figcaption',null,img.alt+' · 仅本机保存'));gallery.appendChild(figure);});});
+    var stage=meal.consumption_status!=='not_requested'?'after':'before',candidate=stage==='after'?meal.consumed_estimate:meal.estimate,confirmed=meal.status==='confirmed';
+    var preview=document.getElementById('nutritionPreview');preview.classList.add('on');preview.classList.toggle('local-no-photo',!meal.preview_url);if(meal.preview_url)document.getElementById('nutritionPreviewImage').src=meal.preview_url;else document.getElementById('nutritionPreviewImage').removeAttribute('src');document.getElementById('nutritionPreviewImage').hidden=!meal.preview_url;
+    document.getElementById('nutritionPreviewTitle').textContent=meal.meal_name+' · '+(stage==='after'?'饭后实际摄入':'餐前总量');
+    document.getElementById('nutritionPreviewStatus').textContent=confirmed?'已由你确认入账，未上传云端。':candidate?'候选来自：'+candidate.source_note+'。尚未确认，不计入今日合计。':'照片和说明已保存本机；尚未填写营养数值，不会自动识别或按零入账。';
+    document.getElementById('nutritionAdjustPanel').classList.remove('on');
+    var form=document.getElementById('offlineMealCandidate');form.hidden=confirmed;form.dataset.stage=stage;document.getElementById('offlineMealCandidateTitle').textContent=stage==='after'?'填写实际吃下的数值（不改餐前估算）':'填写餐前总量候选';
+    var values=candidate&&candidate.best_estimate||{};[['offlineCalories','calories'],['offlineCarbs','carbs_g'],['offlineProtein','protein_g'],['offlineFat','fat_g']].forEach(function(pair){document.getElementById(pair[0]).value=values[pair[1]]==null?'':values[pair[1]];});document.getElementById('offlineSource').value=candidate&&candidate.source_note||'';
+    var actions=document.getElementById('nutritionPreviewActions');actions.dataset.mealId=meal.id;actions.classList.add('on');
+    document.getElementById('nutritionConfirmEstimate').hidden=confirmed||!candidate;document.getElementById('nutritionConfirmEstimate').textContent='确认这些数值并入账';document.getElementById('nutritionUnconfirmMeal').hidden=!confirmed;document.getElementById('nutritionEditMeal').hidden=confirmed;document.getElementById('nutritionOpenConsumption').hidden=confirmed;document.getElementById('nutritionOpenConsumption').textContent='记录饭后情况 / 实际摄入';
+    document.getElementById('offlineMealMessage').textContent=meal.pre_meal_note||'';
+    if(meal.after_preview_url){document.getElementById('nutritionAfterPreviewImage').src=meal.after_preview_url;document.getElementById('nutritionAfterPreview').classList.add('on');}
+  }
+  async function changeOfflineMeal(action){
+    var meal=offlineSelectedMeal;if(!meal)return;
+    try{await offlineStore[action](meal.id,meal.revision);await refreshOfflineMeals();openOfflineMeal(nutritionCloudMeals.find(function(row){return row.id===meal.id;}));}
+    catch(error){document.getElementById('offlineMealMessage').textContent=offlineMessage(error);}
+  }
+  document.getElementById('offlineMealDate').onchange=renderOfflineMeals;
+  document.getElementById('offlineMealCandidate').onsubmit=async function(event){
+    event.preventDefault();var meal=offlineSelectedMeal;if(!meal)return;var button=this.querySelector('button');button.disabled=true;
+    try{await offlineStore.candidate(meal.id,meal.revision,this.dataset.stage,{calories:document.getElementById('offlineCalories').value,carbs_g:document.getElementById('offlineCarbs').value,protein_g:document.getElementById('offlineProtein').value,fat_g:document.getElementById('offlineFat').value},document.getElementById('offlineSource').value);await refreshOfflineMeals();openOfflineMeal(nutritionCloudMeals.find(function(row){return row.id===meal.id;}));}
+    catch(error){document.getElementById('offlineMealMessage').textContent=offlineMessage(error);}finally{button.disabled=false;}
+  };
+  async function exportOfflineBackup(){
+    try{var backup=await offlineStore.exportBackup(),url=URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:'application/json'})),link=document.createElement('a');link.href=url;link.download='fitness-local-private-'+todayIso+'.json';link.click();setTimeout(function(){URL.revokeObjectURL(url);},30000);window.alert('本地训练、餐食及照片备份已交给浏览器下载。含个人数据，请勿上传开源仓库；不包含云端记录和旧版体重、有氧、体感资料。');}
+    catch(error){window.alert(offlineMessage(error));}
+  }
   function readLocalJson(key,fallback){
     try{var value=localStorage.getItem(key);return value?JSON.parse(value):fallback;}catch(e){return fallback;}
   }
@@ -3487,6 +3708,7 @@
     return 'unknown';
   }
   function enterNutritionLocalMode(error,message){
+    if(isOffline()){nutritionCloud.ready=false;setNutritionCloudState('offline','本机模式 · 不上传、不自动识别');trainingCloudUi();refreshOfflineMeals();return;}
     nutritionCloud.error=error||null;
     nutritionCloud.ready=false;
     nutritionCloudMealsSynced=false;
@@ -3497,7 +3719,7 @@
   }
   function nutritionErrorMessage(error){
     var kind=nutritionErrorKind(error);
-    if(kind==='cloud_stopped'){enterNutritionLocalMode(error);return '云端资源暂不可用，已切换本机模式；请稍后点“刷新”重试';}
+    if(kind==='cloud_stopped'){enterNutritionLocalMode(error);return '云端资源暂不可用；本次尚未同步，请稍后点“刷新”重试';}
     if(kind==='meal_active')return '另一台设备已经提交了这餐的饭后情况，正在同步';
     if(kind==='invalid_otp')return '验证码错误或已过期，请重新获取';
     if(kind==='rate_limited')return '请求过于频繁，请稍后再试';
@@ -3527,7 +3749,7 @@
     var hasSession=!!(nutritionCloud.session&&nutritionCloud.session.user&&!nutritionCloud.session.user.is_anonymous);
     if(strip)strip.dataset.state=state;
     if(status)status.textContent=message;
-    if(action){action.textContent=state==='online'?'退出':hasSession?'重新连接':'登录';action.disabled=state==='checking';}
+    if(action){action.hidden=isOffline();action.textContent=state==='online'?'退出':hasSession?'重新连接':'登录';action.disabled=state==='checking';}
     if(refresh)refresh.disabled=state==='checking';
   }
   async function signedNutritionObject(objectKey){
@@ -3641,16 +3863,17 @@
     document.querySelectorAll('[data-nutrition-feeling]').forEach(function(row){var field=row.dataset.nutritionFeeling;row.querySelectorAll('button[data-score]').forEach(function(button){button.classList.toggle('on',Number(button.dataset.score)===nutritionFeelingDraft[field]);});});
     var records=nutritionFeelingRecords().filter(function(item){return item&&item.recorded_on===todayIso&&(!item.checkin_scope||item.checkin_scope==='day');});
     status.textContent=nutritionCheckinsAvailable===false?'今日体感已在本机暂存；云端恢复后会继续同步。':(records.length?'今天已记录 '+records.length+' 条整体体感；可继续补充。':'可只记录一个分数或一句原话。');
-    archiveStatus.textContent=nutritionCloud.ready?'已确认餐食可建立一次性本地归档任务；不会持续同步。':'登录后可为当前账号建立本地归档任务。';
+    archiveStatus.textContent=isOffline()?'导出本机训练、餐食及照片备份；含私人数据，不会上传。':nutritionCloud.ready?'已确认餐食可建立一次性本地归档任务；不会持续同步。':'登录后可为当前账号建立本地归档任务。';
   }
   async function queueNutritionLocalArchive(){
+    if(isOffline()){await exportOfflineBackup();return;}
     var status=document.getElementById('nutritionLocalArchiveStatus'),button=document.getElementById('nutritionLocalArchive');
     if(!nutritionCloud.ready){status.textContent='请先登录并手动刷新云端，再建立本地归档任务。';return;}
     button.disabled=true;status.textContent='正在建立一次性本地归档任务…';
     try{
       nutritionCloudResult(await nutritionCloud.db.rpc('queue_nutrition_local_archive',{p_job_id:nutritionUuid(),p_requested_for:todayIso}));
       status.textContent=nutritionCanLaunchLocalAgent()?'归档任务已建立，正在请求本机 Agent 单次处理。':'归档任务已建立；请在安装 Agent 的 Windows 电脑手动运行一次。';
-      if(nutritionCanLaunchLocalAgent())window.location.href='lzheng-nutrition-agent://run';
+      if(nutritionCanLaunchLocalAgent())window.location.href=FitnessLocal.agentUri;
     }catch(error){
       status.textContent=nutritionFeelingMigrationUnavailable(error)?'本地归档迁移尚未应用；没有建立任务，也没有写入任何数据。':'本地归档任务未建立，请稍后重试。';
     }finally{button.disabled=false;}
@@ -3821,8 +4044,8 @@
   }
   async function initNutritionCloud(){
     if(!nutritionCloud.enabled||!nutritionCloud.env||!nutritionCloud.accessKey||!integrationConfig.sdk){enterNutritionLocalMode(null,'未配置可选同步 · 当前使用本机模式');return false;}
-    if(!await loadCloudbaseSdk()){enterNutritionLocalMode(null,'云端组件未加载 · 已切换本机模式');return false;}
-    if(!window.cloudbase){enterNutritionLocalMode(null,'云端组件未加载 · 已切换本机模式');return false;}
+    if(!await loadCloudbaseSdk()){enterNutritionLocalMode(null,'云端组件未加载 · 尚未同步，请检查配置');return false;}
+    if(!window.cloudbase){enterNutritionLocalMode(null,'云端组件未加载 · 尚未同步，请检查配置');return false;}
     nutritionCloud.error=null;
     try{
       nutritionCloud.app=window.cloudbase.init({env:nutritionCloud.env,region:nutritionCloud.region,accessKey:nutritionCloud.accessKey,auth:{detectSessionInUrl:true}});
@@ -3848,7 +4071,7 @@
         else if(event==='SIGNED_OUT'){nutritionCloud.session=null;nutritionCloud.userId=null;nutritionCloud.ready=false;nutritionCloudMealsSynced=false;nutritionCloudProfile=null;nutritionCloudMeals=[];nutritionCloudMetrics=[];nutritionCloudReviews=[];setNutritionCloudState('offline','已退出 · 当前使用本机数据');renderNutrition();trainingCloudUi();cardioCloudUi();}
       });
       return nutritionCloud.ready;
-    }catch(error){nutritionCloud.error=error;var kind=nutritionErrorKind(error);nutritionErrorMessage(error);if(kind!=='cloud_stopped')enterNutritionLocalMode(error,'云端连接失败 · 已切换本机模式');return false;}
+    }catch(error){nutritionCloud.error=error;var kind=nutritionErrorKind(error);nutritionErrorMessage(error);if(kind!=='cloud_stopped')enterNutritionLocalMode(error,'云端连接失败 · 尚未同步，请刷新重试');return false;}
   }
   async function nutritionSendOtp(){
     var errorBox=document.getElementById('nutritionAuthError'),phone=document.getElementById('nutritionPhone').value.replace(/\s+/g,'');
@@ -3981,7 +4204,7 @@
     if(!nutritionMealDraft){composer.classList.remove('on');composer.setAttribute('aria-hidden','true');title.textContent='先选择要记录的餐次';return;}
     var isConsumption=nutritionMealDraft.mode==='consumption';
     composer.classList.add('on');composer.setAttribute('aria-hidden','false');title.textContent=isConsumption?'记录'+nutritionMealLabel(nutritionMealDraft.key,nutritionMealDraft.name)+' · 饭后情况':nutritionMealDraft.mode==='edit'?'补充'+nutritionMealLabel(nutritionMealDraft.key,nutritionMealDraft.name):'记录'+nutritionMealLabel(nutritionMealDraft.key,nutritionMealDraft.name);
-    name.value=nutritionMealDraft.name||nutritionMealLabel(nutritionMealDraft.key);name.readOnly=isConsumption;note.value=nutritionMealDraft.note||'';
+    name.value=nutritionMealDraft.formName!==undefined?nutritionMealDraft.formName:(nutritionMealDraft.name||nutritionMealLabel(nutritionMealDraft.key));name.readOnly=isConsumption;note.value=nutritionMealDraft.formNote!==undefined?nutritionMealDraft.formNote:(nutritionMealDraft.note||'');
     nameLabel.textContent=isConsumption?'本餐名称（已保存）':'本餐名称';noteLabel.textContent=isConsumption?'未吃完说明（可选）':'估算补充说明（可选）';note.placeholder=isConsumption?'例如：米饭约吃了三分之一；肉吃完；芹菜和其他配菜没有吃完':'例如：看起来油比较多；这张是饮料；汤没有拍到';
     if(beforeButton){beforeButton.disabled=isConsumption;beforeButton.title=isConsumption?'饭前记录已保存；如需补图，请取消后选择编辑这餐':'';}
     if(afterButton){afterButton.disabled=!isConsumption;afterButton.title=isConsumption?'':'先保存饭前餐食后，才能补记饭后情况';}
@@ -3994,6 +4217,7 @@
       files.textContent=nutritionMealDraftFiles.length?'已添加 '+nutritionMealDraftFiles.length+' / 6 张饭前照片：'+nutritionMealDraftFiles.map(function(file){return file.name;}).join('、'):(nutritionMealDraft.mode==='edit'?'可重复拍照或从相册逐张追加，最多 6 张；保存后会重新估算。':'请拍照或从相册逐张选择饭前照片，最多 6 张。');
       save.textContent=nutritionMealDraft.mode==='edit'?'保存并等待电脑端重新估算':(nutritionCanLaunchLocalAgent()?'保存并等待电脑端分析':'上传并等待电脑端分析');
     }
+    if(isOffline()){save.textContent=isConsumption?'保存饭后情况到本机':'保存餐食到本机';hint.textContent='本机记录，不上传、不自动识别；照片可选。营养数值需另行填写并确认。';files.textContent=(isConsumption?(nutritionAfterPhotoFile?1:0):nutritionMealDraftFiles.length)+' 张待保存照片 · 图片保存在当前浏览器数据库';}
   }
   function clearNutritionMealDraftFiles(clearPreview){
     nutritionMealDraftFiles=[];
@@ -4007,7 +4231,7 @@
   }
   function editNutritionMeal(meal){
     if(!meal||meal.status==='confirmed'||meal.status==='pending_agent'||meal.status==='analyzing')return;
-    clearNutritionMealDraftFiles(true);nutritionPhotoStage='before';nutritionMealDraft={mode:'edit',id:meal.id,key:meal.meal_type,label:nutritionMealLabel(meal.meal_type,meal.meal_name),name:meal.meal_name||nutritionMealLabel(meal.meal_type),note:meal.pre_meal_note||''};renderNutritionMealDraft();document.getElementById('nutritionMealNote').focus();
+    clearNutritionMealDraftFiles(true);nutritionPhotoStage='before';nutritionMealDraft={mode:'edit',id:meal.id,revision:meal.revision,key:meal.meal_type,label:nutritionMealLabel(meal.meal_type,meal.meal_name),name:meal.meal_name||nutritionMealLabel(meal.meal_type),note:meal.pre_meal_note||''};renderNutritionMealDraft();document.getElementById('nutritionMealNote').focus();
   }
   function closeNutritionMealDraft(){var wasConsumption=nutritionMealDraft&&nutritionMealDraft.mode==='consumption';clearNutritionMealDraftFiles(true);nutritionMealDraft=null;if(wasConsumption)nutritionConsumptionMealId=null;nutritionPhotoStage='before';renderNutritionMealDraft();}
   async function saveNutritionProfileCloud(profile){
@@ -4064,6 +4288,7 @@
     });
   }
   async function uploadNutritionMealPhotos(files,draft){
+    if(isOffline()){await saveOfflineMeal(Array.prototype.slice.call(files||[]),draft,'before');return;}
     var preview=document.getElementById('nutritionPreview'),status=document.getElementById('nutritionPreviewStatus'),title=document.getElementById('nutritionPreviewTitle'),button=document.getElementById('nutritionMealSave'),items=Array.prototype.slice.call(files||[]),label=nutritionMealLabel(draft.key,draft.name);
     if(draft.mode!=='edit'&&!items.length)throw new Error('请至少选择一张饭前照片');
     if(!nutritionCloud.ready){nutritionPendingPhoto={files:items,meal:draft};if(!nutritionCloud.session)document.getElementById('nutritionAuthPanel').classList.add('on');title.textContent=label+'照片尚未保存';status.textContent=nutritionCloud.session?'云端暂不可用；当前仅为本页临时预览，尚未上传或长期保存。请保持页面打开，点“刷新”恢复后将自动重试。':'当前仅为本页临时预览，尚未上传或长期保存；请保持页面打开，登录后再上传。';preview.classList.add('on');return;}
@@ -4100,7 +4325,7 @@
     if(nutritionMealDraft.mode==='consumption'){await submitNutritionConsumption();return;}
     var name=document.getElementById('nutritionMealName').value.trim(),note=document.getElementById('nutritionMealNote').value.trim();
     if(!name){document.getElementById('nutritionMealName').focus();return;}
-    if(nutritionMealDraft.mode==='create'&&!nutritionMealDraftFiles.length){document.getElementById('nutritionMealFiles').textContent='请至少选择一张饭前照片。';return;}
+    if(!isOffline()&&nutritionMealDraft.mode==='create'&&!nutritionMealDraftFiles.length){document.getElementById('nutritionMealFiles').textContent='请至少选择一张饭前照片。';return;}
     if(nutritionMealDraft.mode==='edit'&&!nutritionMealDraftFiles.length&&name===nutritionMealDraft.name&&note===nutritionMealDraft.note){closeNutritionMealDraft();return;}
     var draft=Object.assign({},nutritionMealDraft,{name:name,note:note});
     try{await uploadNutritionMealPhotos(nutritionMealDraftFiles,draft);}catch(error){console.warn('Nutrition meal save failed',error);}
@@ -4112,9 +4337,9 @@
   }
   function openNutritionConsumptionPanel(){
     var mealId=document.getElementById('nutritionPreviewActions').dataset.mealId,meal=nutritionCloudMeals.find(function(row){return row.id===mealId;});
-    if(!meal||!meal.estimate||meal.status==='confirmed')return;
+    if(!meal||(!isOffline()&&!meal.estimate)||meal.status==='confirmed')return;
     closeNutritionMealDraft();nutritionConsumptionMealId=meal.id;nutritionPhotoStage='after';
-    nutritionMealDraft={mode:'consumption',id:meal.id,key:meal.meal_type,label:nutritionMealLabel(meal.meal_type,meal.meal_name),name:meal.meal_name||nutritionMealLabel(meal.meal_type),note:meal.consumption_note||'',afterObjectKey:meal.after_object_key||null};
+    nutritionMealDraft={mode:'consumption',id:meal.id,revision:meal.revision,key:meal.meal_type,label:nutritionMealLabel(meal.meal_type,meal.meal_name),name:meal.meal_name||nutritionMealLabel(meal.meal_type),note:meal.consumption_note||'',afterObjectKey:meal.after_object_key||null};
     document.getElementById('nutritionConsumptionNote').value=meal.consumption_note||'';
     document.getElementById('nutritionAfterPhotoName').textContent=meal.after_object_key?'已保留上次饭后照片；可重新选择':'没有照片也可以提交文字说明';
     document.getElementById('nutritionConsumptionStatus').textContent=meal.consumption_status==='failed'?nutritionSafeFailureMessage(meal.consumption_error_message):'';
@@ -4127,6 +4352,7 @@
     if(sharedDraft){status=sharedStatus;document.getElementById('nutritionConsumptionNote').value=note;}
     if(!meal){status.textContent='没有找到这条餐食，请重新打开。';return;}
     if(meal.status==='confirmed'){status.textContent='这餐已经确认入账，不能再改写；额外吃的食物请新增一餐。';return;}
+    if(isOffline()){if(!note&&!file){status.textContent='请填写饭后说明或选择照片';return;}await saveOfflineMeal(file?[file]:[],{id:meal.id,revision:sharedDraft?nutritionMealDraft.revision:meal.revision,name:meal.meal_name,key:meal.meal_type,note:note},'after');return;}
     if(!nutritionCloud.ready){if(!nutritionCloud.session)document.getElementById('nutritionAuthPanel').classList.add('on');status.textContent=nutritionCloud.session?'云端暂不可用；已加载记录可查看，本次饭后情况尚未保存。请点“刷新”恢复后再提交。':'请先登录，再提交饭后情况。';return;}
     if(!note&&!file&&!meal.after_object_key){status.textContent='请写一句未吃完说明，或选择一张饭后照片。';document.getElementById('nutritionConsumptionNote').focus();return;}
     nutritionConsumptionSubmitting=true;submit.disabled=true;status.textContent=file?'正在压缩并保存饭后照片。':'正在保存说明并创建实际摄入任务。';
@@ -4251,9 +4477,10 @@
     }
     nutritionWakingAgent=true;renderMealList();setNutritionCloudState('checking','正在请求本机 Agent 分析照片；随后只刷新一次结果');
     syncNutritionAgentResults(true).catch(function(error){console.warn('Nutrition explicit result sync failed',error);});
-    window.location.href='lzheng-nutrition-agent://run';
+    window.location.href=FitnessLocal.agentUri;
   }
   function renderMealList(){
+    if(isOffline()){renderOfflineMeals();return;}
     var list=document.getElementById('nutritionMealList');
     if(!list)return;
     list.innerHTML='';
@@ -4299,6 +4526,7 @@
     });
   }
   function showNutritionMealEstimate(meal,label){
+    if(isOffline()){openOfflineMeal(meal);return;}
     var isActual=!!meal.consumed_estimate,estimate=meal.consumed_estimate||meal.estimate||meal.confirmed_nutrition||{},foods=estimate.foods||[];
     nutritionAutoRevealedMeals[nutritionRevealKey(meal)]=true;
     var preview=document.getElementById('nutritionPreview');preview.classList.add('on');preview.dataset.mealId=meal.id;
@@ -4387,7 +4615,7 @@
     var note=document.getElementById('nutritionProgressNote');
     specs.forEach(function(spec){var targetNode=document.getElementById(spec.targetId);if(targetNode)targetNode.textContent=targets&&Number.isFinite(Number(targets[spec.key]))?nutritionProgressFormat(targets[spec.key]):'--';});
     if(!targets){specs.forEach(function(spec){var consumedNode=document.getElementById(spec.consumedId);if(consumedNode)consumedNode.textContent='--';setNutritionProgressRemaining(spec,null);});if(note){note.dataset.state='unknown';note.textContent='请先完成资料确认，再计算今日摄入。';}return;}
-    if(!nutritionCloud.ready||!nutritionCloudMealsSynced){specs.forEach(function(spec){var consumedNode=document.getElementById(spec.consumedId);if(consumedNode)consumedNode.textContent='--';setNutritionProgressRemaining(spec,null);});if(note){note.dataset.state='unknown';note.textContent='云端未就绪，登录或刷新后计算。';}return;}
+    if((!isOffline()&&!nutritionCloud.ready)||!nutritionCloudMealsSynced){specs.forEach(function(spec){var consumedNode=document.getElementById(spec.consumedId);if(consumedNode)consumedNode.textContent='--';setNutritionProgressRemaining(spec,null);});if(note){note.dataset.state='unknown';note.textContent=isOffline()?'本地记录尚未读取，请刷新；不将读取失败当作零摄入。':'云端未就绪，登录或刷新后计算。';}return;}
     var totals=nutritionConfirmedTotals(nutritionCloudMeals,todayIso),remaining=nutritionRemaining(targets,totals),hasOver=false;
     specs.forEach(function(spec){var consumedNode=document.getElementById(spec.consumedId),value=totals[spec.key],result=remaining[spec.key];if(consumedNode)consumedNode.textContent=nutritionProgressFormat(value);if(setNutritionProgressRemaining(spec,result))hasOver=true;});
     if(note){note.dataset.state=hasOver?'over':'ready';note.textContent='只统计已确认并入账的餐食 · '+totals.confirmedMealCount+' 餐已确认'+(totals.incompleteMealCount?' · 有 '+totals.incompleteMealCount+' 条已入账记录数据不完整，未计入合计':'');}
@@ -4419,6 +4647,7 @@
     renderNutritionProgress(targets);renderMealList();renderNutritionReview(profile);renderNutritionFeeling();
   }
   async function manualNutritionCloudRefresh(){
+    if(isOffline()){await refreshOfflineMeals();return;}
     if(document.hidden)return;
     setNutritionCloudState('checking','正在手动刷新云端');
     try{
@@ -4452,6 +4681,7 @@
     document.getElementById('m-nutrition').classList.add('on');
     document.body.classList.add('nutrition-open');
     renderNutrition();
+    if(isOffline())refreshOfflineMeals();
     window.scrollTo({top:0,behavior:'smooth'});
   }
   function closeNutrition(){
@@ -4510,6 +4740,8 @@
     renderNutritionFeeling();
   };
   document.getElementById('nutritionLocalArchive').onclick=queueNutritionLocalArchive;
+  document.getElementById('nutritionMealName').oninput=function(){if(nutritionMealDraft)nutritionMealDraft.formName=this.value;};
+  document.getElementById('nutritionMealNote').oninput=function(){if(nutritionMealDraft)nutritionMealDraft.formNote=this.value;};
   document.getElementById('nutritionMealTypes').onclick=function(event){var button=event.target.closest('button[data-nutrition-meal-type]');if(button)openNutritionMealDraft(button.dataset.nutritionMealType);};
   document.getElementById('nutritionPhotoStageChoices').onclick=function(event){var button=event.target.closest('button[data-nutrition-photo-stage]');if(!button||button.disabled||!nutritionMealDraft)return;var nextStage=button.dataset.nutritionPhotoStage;if(nextStage==='after'&&nutritionMealDraft.mode!=='consumption')return;if(nextStage==='before'&&nutritionMealDraft.mode==='consumption')return;nutritionPhotoStage=nextStage;renderNutritionMealDraft();};
   function nutritionDraftFileKey(file){return [file.name,file.size,file.lastModified,file.type].join(':');}
@@ -4523,9 +4755,9 @@
     if(nutritionMealDraftPreviewUrl)URL.revokeObjectURL(nutritionMealDraftPreviewUrl);
     nutritionMealDraftPreviewUrl=URL.createObjectURL(file);
     var preview=document.getElementById('nutritionPreview');
-    document.getElementById('nutritionPreviewImage').src=nutritionMealDraftPreviewUrl;preview.dataset.localDraft='true';
+    document.getElementById('nutritionPreviewImage').src=nutritionMealDraftPreviewUrl;document.getElementById('nutritionPreviewImage').hidden=false;preview.classList.remove('local-no-photo');preview.dataset.localDraft='true';
     document.getElementById('nutritionPreviewTitle').textContent=nutritionMealLabel(nutritionMealDraft.key,nutritionMealDraft.name)+'已添加 '+nutritionMealDraftFiles.length+' / 6 张照片';
-    document.getElementById('nutritionPreviewStatus').textContent='照片仅在本机预览，尚未上传；点“保存并开始识别”后才会保存。';
+    document.getElementById('nutritionPreviewStatus').textContent=isOffline()?'照片暂时预览；点击“保存餐食到本机”后才会持久保存，不会自动识别。':'照片仅在本机预览，尚未上传；点“保存并开始识别”后才会保存。';
     preview.classList.add('on');renderNutritionMealDraft();
   }
   document.getElementById('nutritionPhotoCameraButton').onclick=function(){if(!nutritionMealDraft)return;(nutritionPhotoStage==='after'?document.getElementById('nutritionAfterPhotoInput'):document.getElementById('nutritionPhotoInput')).click();};
@@ -4545,7 +4777,7 @@
     document.getElementById('nutritionAfterPreviewImage').src=nutritionAfterPhotoUrl;
     document.getElementById('nutritionAfterPreview').classList.add('on');
     document.getElementById('nutritionAfterPhotoName').textContent='饭后照片已选择（仅本机预览）';
-    document.getElementById('nutritionConsumptionStatus').textContent='饭后照片仅在本机预览，点“保存并重新估算实际摄入”后才会上传。';
+    document.getElementById('nutritionConsumptionStatus').textContent=isOffline()?'饭后照片暂时预览，保存到本机后再填写实际摄入候选。':'饭后照片仅在本机预览，点“保存并重新估算实际摄入”后才会上传。';
     if(nutritionMealDraft&&nutritionMealDraft.mode==='consumption')renderNutritionMealDraft();
   }
   document.getElementById('nutritionAfterPhotoInput').onchange=function(e){nutritionSelectAfterPhoto(e.target);};
@@ -4553,6 +4785,7 @@
   document.getElementById('nutritionSubmitConsumption').onclick=submitNutritionConsumption;
   document.getElementById('nutritionCancelConsumption').onclick=closeNutritionMealDraft;
   document.getElementById('nutritionConfirmEstimate').onclick=async function(){
+    if(isOffline()){await changeOfflineMeal('confirmMeal');return;}
     var id=document.getElementById('nutritionPreviewActions').dataset.mealId,meal=nutritionCloudMeals.find(function(row){return row.id===id;});
     if(!meal||!meal.estimate)return;
     if(!nutritionCloud.ready){document.getElementById('nutritionPreviewStatus').textContent='云端暂不可用；已加载估算可查看，但尚未确认入账。点“刷新”恢复后再确认。';return;}
@@ -4571,6 +4804,7 @@
   };
   document.getElementById('nutritionDismissEstimate').onclick=function(){document.getElementById('nutritionPreviewActions').classList.remove('on');closeNutritionConsumptionPanel();};
   document.getElementById('nutritionUnconfirmMeal').onclick=async function(){
+    if(isOffline()){if(window.confirm('撤销入账并保留原候选？'))await changeOfflineMeal('unconfirmMeal');return;}
     var id=document.getElementById('nutritionPreviewActions').dataset.mealId,meal=nutritionCloudMeals.find(function(row){return row.id===id;});
     if(!meal||meal.status!=='confirmed')return;
     if(!nutritionCloud.ready){document.getElementById('nutritionPreviewStatus').textContent='云端暂不可用；点“刷新”恢复后再撤销入账。';return;}
@@ -5122,6 +5356,7 @@
   async function taLoad(){
     if(taState.loading)return;taState.loading=true;taAccount('正在读取账号记录');
     try{
+      if(isOffline()){taState.sessions=await offlineStore.all('session');taState.cardio=cardioReadRecords().filter(function(row){return row.status==='completed';});taState.legacy=taLegacyRecords();taAccount('本机档案 · '+taState.sessions.length+' 次力量训练 · 未上传');taRender();return;}
       if(!nutritionCloud.auth)await ensureNutritionCloudAuth();
       if(!nutritionCloud.ready){taState.sessions=[];taState.cardio=cardioReadRecords().filter(function(row){return row.status==='completed';});taState.legacy=taLegacyRecords();taAccount('未登录 · 历史复盘可阅读');taRender();return;}
       var values=await Promise.all([
@@ -5145,20 +5380,29 @@
   function taRenderVolume(){var bounds=taWeekBounds(taState.selected),weekly=taState.sessions.filter(function(row){return row.training_date>=bounds[0]&&row.training_date<=bounds[1];}),legacy=taState.legacy.filter(function(row){return row.date>=bounds[0]&&row.date<=bounds[1];}),totals={};TA_MUSCLES.forEach(function(name){totals[name]=0;});weekly.forEach(function(session){(session.exercises||[]).forEach(function(exercise){if(exercise.is_skipped||exercise.status==='skipped')return;var muscle=taMuscle(exercise);(exercise.sets||[]).forEach(function(set){if(set.is_completed&&!taWarmup(set))totals[muscle]++;});});});var active=TA_MUSCLES.filter(function(name){return totals[name]>0;}),max=Math.max.apply(Math,[1].concat(active.map(function(name){return totals[name];}))),sets=weekly.reduce(function(sum,row){return sum+taWorkSets(row);},0),host=document.getElementById('taVolume');host.innerHTML='<header><span class="ta-kicker">WEEKLY VOLUME / 周训练量</span><h2>'+esc(taDisplayDate(bounds[0])+'—'+taDisplayDate(bounds[1]))+'</h2><p>只统计真实完成的有效工作组</p></header><div class="ta-volume-overview"><strong>'+weekly.length+'</strong><span>次可统计训练</span><strong>'+sets+'</strong><span>个有效组</span></div><div class="ta-volume-list">'+(active.length?active.map(function(name){return '<div class="ta-volume-row"><div><span>'+esc(name)+'</span><strong>'+totals[name]+'组</strong></div><div class="ta-volume-track"><i style="width:'+Math.max(10,totals[name]/max*100)+'%"></i></div></div>';}).join(''):'<div class="ta-empty"><strong>本周暂无可统计组数</strong><span>计划训练不会被当成实际完成。</span></div>')+'</div>'+(legacy.length?'<div class="ta-empty"><strong>另有 '+legacy.length+' 条旧复盘记录</strong><span>旧记录缺少统一逐组数据，因此不猜测组数。</span></div>':'')+'<details><summary>查看统计口径</summary><p>顶组、回退组和正式工作组计入；热身、跳过和未完成组不计。每组只归入一个主要肌群，避免重复计算；无法识别的动作进入“待归类”。</p></details>';}
   function taRenderDay(){var records=taRecordsOn(taState.selected),host=document.getElementById('taRecordList'),count=records.strength.length+records.legacy.length+records.cardio.length;document.getElementById('taSelectedDate').textContent=taDisplayDate(taState.selected);document.getElementById('taSelectedCount').textContent=count?'共 '+count+' 条真实记录':'当天没有已完成训练';host.innerHTML='';records.strength.forEach(function(session){var button=el('button');button.type='button';button.innerHTML='<span class="ta-record-kind">力量</span><span class="ta-record-main"><strong>'+esc(taSessionTitle(session))+'</strong><i>'+esc((session.exercises||[]).map(function(x){return x.actual_name;}).slice(0,3).join(' · ')||'查看详细训练数据')+'</i></span><span class="ta-record-meta"><b>'+taWorkSets(session)+'组</b><i>'+esc(session.completed_at?new Date(session.completed_at).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false})+' 完成':'已完成')+'</i></span>';button.onclick=function(){taOpenDetail(session);};host.appendChild(button);});records.legacy.forEach(function(record){var button=el('button');button.type='button';button.innerHTML='<span class="ta-record-kind">复盘</span><span class="ta-record-main"><strong>'+esc(record.day)+'</strong><i>'+esc(record.title||record.lead||'历史训练复盘')+'</i></span><span class="ta-record-meta"><b>旧记录</b><i>组数不猜测</i></span>';button.onclick=function(){if(record.review&&record.review.content_markdown){closeTrainingArchive();openDocument({title:record.title,file_path:record.review.file_path,content_markdown:record.review.content_markdown});}else taToast('这条旧记录暂无可展开正文');};host.appendChild(button);});records.cardio.forEach(function(record){var name=record.activity_name||cardioTypeMeta[record.activity_type]&&cardioTypeMeta[record.activity_type].name||'有氧',button=el('button');button.type='button';button.innerHTML='<span class="ta-record-kind cardio">有氧</span><span class="ta-record-main"><strong>'+esc(name)+'</strong><i>'+esc([record.amount_value!=null?record.amount_value+(record.amount_unit||''):'',record.duration_minutes!=null?record.duration_minutes+'分钟':''].filter(Boolean).join(' · ')||'已完成')+'</i></span><span class="ta-record-meta"><b>已完成</b><i>不计肌群组数</i></span>';host.appendChild(button);});if(!count)host.innerHTML='<div class="ta-empty"><strong>休息日或尚未记录</strong><span>这里不会把计划训练显示成已经完成。</span></div>';}
   function taRender(){if(!taState.month)taState.month=taDate(taState.selected);taRenderCalendar();taRenderVolume();taRenderDay();}
-  function taWeight(set,exercise){var meta=taSetMeta(set),label=String(meta.weight_text||'');if(label)return label;if(set.weight!=null)return Number(set.weight)+(exercise.weight_unit||'kg');return '—';}
+  function taWeight(set,exercise){var meta=taSetMeta(set),label=String(meta.weight_text||'');if(label)return /^\+?\d+(?:\.\d+)?$/.test(label)?label+(exercise.weight_unit||'kg'):label;if(set.weight!=null)return Number(set.weight)+(exercise.weight_unit||'kg');return '—';}
   function taOpenDetail(session){taState.current=session;var corrected=Number(session.correction_count||0)>0,body=document.getElementById('taDetailBody');document.getElementById('taDetailState').textContent=corrected?'已纠正记录':'正式训练记录';var html='<div class="ta-detail-hero"><span>'+esc(session.training_date+' · W'+session.week_number)+'</span><h2>'+esc(session.training_day)+'</h2><p>'+esc((session.exercises||[]).map(function(x){return x.actual_name;}).slice(0,4).join(' + ')||'训练详情')+'</p><div class="ta-detail-stats"><b>'+taWorkSets(session)+'个有效组</b><b>'+session.exercises.length+'个动作</b><b>'+esc(session.completed_at?new Date(session.completed_at).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false})+'完成':'已完成')+'</b></div></div>';if(corrected)html+='<div class="ta-corrected"><strong>这条记录已纠正 '+Number(session.correction_count)+' 次</strong><span>修改前版本仍保留，可以恢复最近一次。</span><button id="taRestore" type="button">恢复上个版本</button></div>';html+='<section class="ta-facts"><div><span>整体感受</span><strong>'+esc(session.overall_feeling||'未填写')+'</strong></div><div><span>体重</span><strong>'+esc(session.bodyweight_kg!=null?session.bodyweight_kg+' kg':'未填写')+'</strong></div><div class="wide"><span>异常／疼痛</span><strong>'+esc(session.pain_or_abnormal||'未填写')+'</strong></div><div class="wide"><span>训练备注</span><strong>'+esc(session.notes||'未填写')+'</strong></div></section><section class="ta-exercises"><span class="ta-kicker">ACTIONS / 动作与逐组数据</span><h3>本次训练动作</h3>'+(session.exercises||[]).map(function(exercise,index){return '<details class="ta-exercise"'+(index<2?' open':'')+'><summary><span>'+String(index+1).padStart(2,'0')+'</span><div><strong>'+esc(exercise.actual_name||exercise.planned_name)+'</strong><i>'+esc(taMuscle(exercise)+' · '+(exercise.sets||[]).filter(function(x){return x.is_completed;}).length+'组')+'</i></div><b>展开</b></summary><div class="ta-set-table"><div class="head"><span>组</span><span>重量</span><span>次数</span><span>RPE</span></div>'+(exercise.sets||[]).map(function(set){return '<div><span>'+set.set_number+'</span><strong>'+esc(taWeight(set,exercise))+'</strong><strong>'+esc(set.reps==null?'—':set.reps)+'</strong><strong>'+esc(set.rpe==null?'—':set.rpe)+'</strong></div>';}).join('')+'</div>'+(exercise.problem_note?'<p class="ta-issue"><span>问题记录</span>'+esc(exercise.problem_note)+'</p>':'')+'</details>';}).join('')+'</section>';body.innerHTML=html;document.getElementById('taDrawer').hidden=false;if(corrected)document.getElementById('taRestore').onclick=taRestoreLatest;}
   function taCloseDetail(){document.getElementById('taDrawer').hidden=true;taState.current=null;}
   function taClone(value){return JSON.parse(JSON.stringify(value));}
-  function taOpenEditor(){if(!taState.current||!nutritionCloud.ready){taToast('请先登录，才能修改正式训练记录');return;}taState.draft=taClone(taState.current);document.getElementById('taEditMeta').textContent=taState.current.training_date+' · W'+taState.current.week_number+' '+taState.current.training_day;taRenderEditor();document.getElementById('taEditor').hidden=false;}
+  function taOpenEditor(){if(!taState.current||(!nutritionCloud.ready&&!(isOffline()&&taState.current.local))){taToast('请先登录，才能修改正式训练记录');return;}taState.draft=taClone(taState.current);document.getElementById('taEditMeta').textContent=taState.current.training_date+' · W'+taState.current.week_number+' '+taState.current.training_day;taRenderEditor();document.getElementById('taEditor').hidden=false;}
   function taRenderEditor(){var host=document.getElementById('taEditList');host.innerHTML='';taState.draft.exercises.forEach(function(exercise,exerciseIndex){var article=el('article','ta-edit-exercise');article.innerHTML='<header><h3>'+String(exerciseIndex+1).padStart(2,'0')+' · '+esc(exercise.actual_name||exercise.planned_name)+'</h3><b>'+esc(taMuscle(exercise))+' · '+exercise.sets.length+'组</b></header><div class="ta-edit-head"><span>组</span><span>重量 kg</span><span>次数</span><span>RPE</span></div>';exercise.sets.forEach(function(set,setIndex){var row=el('div','ta-edit-row'),meta=taSetMeta(set),special=set.weight==null&&meta.weight_text;row.appendChild(el('span',null,String(set.set_number)));[['weight','重量'],['reps','次数'],['rpe','RPE']].forEach(function(pair){var input=document.createElement('input');input.type='number';input.inputMode=pair[0]==='reps'?'numeric':'decimal';input.step=pair[0]==='reps'?'1':'0.1';input.min='0';if(pair[0]==='rpe')input.max='10';input.value=set[pair[0]]==null?'':String(set[pair[0]]);input.setAttribute('aria-label',(exercise.actual_name||exercise.planned_name)+'第'+set.set_number+'组'+pair[1]);if(pair[0]==='weight'&&special){input.disabled=true;input.placeholder=meta.weight_text;}input.oninput=function(){taState.draft.exercises[exerciseIndex].sets[setIndex][pair[0]]=this.value;};row.appendChild(input);});article.appendChild(row);});host.appendChild(article);});}
   function taDiff(){var diffs=[];taState.draft.exercises.forEach(function(exercise,exerciseIndex){exercise.sets.forEach(function(set,setIndex){var before=taState.current.exercises[exerciseIndex].sets[setIndex];[['weight','重量'],['reps','次数'],['rpe','RPE']].forEach(function(pair){var a=before[pair[0]]==null?'':String(before[pair[0]]),b=set[pair[0]]==null?'':String(set[pair[0]]);if(a!==b)diffs.push({set_id:set.id,exercise:exercise.actual_name||exercise.planned_name,set:set.set_number,field:pair[1],key:pair[0],before:a||'未填',after:b||'未填',value:b===''?null:Number(b)});});});});return diffs;}
   function taReviewChanges(){taState.changes=taDiff();var host=document.getElementById('taDiffs');host.innerHTML=taState.changes.length?taState.changes.map(function(diff){return '<div class="ta-diff"><span>'+esc(diff.exercise)+' · 第 '+diff.set+' 组 · '+diff.field+'</span><p><del>'+esc(diff.before)+'</del><b>→</b><ins>'+esc(diff.after)+'</ins></p></div>';}).join(''):'<div class="ta-empty"><strong>还没有修改</strong><span>返回后调整重量、次数或 RPE。</span></div>';document.getElementById('taConfirmSave').disabled=!taState.changes.length;document.getElementById('taConfirm').hidden=false;}
-  async function taSaveCorrection(){if(!taState.changes.length||!taState.current)return;var button=document.getElementById('taConfirmSave');button.disabled=true;button.textContent='正在保存';try{var grouped={};taState.changes.forEach(function(diff){var change=grouped[diff.set_id]||(grouped[diff.set_id]={set_id:diff.set_id});change[diff.key]=diff.value;});trainingResult(await nutritionCloud.db.rpc('correct_training_session_sets',{p_session_id:taState.current.id,p_changes:Object.keys(grouped).map(function(key){return grouped[key];}),p_reason:'在训练日历中手动纠正误填数据'}));document.getElementById('taConfirm').hidden=true;document.getElementById('taEditor').hidden=true;taToast('纠错已保存，修改前版本已保留');var sessionId=taState.current.id;await taLoad();var updated=taState.sessions.filter(function(row){return row.id===sessionId;})[0];if(updated)taOpenDetail(updated);}catch(error){console.error('Training correction failed',error);handleNutritionCloudError(error);taToast('保存失败，原记录没有被覆盖');}finally{button.disabled=false;button.textContent='保存纠错';}}
-  async function taRestoreLatest(){if(!taState.current||!nutritionCloud.ready)return;if(!window.confirm('恢复最近一次修改前的版本？当前版本也会先自动保存。'))return;try{var rows=trainingResult(await nutritionCloud.db.from('training_session_revisions').select('*').eq('session_id',taState.current.id).order('revision_number',{ascending:false}).limit(1))||[];if(!rows.length){taToast('没有可恢复的历史版本');return;}var sessionId=taState.current.id;trainingResult(await nutritionCloud.db.rpc('restore_training_session_revision',{p_revision_id:rows[0].id}));taToast('已恢复上个版本，当前版本也已留存');await taLoad();var updated=taState.sessions.filter(function(row){return row.id===sessionId;})[0];if(updated)taOpenDetail(updated);}catch(error){console.error('Training revision restore failed',error);handleNutritionCloudError(error);taToast('恢复失败，当前记录未改变');}}
+  async function taSaveCorrection(){if(taState.current&&taState.current.local){await taSaveLocalCorrection();return;}if(!taState.changes.length||!taState.current)return;var button=document.getElementById('taConfirmSave');button.disabled=true;button.textContent='正在保存';try{var grouped={};taState.changes.forEach(function(diff){var change=grouped[diff.set_id]||(grouped[diff.set_id]={set_id:diff.set_id});change[diff.key]=diff.value;});trainingResult(await nutritionCloud.db.rpc('correct_training_session_sets',{p_session_id:taState.current.id,p_changes:Object.keys(grouped).map(function(key){return grouped[key];}),p_reason:'在训练日历中手动纠正误填数据'}));document.getElementById('taConfirm').hidden=true;document.getElementById('taEditor').hidden=true;taToast('纠错已保存，修改前版本已保留');var sessionId=taState.current.id;await taLoad();var updated=taState.sessions.filter(function(row){return row.id===sessionId;})[0];if(updated)taOpenDetail(updated);}catch(error){console.error('Training correction failed',error);handleNutritionCloudError(error);taToast('保存失败，原记录没有被覆盖');}finally{button.disabled=false;button.textContent='保存纠错';}}
+  async function taRestoreLatest(){if(taState.current&&taState.current.local){await taRestoreLocal();return;}if(!taState.current||!nutritionCloud.ready)return;if(!window.confirm('恢复最近一次修改前的版本？当前版本也会先自动保存。'))return;try{var rows=trainingResult(await nutritionCloud.db.from('training_session_revisions').select('*').eq('session_id',taState.current.id).order('revision_number',{ascending:false}).limit(1))||[];if(!rows.length){taToast('没有可恢复的历史版本');return;}var sessionId=taState.current.id;trainingResult(await nutritionCloud.db.rpc('restore_training_session_revision',{p_revision_id:rows[0].id}));taToast('已恢复上个版本，当前版本也已留存');await taLoad();var updated=taState.sessions.filter(function(row){return row.id===sessionId;})[0];if(updated)taOpenDetail(updated);}catch(error){console.error('Training revision restore failed',error);handleNutritionCloudError(error);taToast('恢复失败，当前记录未改变');}}
   function openTrainingArchive(){trainingModal('trainingHistoryModal',false);document.body.classList.add('training-archive-open');document.getElementById('trainingArchiveOverlay').hidden=false;taState.selected=todayIso;taState.month=taDate(todayIso);taRender();taLoad();setTimeout(function(){document.getElementById('taClose').focus();},0);}
   function closeTrainingArchive(){document.getElementById('trainingArchiveOverlay').hidden=true;document.getElementById('taDrawer').hidden=true;document.getElementById('taEditor').hidden=true;document.getElementById('taConfirm').hidden=true;document.body.classList.remove('training-archive-open');}
   document.getElementById('taClose').onclick=closeTrainingArchive;document.getElementById('taDrawerClose').onclick=taCloseDetail;document.getElementById('taDrawer').onclick=function(event){if(event.target===this)taCloseDetail();};document.getElementById('taEditOpen').onclick=taOpenEditor;document.getElementById('taEditCancel').onclick=function(){document.getElementById('taEditor').hidden=true;};document.getElementById('taEditReview').onclick=taReviewChanges;document.getElementById('taConfirmBack').onclick=function(){document.getElementById('taConfirm').hidden=true;};document.getElementById('taConfirmSave').onclick=taSaveCorrection;document.getElementById('taPrevMonth').onclick=function(){taState.month=new Date(taState.month.getFullYear(),taState.month.getMonth()-1,1);taRenderCalendar();};document.getElementById('taNextMonth').onclick=function(){taState.month=new Date(taState.month.getFullYear(),taState.month.getMonth()+1,1);taRenderCalendar();};document.getElementById('taToday').onclick=function(){taState.selected=todayIso;taState.month=taDate(todayIso);taRender();};document.getElementById('taReviewOpen').onclick=function(){if(!taState.current)return;var review=(D.reviews||[]).filter(function(row){return row.full_date===taState.current.training_date&&row.day===taState.current.training_day;})[0];if(review&&review.content_markdown){closeTrainingArchive();openDocument({title:reviewSummary(review).title,file_path:review.file_path,content_markdown:review.content_markdown});}else taToast('这次训练暂时没有对应复盘');};document.addEventListener('keydown',function(event){if(event.key!=='Escape'||document.getElementById('trainingArchiveOverlay').hidden)return;if(!document.getElementById('taConfirm').hidden)document.getElementById('taConfirm').hidden=true;else if(!document.getElementById('taEditor').hidden)document.getElementById('taEditor').hidden=true;else if(!document.getElementById('taDrawer').hidden)taCloseDetail();else closeTrainingArchive();});
 
+  async function taSaveLocalCorrection(){
+    if(!taState.changes.length)return;var id=taState.current.id,button=document.getElementById('taConfirmSave');button.disabled=true;
+    try{var grouped={};taState.changes.forEach(function(diff){var change=grouped[diff.set_id]||(grouped[diff.set_id]={set_id:diff.set_id});change[diff.key]=diff.value;});await offlineStore.correctSession(id,taState.current.revision,Object.values(grouped));document.getElementById('taConfirm').hidden=true;document.getElementById('taEditor').hidden=true;await taLoad();taOpenDetail(taState.sessions.find(function(row){return row.id===id;}));taToast('本机纠错已保存，修改前版本已保留');}
+    catch(error){taToast(offlineMessage(error));}finally{button.disabled=false;}
+  }
+  async function taRestoreLocal(){
+    if(!window.confirm('恢复最近一次修改前的本地记录？当前版本也会保留。'))return;
+    try{var id=taState.current.id;await offlineStore.restoreSession(id,taState.current.revision);await taLoad();taOpenDetail(taState.sessions.find(function(row){return row.id===id;}));taToast('已恢复上个版本');}catch(error){taToast(offlineMessage(error));}
+  }
   var linkBox = document.getElementById('linkBox');
   function linkCard(n, href, s, ext, action){
     var a = el(action?'button':'a','link');
@@ -5175,6 +5419,10 @@
   linkBox.appendChild(linkCard('训练复盘索引','',docs.review_index?'直接在工作台阅读':'复盘索引尚未建立',false,docs.review_index?function(){openDocument(docs.review_index);}:null));
   linkBox.appendChild(linkCard('状态档案','',docs.status_index?'直接在工作台阅读':'状态档案尚未建立',false,docs.status_index?function(){openDocument(docs.status_index);}:null));
   linkBox.appendChild(linkCard('Notion 训练系统', links.notion_url||'', links.notion_url?'训练记录 / 体重（动态数据）':'未配置 Notion 链接', true));
+  linkBox.appendChild(linkCard('导出本地记录备份','','仅本机训练、餐食及照片 · 含个人数据，请勿开源',false,exportOfflineBackup));
+  var backupInput=document.createElement('input');backupInput.type='file';backupInput.accept='.json,application/json';backupInput.hidden=true;backupInput.id='offlineBackupImport';linkBox.appendChild(backupInput);
+  linkBox.appendChild(linkCard('导入本地记录备份','','只允许空本地库，不覆盖现有记录；不上传',false,function(){backupInput.click();}));
+  backupInput.onchange=async function(){var file=this.files[0];this.value='';if(!file)return;try{if(file.size>100000000)throw new Error('备份文件超过 100 MB');if(!window.confirm('将私人备份导入此实例的空本地库？仅保存在当前浏览器，不上传。'))return;var count=await offlineStore.importBackup(JSON.parse(await file.text()));await refreshOfflineMeals();window.alert('已导入 '+count+' 条记录及照片；可打开训练日历核对。');}catch(error){window.alert(offlineMessage(error));}};
 
   var ruleBox = document.getElementById('ruleBox');
   function ruleHighlights(body){
