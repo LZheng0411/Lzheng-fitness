@@ -54,7 +54,9 @@ class UpgradeTests(unittest.TestCase):
                 self.assertFalse(receipt["data_refreshed"])
                 self.assertEqual(Path(receipt["backup"]).read_bytes(), before)
                 self.assertEqual(data_block(self.formal.read_text(encoding="utf-8"))[0], self.raw)
-                self.assertEqual(receipt["workbench"], str(self.formal))
+                # Windows TEMP may use an 8.3 alias; the receipt uses its canonical path.
+                self.assertEqual(Path(receipt["workbench"]), self.formal.resolve())
+                self.assertTrue(Path(receipt["workbench"]).samefile(self.formal))
 
     def test_missing_navigation_is_repaired(self):
         self.formal.write_text(NAV.sub("", self.old), encoding="utf-8")
