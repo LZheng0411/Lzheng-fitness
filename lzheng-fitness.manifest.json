@@ -1,6 +1,6 @@
 {
   "name": "Lzheng-fitness",
-  "version": "3.1.1",
+  "version": "3.2.0",
   "license": "MIT",
   "language": "zh-CN",
   "skills": [
@@ -47,7 +47,13 @@
   ],
   "runtime": {
     "python": ">=3.10",
-    "third_party_dependencies": []
+    "third_party_dependencies": [],
+    "ui_upgrade_verification": {
+      "node": ">=22",
+      "playwright": "1.62.1",
+      "browser": "Chromium",
+      "required_for": "upgrade-workbench-ui --apply"
+    }
   },
   "integrations": {
     "cloudbase": {

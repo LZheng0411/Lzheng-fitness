@@ -1,0 +1,15 @@
+{
+  "canonical_format": 1,
+  "shells": {
+    "fe5a2db1faeffc41867a7ff2e89b06d9020f93fd16819704c1bdc0f27e21ba1e": "v2.3.0",
+    "79f26b5f049b454d97021d2c7d4dc8de1cd3a9fd265b4efa69c4624bd8e3e79e": "v2.3.1",
+    "ad853dcb141fbf7a6a8f43e69fff49e833fdae0e26c9d67ed5320fd69650e1ab": "v3.1.0",
+    "8377149a048c3b1972907ac40f7290c605a0f8147088bb28f0ea8e7b6774ceb2": "v3.1.1"
+  },
+  "without_navigation": {
+    "c8978db05bf006a249fb72c20b9775c42a5989aa15cba03f703e7b326a53c799": "v2.3.0",
+    "6d40e1bb64bf20f560a3f89dc6a0b5a0e31ea878c049861ce85cc213b02292dd": "v2.3.1",
+    "6ce499b396805bee802ab7e2340b2f4088a5e6266bf8746b6916d7a3dc9ea6c2": "v3.1.0",
+    "7ad504e613d8a1722cf08a9f62b042f1ac00c8d27c22fcf7f991ae35bbbba537": "v3.1.1"
+  }
+}

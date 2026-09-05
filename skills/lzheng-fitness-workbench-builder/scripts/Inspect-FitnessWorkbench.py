@@ -20,7 +20,6 @@ DATA_BLOCK = re.compile(
     r'<script id="workbench-data" type="application/json">([\s\S]*?)</script>'
 )
 TEMPLATE_MARKER = 'data-ui-template="lzheng-fitness-workbench-v3"'
-NAV_CONTAINER = '<nav class="nav" id="navBar"></nav>'
 NAV_LABELS = ("训练", "计划", "负荷", "复盘", "指南")
 SECTION_IDS = ("m-today", "m-week", "m-trend", "m-record", "m-settings")
 
@@ -50,22 +49,17 @@ def load_workbench(project: Path) -> tuple[str, dict]:
 
 
 def shell_summary(html: str) -> dict:
-    labels = []
-    nav_match = re.search(r"var navs\s*=\s*\[([\s\S]*?)\];", html)
-    if nav_match:
-        labels = [
-            match.group(1)
-            for match in re.finditer(r"\[['\"][^'\"]+['\"],['\"]([^'\"]+)['\"]", "[" + nav_match.group(1))
-        ]
+    from workbench_ui import nav_items, NAV, identity
+    labels = [label for _, label in nav_items(html)]
     checks = {
         "template_marker": TEMPLATE_MARKER in html,
-        "nav_container": html.count(NAV_CONTAINER) == 1,
+        "nav_container": len(NAV.findall(html)) == 1,
         "nav_labels": tuple(labels) == NAV_LABELS,
-        "nav_initializer": "navBar.appendChild(a)" in html,
+        "nav_initializer": '<script id="workbench-shell">' in html,
         "sections": all(re.search(rf'id=["\']{re.escape(section)}["\']', html) for section in SECTION_IDS),
     }
     required = ("template_marker", "nav_container", "nav_labels", "nav_initializer", "sections")
-    return {"ok": all(checks[name] for name in required), "checks": checks}
+    return {"ok": all(checks[name] for name in required), "checks": checks, **identity(html)}
 
 
 def compact_exercises(day: object) -> list[dict]:

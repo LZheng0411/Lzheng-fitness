@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from workbench_ui import suite_version
 
 
 def main() -> None:
@@ -19,7 +20,7 @@ def main() -> None:
         data.update({
             "schema": 6,
             "onboarding": {"completed": True, "mode": "migrated", "missing": [], "message": "由 schema 5 迁移；请在下一次构建时重新核验。", "review_count": len(data.get("reviews", []))},
-            "system": {"suite_version": "2.0.0-local", "workbench_schema": 6, "ui_contract": "v1", "last_health_check": None, "health": "unknown"},
+            "system": {"suite_version": suite_version(), "workbench_schema": 6, "ui_contract": "v1", "last_health_check": None, "health": "unknown"},
             "knowledge": {"public_pack": {"schema": 1, "status": "unregistered", "source": None}, "private_pack": {"status": "not_loaded", "count": 0, "excluded_from_public_export": True}},
             "status": {"state": "unknown", "effective_until": data.get("meta", {}).get("plan_end"), "reason": "迁移后需重新构建核验。", "source": None},
             "provenance": {"plan": {"source": None, "verified_at": None, "trust": "migrated"}, "baseline": {"source": None, "verified_at": None, "trust": "migrated"}, "reviews": {"source": None, "verified_at": None, "trust": "migrated", "count": len(data.get("reviews", []))}, "notion": {"source": "optional_notion_export", "verified_at": None, "trust": "unknown"}},

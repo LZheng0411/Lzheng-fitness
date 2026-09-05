@@ -26,7 +26,7 @@ EXPECTED = (
     "lzheng-training-system",
     "lzheng-fitness-workbench-builder",
 )
-TEXT_SUFFIXES = {".md", ".json", ".yaml", ".yml", ".py", ".ps1", ".js", ".sql", ".txt"}
+TEXT_SUFFIXES = {".md", ".json", ".yaml", ".yml", ".py", ".ps1", ".js", ".cjs", ".sql", ".txt"}
 BLOCKED = {
     "private Windows absolute path": re.compile(r"\b[A-Za-z]:\\(?:[^\\/:*?\"<>|\r\n]+\\)+"),
     "private macOS home": re.compile(r"/Users/[^/\s]+/"),
@@ -435,7 +435,8 @@ def validate_renderers(temp: Path) -> None:
     shutil.copytree(universal_root, tampered_root)
     tampered_html = tampered_root / "健身工作台.html"
     tampered_text = read_text(tampered_html)
-    marker = '<nav class="nav" id="navBar"></nav>'
+    marker_match = re.search(r'<nav\b[^>]*id="navBar"[^>]*>[\s\S]*?</nav>', tampered_text)
+    marker = marker_match[0] if marker_match else "__missing_nav__"
     if tampered_text.count(marker) != 1:
         fail("Cannot build missing-navigation regression fixture")
     tampered_html.write_text(tampered_text.replace(marker, "", 1), encoding="utf-8")
@@ -511,6 +512,7 @@ def validate_install(temp: Path) -> None:
 
 
 def main() -> None:
+    run([sys.executable, "-B", str(SKILLS_ROOT / "lzheng-fitness-workbench-builder/scripts/Test-FitnessWorkbenchUiUpgrade.py")])
     validate_beginner_guide()
     validate_repository_hygiene()
     platform_test = run([sys.executable, str(ROOT / "tools" / "test_validation_platform.py")])

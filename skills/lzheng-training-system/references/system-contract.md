@@ -28,6 +28,8 @@
 
 用户内容包括计划、复盘、状态档案、私人知识包和 Notion 导出。升级不得覆盖它们。系统托管文件的备份写到配置中 `backup_root`，不得在正式根目录创建版本副本。
 
+`upgrade` 仅更新配置并报告界面状态，不代表用户 HTML 已升级。界面更换必须走独立 `upgrade-workbench-ui`，保留原绝对路径和数据块，候选与替换后浏览器验证通过才报告 `ui_upgraded`。未知界面自定义拒绝静默覆盖；HTML 备份不等于浏览器记录备份。详见 [界面升级](../../lzheng-fitness-workbench-builder/references/ui-upgrade.md)。
+
 ## 专家知识层
 
 六个来源限定专家模块由 `lzheng-training-expert-library` 统一承载。计划、周期、复盘和接回 Skill 可按变量读取它，但专家库不拥有当前事实、计划版本、执行基准、最终处方或工作台写入权。升级可以更新公开蒸馏模块和登记表，不得把用户私人知识包合并进公开专家库。

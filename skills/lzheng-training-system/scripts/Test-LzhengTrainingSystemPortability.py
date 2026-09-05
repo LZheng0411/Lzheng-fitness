@@ -90,7 +90,7 @@ def main() -> None:
             fail("旧配置迁移备份数量异常")
 
         output = run([sys.executable, str(SYSTEM), "upgrade", "--root", str(moved)])
-        if "LZHENG_TRAINING_SYSTEM_UPGRADE: PASS" not in output:
+        if "LZHENG_TRAINING_SYSTEM_UPGRADE: CONFIG_ONLY" not in output:
             fail("移动后 upgrade 未通过")
         assert_portable(moved)
 

@@ -1,5 +1,24 @@
 # Changelog
 
+## 3.2.0 — 2026-09-05
+
+UI revision: `2026.09.05.1`.
+
+- Rendered the five navigation links in HTML and isolated routing from business
+  initialization. Broken JSON, business script errors and guarded render failures
+  retain navigation and show a visible error. Desktop nutrition keeps the sidebar
+  and protects unsaved meal edits when leaving.
+- Added explicit `upgrade-workbench-ui`: recognize official historical shells,
+  preserve the exact data block and managed backgrounds, verify candidates in a
+  browser, back up and replace the original path, then verify again and roll back
+  failures. Unknown customizations and concurrent edits are protected.
+- Added independent UI revision and canonical shell fingerprints; corrected the
+  embedded generator version. Configuration upgrades now report `CONFIG_ONLY`,
+  returning exit code 2 when UI work remains instead of claiming full success.
+- Added historical migration, failure, responsive navigation and same-file
+  IndexedDB record/photo preservation tests. UI upgrades require Node.js,
+  Playwright and Chromium; no installation, release or deployment is implied.
+
 ## 3.1.1 — 2026-09-03
 
 - Completed the offline training flow: transactional IndexedDB records, immutable

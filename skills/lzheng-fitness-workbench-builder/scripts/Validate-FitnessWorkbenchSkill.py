@@ -18,6 +18,10 @@ REQUIRED = [
     "scripts/Build-FitnessWorkbenchData.py",
     "scripts/Check-FitnessWorkbench.py",
     "scripts/Inspect-FitnessWorkbench.py",
+    "scripts/workbench_ui.py",
+    "scripts/Upgrade-FitnessWorkbenchUi.py",
+    "scripts/Check-FitnessWorkbenchBrowser.cjs",
+    "assets/ui-history.json",
     "scripts/Prepare-FitnessWorkbenchRelease.py",
     "scripts/Replace-FitnessWorkbenchBackground.py",
     "scripts/Refresh-FitnessWorkbench.py",
@@ -99,7 +103,8 @@ def main():
             problems.append("模板缺少品牌占位符")
         if 'data-ui-template="lzheng-fitness-workbench-v3"' not in html:
             problems.append("模板缺少固定 UI 模板版本")
-        if html.count('<nav class="nav" id="navBar"></nav>') != 1 or "navBar.appendChild(a)" not in html:
+        from workbench_ui import shell_problems, identity
+        if shell_problems(html) or not identity(html)['declared_hash_matches']:
             problems.append("模板缺少固定侧栏/底栏导航结构")
         if "workbench-background.png" not in html or "workbench-background.mp4" not in html:
             problems.append("模板没有引用正式动态背景及静态兜底")

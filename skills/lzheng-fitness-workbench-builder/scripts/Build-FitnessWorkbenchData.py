@@ -760,9 +760,15 @@ def build_onboarding(plan_json, baseline, review_rows):
     }
 
 
+def runtime_suite_version():
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from workbench_ui import suite_version
+    return suite_version()
+
+
 def build_system_info():
     return {
-        "suite_version": "2.0.0-local",
+        "suite_version": runtime_suite_version(),
         "workbench_schema": SCHEMA_VERSION,
         "ui_contract": "v1",
         "last_health_check": None,

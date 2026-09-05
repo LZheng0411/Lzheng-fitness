@@ -176,6 +176,11 @@ def main():
     except json.JSONDecodeError as exc:
         fail("模板数据块不是合法 JSON: " + str(exc))
 
+    from workbench_ui import seal, shell_problems
+    issues = shell_problems(html)
+    if issues:
+        fail("源页面不具备当前独立导航契约：" + ";".join(issues))
+    html = seal(html)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(html.rstrip() + "\n", encoding="utf-8")
     print("FITNESS_WORKBENCH_TEMPLATE: PASS")
