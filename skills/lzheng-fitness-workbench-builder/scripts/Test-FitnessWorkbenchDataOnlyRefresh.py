@@ -22,7 +22,8 @@ INITIALIZE = SCRIPT_DIR / "Initialize-FitnessWorkbench.py"
 BUILDER = SCRIPT_DIR / "Build-FitnessWorkbenchData.py"
 CHECKER = SCRIPT_DIR / "Check-FitnessWorkbench.py"
 DATA_BLOCK = re.compile(r'(<script id="workbench-data" type="application/json">)[\s\S]*?(</script>)')
-NAV_CONTAINER = '<nav class="nav" id="navBar"></nav>'
+from workbench_ui import NAV
+NAV_CONTAINER = '<nav class="nav" id="navBar"'
 
 
 def run(command: list[str], expect_success: bool = True) -> subprocess.CompletedProcess[str]:
@@ -104,7 +105,7 @@ def main() -> None:
         tampered_formal = tampered / "健身工作台.html"
         tampered_html = tampered_formal.read_text(encoding="utf-8")
         require(NAV_CONTAINER in tampered_html, "无法构造导航缺失回归")
-        tampered_formal.write_text(tampered_html.replace(NAV_CONTAINER, "", 1), encoding="utf-8")
+        tampered_formal.write_text(NAV.sub("", tampered_html, count=1), encoding="utf-8")
         failure = run([sys.executable, str(CHECKER), "--project", str(tampered)], expect_success=False)
         require("固定导航容器" in (failure.stdout + failure.stderr), "检查器未明确报告导航缺失")
 

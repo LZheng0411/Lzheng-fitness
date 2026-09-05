@@ -242,7 +242,131 @@ test('mobile local meal form and desktop navigation remain usable', async ({ pag
   await page.locator('#nutritionBack').click();
   await page.locator('#navBar a').first().click();
   await expect(page.locator('#navBar a')).toHaveCount(5);
+  for (const link of await page.locator('#navBar a').all()) await expect(link).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('desktop-workbench.png'), fullPage: true });
+});
+
+test('navigation survives broken JSON and a business script syntax error', async ({ page }) => {
+  const source = fs.readFileSync(path.join(fixture, 'browser-test.html'), 'utf8');
+  for (const mode of ['json', 'script']) {
+    const html = mode === 'json'
+      ? source.replace(/(<script id="workbench-data" type="application\/json">)[\s\S]*?(<\/script>)/, '$1{$2')
+      : source.replace('var D = JSON.parse', 'var deliberately broken syntax; var D = JSON.parse');
+    await page.route(base + '/fault-' + mode, route => route.fulfill({ contentType: 'text/html', body: html }));
+    await page.goto(base + '/fault-' + mode);
+    await expect(page.locator('#workbenchError')).toBeVisible();
+    for (const width of [375, 899, 900, 1440]) {
+      await page.setViewportSize({ width, height: 960 });
+      for (const key of ['today', 'week', 'trend', 'record', 'settings']) {
+        const link = page.locator('#navBar a[data-k="' + key + '"]');
+        await expect(link).toBeVisible(); await link.click();
+        await expect(page.locator('#m-' + key)).toBeVisible();
+        await expect(page.locator('main>section.on')).toHaveCount(1);
+        await expect(link).toHaveAttribute('aria-current', 'page');
+      }
+    }
+  }
+  expect(page.__errors).toHaveLength(2);
+  expect(page.__errors[0]).toMatch(/JSON|property name/);
+  expect(page.__errors[1]).toMatch(/Unexpected identifier/);
+  page.__errors = []; // Only the two deliberately injected failures were expected.
+});
+
+test('a failed training render leaves navigation and other pages available', async ({ page }) => {
+  const source = fs.readFileSync(path.join(fixture, 'browser-test.html'), 'utf8');
+  const html = source.replace('function renderTodayContent(name){', 'function renderTodayContent(name){throw new Error("controlled training failure");');
+  await page.route(base + '/render-failure', route => route.fulfill({ contentType: 'text/html', body: html }));
+  await page.goto(base + '/render-failure');
+  await expect(page.locator('#workbenchError')).toBeVisible();
+  await page.locator('#navBar a[data-k="settings"]').click();
+  await expect(page.locator('#howNote')).toContainText('查看训练');
+  await page.locator('#navBar a[data-k="week"]').click();
+  await expect(page.locator('#dayGrid')).not.toBeEmpty();
+});
+
+test('null display version and malformed phase data do not prevent other modules starting', async ({ page }) => {
+  const source = fs.readFileSync(path.join(fixture, 'browser-test.html'), 'utf8');
+  const html = source.replace(/(<script id="workbench-data" type="application\/json">)([\s\S]*?)(<\/script>)/, (_, a, raw, b) => {
+    const data = JSON.parse(raw); data.meta.source_version = null; data.phases = null;
+    return a + JSON.stringify(data) + b;
+  });
+  await page.route(base + '/bad-phases', route => route.fulfill({ contentType: 'text/html', body: html }));
+  await page.goto(base + '/bad-phases');
+  await expect(page.locator('#workbenchError')).toContainText('周期阶段');
+  await expect(page.locator('#verChip')).toContainText('待确认');
+  await page.locator('#navBar a[data-k="settings"]').click();
+  await expect(page.locator('#howNote')).toContainText('查看训练');
+});
+
+test('desktop nutrition preserves navigation, protects drafts, and clears page mode on exit', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await page.evaluate(() => window.__fitnessTest.openNutrition());
+  await expect(page.locator('#navBar')).toBeVisible();
+  const rail = await page.locator('#navBar').boundingBox();
+  const main = await page.locator('body>main').boundingBox();
+  expect(main.x).toBeGreaterThanOrEqual(rail.x + rail.width);
+  await page.screenshot({ path: testInfo.outputPath('desktop-nutrition-sidebar.png'), fullPage: true });
+  await page.locator('#nutritionMealTypes button').first().click();
+  await page.locator('#nutritionMealName').fill('尚未保存的编辑');
+  page.once('dialog', d => d.dismiss());
+  await page.locator('#navBar a[data-k="week"]').click();
+  await expect(page.locator('#m-nutrition')).toBeVisible();
+  await expect(page.locator('#nutritionMealName')).toHaveValue('尚未保存的编辑');
+  page.once('dialog', d => d.accept());
+  await page.locator('#navBar a[data-k="week"]').click();
+  await expect(page.locator('#m-week')).toBeVisible();
+  await expect(page.locator('body')).not.toHaveClass(/nutrition-open|training-record-open/);
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.evaluate(() => window.__fitnessTest.openNutrition());
+  await expect(page.locator('#navBar')).toBeHidden();
+  await page.locator('#nutritionBack').click();
+  await expect(page.locator('#navBar')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+});
+
+test('real v3.1.1 upgrades in the same file without losing records, photos, or instance identity', async ({ page }) => {
+  test.setTimeout(120000);
+  const { gunzipSync } = require('node:zlib');
+  const formal = path.join(fixture, '健身工作台.html');
+  const before = fs.readFileSync(formal);
+  const testSource = fs.readFileSync(path.join(fixture, 'browser-test.html'), 'utf8');
+  const dataRe = /(<script id="workbench-data" type="application\/json">)([\s\S]*?)(<\/script>)/;
+  const raw = testSource.match(dataRe)[2];
+  let legacy = gunzipSync(fs.readFileSync(path.join(repo, 'tests/fixtures/ui-history/v3.1.1.html.gz'))).toString('utf8');
+  legacy = legacy.replaceAll('__FWB_BRAND__', 'TEST').replace(dataRe, (_, a, b, c) => a + raw + c);
+  const hook = testSource.match(/window\.__fitnessTest=\{[^;]+;/)[0];
+  const end = legacy.lastIndexOf('})();');
+  const withHook = legacy.slice(0, end) + hook + legacy.slice(end);
+  const backup = path.join(path.dirname(fixture), 'ui-backups');
+  try {
+    fs.writeFileSync(formal, withHook);
+    await page.goto(pathToFileURL(formal).href);
+    await completeTraining(page); await newMeal(page, true);
+    const oldBackup = await page.evaluate(() => window.__fitnessTest.offlineStore.exportBackup());
+    // Remove the test hook before migration: only official shells may be auto-upgraded.
+    fs.writeFileSync(formal, legacy);
+    const result = spawnSync(process.env.PYTHON || 'python', ['-B', path.join(repo, 'skills/lzheng-fitness-workbench-builder/scripts/Upgrade-FitnessWorkbenchUi.py'), '--project', fixture, '--backup-dir', backup, '--apply'], { cwd: repo, encoding: 'utf8', timeout: 90000, env: { ...process.env, PYTHONUTF8: '1', PYTHONDONTWRITEBYTECODE: '1' } });
+    expect(result.status, result.stdout + result.stderr).toBe(0);
+    const receipt = JSON.parse(result.stdout);
+    expect(receipt.ui_upgraded && receipt.browser_verified).toBe(true);
+    expect(receipt.data_refreshed || receipt.browser_records_backed_up).toBe(false);
+    expect(fs.readFileSync(formal, 'utf8').match(dataRe)[2]).toBe(raw);
+    await page.reload();
+    const restored = await page.evaluate(async () => {
+      const data = JSON.parse(document.getElementById('workbench-data').textContent);
+      const store = FitnessLocal.create(data.system.instance_id);
+      return { backup: await store.exportBackup(), sessions: await store.all('session'), meals: await store.all('meal'), photos: (await store.all('photo')).map(p => p.blob.size), instance: data.system.instance_id };
+    });
+    expect(restored.instance).toBe(JSON.parse(raw).system.instance_id);
+    expect(restored.sessions).toHaveLength(1); expect(restored.meals).toHaveLength(1);
+    expect(restored.photos[0]).toBeGreaterThan(0);
+    // Export includes timestamps; compare the persistent records and attachments themselves.
+    expect(restored.backup.records).toEqual(oldBackup.records);
+    for (const key of ['today', 'week', 'trend', 'record', 'settings']) {
+      await page.locator('#navBar a[data-k="' + key + '"]').click();
+      await expect(page.locator('#m-' + key)).toBeVisible();
+    }
+  } finally { fs.writeFileSync(formal, before); }
 });
 
 test('public page and installer agree on the explicit Agent protocol', async ({ page }) => {
@@ -251,3 +375,28 @@ test('public page and installer agree on the explicit Agent protocol', async ({ 
   expect(installer).toContain("$ProtocolName='lzheng-fitness-agent'");
   expect(fs.readFileSync(path.join(repo, 'skills/lzheng-fitness-workbench-builder/assets/workbench-template.html'), 'utf8')).not.toContain('lzheng-nutrition-agent://');
 });
+
+for (const release of ['v2.3.0', 'v2.3.1', 'v3.1.0']) {
+  test('official ' + release + ' shell migrates through the real browser gate', async ({ page }) => {
+    test.setTimeout(120000);
+    const { gunzipSync } = require('node:zlib');
+    const formal = path.join(fixture, '健身工作台.html');
+    const before = fs.readFileSync(formal);
+    const dataRe = /(<script id="workbench-data" type="application\/json">)([\s\S]*?)(<\/script>)/;
+    const raw = before.toString('utf8').match(dataRe)[2];
+    const old = gunzipSync(fs.readFileSync(path.join(repo, 'tests/fixtures/ui-history/' + release + '.html.gz'))).toString('utf8')
+      .replaceAll('__FWB_BRAND__', 'TEST').replace(dataRe, (_, a, b, c) => a + raw + c);
+    try {
+      fs.writeFileSync(formal, old);
+      const result = spawnSync(process.env.PYTHON || 'python', ['-B', path.join(repo, 'skills/lzheng-fitness-workbench-builder/scripts/Upgrade-FitnessWorkbenchUi.py'), '--project', fixture, '--backup-dir', path.join(path.dirname(fixture), 'ui-history-backups'), '--apply'], { cwd: repo, encoding: 'utf8', timeout: 90000, env: { ...process.env, PYTHONUTF8: '1', PYTHONDONTWRITEBYTECODE: '1' } });
+      expect(result.status, result.stdout + result.stderr).toBe(0);
+      const receipt = JSON.parse(result.stdout);
+      expect(receipt.source_release).toBe(release);
+      expect(receipt.ui_upgraded && receipt.browser_verified).toBe(true);
+      expect(fs.readFileSync(formal, 'utf8').match(dataRe)[2]).toBe(raw);
+      await page.goto(pathToFileURL(formal).href);
+      await page.locator('#navBar a[data-k="settings"]').click();
+      await expect(page.locator('#m-settings')).toBeVisible();
+    } finally { fs.writeFileSync(formal, before); }
+  });
+}

@@ -21,6 +21,8 @@ python "<skill>/scripts/Inspect-FitnessWorkbench.py" --project "<项目根目录
 
 ## 先判断任务
 
+- **侧栏缺失 / 已有页面升级**：读取 [界面升级](references/ui-upgrade.md)，先检查实际运行模板和原 HTML，再使用独立 `upgrade-workbench-ui`。用户已经要求修复时直接完成兼容检查、备份、升级与浏览器验收；未知自定义不能静默覆盖。数据刷新和重新安装 Skill 都不能替代界面升级。
+
 - **从零构建 / 新电脑迁移**：读取 [输入契约](references/input-contract.md)，使用初始化脚本创建完整目录和可运行页面。
 - **刷新数据**：保留正式 HTML 视图，只运行数据生成器更新唯一 `workbench-data` 数据块；schema 6 必须包含建档、系统、知识包、状态和来源核验信息。
 - **接入完整计划**：完整计划使用 `plan_contract` 时，先运行 `Adapt-PlanContract.py` 适配为工作台主源；不得要求用户手工重写第二份计划 JSON。

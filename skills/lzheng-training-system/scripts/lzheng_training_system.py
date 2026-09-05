@@ -13,7 +13,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-SUITE_VERSION = "3.1.1"
+SUITE_VERSION = "3.2.0"
 PORTABLE_CONFIG_VERSION = 1
 PROJECT_RELATIVE = Path("个人训练系统")
 BACKUP_RELATIVE = Path("系统/backups")
@@ -270,10 +270,14 @@ def doctor(args: argparse.Namespace) -> None:
         problems.append(str(exc).split("- ")[-1])
     if problems:
         stop("；".join(problems))
-    print("LZHENG_TRAINING_SYSTEM_DOCTOR: PASS")
+    state = workbench_ui_status(project_root)
+    print("LZHENG_TRAINING_SYSTEM_DOCTOR: " + ("PASS" if state["status"] == "current" else "NEEDS_UI_ATTENTION"))
     print("suite: " + str(config.get("suite_version")))
     print("root: " + str(root))
     print("project: " + str(project_root))
+    print("ui: " + json.dumps(state, ensure_ascii=False))
+    if state["status"] != "current":
+        raise SystemExit(2)
 
 
 def install_skill(args: argparse.Namespace) -> None:
@@ -320,7 +324,7 @@ def upgrade(args: argparse.Namespace) -> None:
     if conflicts:
         print("LZHENG_TRAINING_SYSTEM_UPGRADE: PROTECTED")
         print("用户修改的托管文件未覆盖：" + "、".join(conflicts))
-        return
+        raise SystemExit(2)
     config["suite_version"] = SUITE_VERSION
     config["upgraded_at"] = dt.datetime.now().astimezone().isoformat(timespec="seconds")
     config["project_root"] = portable_relative(project_path(root, config), root, "project_root")
@@ -331,8 +335,49 @@ def upgrade(args: argparse.Namespace) -> None:
     for relative in sorted(set(OUTPUT_LOCATIONS.values())):
         (root / relative).mkdir(parents=True, exist_ok=True)
     write_json(config_path(root), config)
-    print("LZHENG_TRAINING_SYSTEM_UPGRADE: PASS")
-    print("仅升级系统配置；计划、复盘、状态档案和私人知识均未触碰")
+    print("LZHENG_TRAINING_SYSTEM_UPGRADE: CONFIG_ONLY")
+    print("仅升级系统配置；工作台界面未替换")
+    state = workbench_ui_status(project_path(root, config))
+    print("ui: " + json.dumps(state, ensure_ascii=False))
+    if state["status"] != "current":
+        print("需要单独执行 upgrade-workbench-ui --root <系统根目录> --apply")
+        raise SystemExit(2)
+
+
+def workbench_ui_status(project: Path) -> dict:
+    from importlib.machinery import SourceFileLoader
+    script = workbench_script("Upgrade-FitnessWorkbenchUi.py")
+    sys.path.insert(0, str(script.parent))
+    module = SourceFileLoader("fitness_ui_upgrade", str(script)).load_module()
+    try:
+        return module.inspect_html((project / "健身工作台.html").read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError) as exc:
+        return {"status": "unreadable", "reason": str(exc)}
+
+
+def upgrade_workbench_ui(args: argparse.Namespace) -> None:
+    from importlib.machinery import SourceFileLoader
+    script = workbench_script("Upgrade-FitnessWorkbenchUi.py")
+    sys.path.insert(0, str(script.parent))
+    module = SourceFileLoader("fitness_ui_upgrade", str(script)).load_module()
+    root = module.safe_path(Path(args.root))
+    module.safe_path(config_path(root))
+    config = load_config_readonly(root)
+    # Check-only does not migrate configuration, create directories, or write receipts.
+    project = root / str(config.get("project_root") or PROJECT_RELATIVE)
+    module.safe_path(project)
+    if not project.resolve().is_relative_to(root):
+        stop("project_root 越出系统目录")
+    configured_backup = str(config.get("backup_root") or BACKUP_RELATIVE)
+    if is_machine_absolute(configured_backup):
+        configured_backup = str(BACKUP_RELATIVE)
+    backup = Path(args.backup_dir) if args.backup_dir else root / configured_backup / "workbench-ui"
+    if not args.backup_dir and not backup.resolve().is_relative_to(root):
+        stop("配置 backup_root 越出当前系统根目录")
+    try:
+        print(json.dumps(module.upgrade(project, backup, args.apply), ensure_ascii=False, indent=2))
+    except (ValueError, OSError, subprocess.SubprocessError) as exc:
+        stop(str(exc))
 
 
 def validate(args: argparse.Namespace) -> None:
@@ -439,6 +484,11 @@ def main() -> None:
     p.set_defaults(func=bootstrap)
     for action, fn in (("doctor", doctor), ("upgrade", upgrade), ("validate", validate)):
         p = subs.add_parser(action); p.add_argument("--root", required=True); p.set_defaults(func=fn)
+    p = subs.add_parser("upgrade-workbench-ui")
+    p.add_argument("--root", required=True); p.add_argument("--backup-dir")
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument("--check-only", action="store_true"); mode.add_argument("--apply", action="store_true")
+    p.set_defaults(func=upgrade_workbench_ui)
     p = subs.add_parser("inspect"); p.add_argument("--root", required=True); p.add_argument("--pretty", action="store_true"); p.set_defaults(func=inspect_system)
     p = subs.add_parser("process-handoffs"); p.add_argument("--root", required=True); p.add_argument("--notion"); p.add_argument("--notion-mode", choices=("incremental", "full")); p.add_argument("--backup-dir"); p.add_argument("--dry-run", action="store_true"); p.set_defaults(func=process_handoffs)
     p = subs.add_parser("refresh-workbench"); p.add_argument("--root", required=True); p.add_argument("--notion"); p.add_argument("--notion-mode", choices=("incremental", "full")); p.add_argument("--replace-main-lift-history", action="store_true"); p.add_argument("--confirm-replace-main-lift-history", action="store_true"); p.add_argument("--backup-dir"); p.add_argument("--receipt"); p.add_argument("--deploy"); p.add_argument("--release-mode", choices=("private-portable", "public-anonymized")); p.add_argument("--confirm-private-portable", action="store_true"); p.set_defaults(func=refresh_workbench)

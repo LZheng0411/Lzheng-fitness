@@ -30,7 +30,8 @@ description: 初始化、升级、诊断、校验和迁移 Lzheng 本地训练�
 | 新电脑、空文件夹、从零搭建 | `bootstrap` |
 | 检查路径、数据主源、Skill、工作台或链接 | `doctor` |
 | 日常任务读取当前状态，不加载整份工作台 HTML | `inspect` |
-| 升级本地系统 | `upgrade` |
+| 升级系统配置并检查界面状态 | `upgrade`（仅配置；需要界面升级时退出码 2） |
+| 修复侧栏或升级已有工作台界面，保留事实和壁纸 | `upgrade-workbench-ui` |
 | 只装/检查某个专业 Skill | `install-skill` |
 | 导入用户自己的知识、书摘或资料包 | `import-private-pack` |
 | 刷新正式工作台并生成可审计回执，可选准备本地发布副本 | `refresh-workbench` |
@@ -62,6 +63,8 @@ python scripts/lzheng_training_system.py bootstrap --target "<空目录>"
 python scripts/lzheng_training_system.py doctor --root "<系统根目录>"
 python scripts/lzheng_training_system.py inspect --root "<系统根目录>"
 python scripts/lzheng_training_system.py upgrade --root "<系统根目录>"
+python scripts/lzheng_training_system.py upgrade-workbench-ui --root "<系统根目录>" --check-only
+python scripts/lzheng_training_system.py upgrade-workbench-ui --root "<系统根目录>" --apply
 python scripts/lzheng_training_system.py install-skill --root "<系统根目录>" --name lzheng-fitness-plan
 python scripts/lzheng_training_system.py import-private-pack --root "<系统根目录>" --source "<用户明确指定的目录>"
 python scripts/lzheng_training_system.py refresh-workbench --root "<系统根目录>" [--notion "<notion-data.json>" --notion-mode incremental|full]

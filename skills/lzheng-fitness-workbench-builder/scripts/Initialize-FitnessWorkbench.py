@@ -154,7 +154,10 @@ def main():
     template = (ASSET_DIR / "workbench-template.html").read_text(encoding="utf-8")
     brand = safe_brand(args.brand)
     template = template.replace("__FWB_BRAND__", brand)
-    template = template.replace("<title>健身工作台</title>", "<title>%s</title>" % args.title)
+    from html import escape
+    from workbench_ui import seal
+    template = re.sub(r"<title>.*?</title>", lambda _: "<title>" + escape(args.title) + "</title>", template, count=1)
+    template = seal(template)
     write_text(target / "健身工作台.html", template)
 
     image_target = target / "工作台与工具/健身工作台开发/界面素材"

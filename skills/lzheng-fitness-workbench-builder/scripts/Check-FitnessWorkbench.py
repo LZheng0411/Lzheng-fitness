@@ -60,28 +60,10 @@ def run_utf8(command):
 
 
 def check_workbench_shell(html):
-    """Validate the fixed shell that data-only refreshes must never remove."""
-    problems = []
-    if WORKBENCH_TEMPLATE_MARKER not in html:
-        problems.append("缺少固定工作台模板版本标记")
-    nav_tags = re.findall(r"<nav\b[^>]*>", html, re.I)
-    nav_containers = [
-        tag for tag in nav_tags
-        if re.search(r'\bid=["\']navBar["\']', tag, re.I)
-        and re.search(r'\bclass=["\'][^"\']*\bnav\b[^"\']*["\']', tag, re.I)
-    ]
-    if len(nav_containers) != 1:
-        problems.append("固定导航容器 navBar 数量异常: %d" % len(nav_containers))
-    for section_id in WORKBENCH_SECTION_IDS:
-        if not re.search(r'id=["\']%s["\']' % re.escape(section_id), html):
-            problems.append("缺少固定工作台区块: " + section_id)
-    nav_match = re.search(r"var navs\s*=\s*\[([\s\S]*?)\];", html)
-    nav_items = tuple(re.findall(r"\[['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]", "[" + nav_match.group(1))) if nav_match else ()
-    if nav_items != WORKBENCH_NAV_ITEMS:
-        problems.append("固定导航配置缺失或顺序异常")
-    if "navBar.appendChild(a)" not in html:
-        problems.append("固定导航初始化逻辑缺失")
-    return problems
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from workbench_ui import shell_problems
+    return shell_problems(html)
 
 
 def fail(msg):

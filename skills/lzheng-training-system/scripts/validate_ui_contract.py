@@ -96,12 +96,10 @@ def main() -> int:
             ]
             if len(nav_containers) != 1:
                 errors.append("固定导航容器 navBar 缺失或重复")
-            nav_match = re.search(r"var navs\s*=\s*\[([\s\S]*?)\];", text)
-            nav_items = tuple(re.findall(r"\[['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]", "[" + nav_match.group(1))) if nav_match else ()
-            if nav_items != (("today", "训练"), ("week", "计划"), ("trend", "负荷"), ("record", "复盘"), ("settings", "指南")):
-                errors.append("固定导航配置缺失或顺序异常")
-            if "navBar.appendChild(a)" not in text:
-                errors.append("固定导航初始化逻辑缺失")
+            import sys
+            sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lzheng-fitness-workbench-builder/scripts"))
+            from workbench_ui import shell_problems
+            errors.extend(shell_problems(text))
         if kind == "plan" and re.search(r"--green\b|#174f3d|#e7f0ec|#bdd1c6", text, re.I):
             errors.append("计划页包含旧绿色视觉令牌")
     else:

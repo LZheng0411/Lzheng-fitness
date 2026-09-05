@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ui-template="lzheng-fitness-workbench-v3">
+<html lang="zh-CN" data-ui-template="lzheng-fitness-workbench-v3" data-ui-revision="2026.09.05.1">
 <head>
 <meta charset="UTF-8">
+<meta name="workbench-shell-sha256" content="aca04103612d1f524ac47d09884a1c65aa270410264ad9690335d1c3c0befd7f">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -2154,6 +2155,11 @@
   #offlineMealPhotos figcaption{font-size:12px;color:#45433f;text-shadow:none}
   #offlineMealDateLabel{margin-top:12px}
   @media(max-width:430px){#offlineMealCandidate .nutrition-profile-fields{grid-template-columns:1fr}}
+
+  #workbenchError{position:fixed;z-index:1500;left:16px;right:16px;top:8px;margin:auto;max-width:720px;padding:12px 18px;background:#191919;color:#fff;border:1px solid #aaa;border-radius:10px;box-shadow:0 4px 22px #0004;font-size:13px}
+  #workbenchError[hidden]{display:none}
+  .shell-error-note{padding:14px;margin-bottom:16px;border:1px solid #777;background:#fff;color:#222}
+  @media(min-width:900px){body.nutrition-open>.nav{display:flex!important}body.nutrition-open{padding-left:224px}body.nutrition-open main{width:100%;min-width:0}body.nutrition-open .nutrition-shell{max-width:100%}}
 </style>
 </head>
 <body class="dark-background-theme">
@@ -2538,7 +2544,51 @@
 
 <div class="ta-confirm" id="taConfirm" hidden><section class="ta-confirm-card" role="dialog" aria-modal="true" aria-label="确认训练纠错"><header><span class="ta-kicker">BEFORE / AFTER</span><h2>确认这次修改</h2><p>系统会先保存修改前快照，再写入新的实际训练数据。</p></header><div class="ta-diffs" id="taDiffs"></div><footer><button id="taConfirmBack" type="button">返回继续修改</button><button class="save" id="taConfirmSave" type="button">保存纠错</button></footer></section></div>
 
-<nav class="nav" id="navBar"></nav>
+<nav class="nav" id="navBar" aria-label="工作台导航">
+<a data-k="today" href="#m-today" class="on" aria-current="page"><i aria-hidden="true"></i><span>训练</span></a>
+<a data-k="week" href="#m-week"><i aria-hidden="true"></i><span>计划</span></a>
+<a data-k="trend" href="#m-trend"><i aria-hidden="true"></i><span>负荷</span></a>
+<a data-k="record" href="#m-record"><i aria-hidden="true"></i><span>复盘</span></a>
+<a data-k="settings" href="#m-settings"><i aria-hidden="true"></i><span>指南</span></a>
+</nav>
+<div id="workbenchError" role="alert" hidden></div>
+<script id="workbench-shell">
+(function(){
+  var nav=document.getElementById('navBar'),hooks={},failed=false;
+  function report(label,error){
+    failed=true;
+    var box=document.getElementById('workbenchError');box.hidden=false;
+    box.textContent=label+'加载失败。可切换其他页面；请保留原文件并让助手检查工作台。';
+    console.error('[workbench] '+label,error);
+  }
+  function mark(key){
+    nav.querySelectorAll('a[data-k]').forEach(function(a){
+      var active=a.dataset.k===key;a.classList.toggle('on',active);
+      if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
+    });
+  }
+  function go(key){
+    var target=document.getElementById('m-'+key);if(!target)return false;
+    try{if(hooks.beforeLeave&&hooks.beforeLeave()===false)return false;}
+    catch(error){report('离开当前页面',error);return false;}
+    document.body.classList.remove('nutrition-open','training-record-open');
+    document.querySelectorAll('body>main>section').forEach(function(s){s.classList.toggle('on',s===target);});
+    mark(key);
+    try{if(hooks.enter)hooks.enter(key);}catch(error){report('当前页面',error);}
+    if(failed&&!target.querySelector('[data-shell-error]')){
+      var notice=document.createElement('p');notice.dataset.shellError='true';notice.className='shell-error-note';
+      notice.textContent='部分内容未能加载，请勿把空白或旧值当作最新记录。';target.prepend(notice);
+    }
+    window.scrollTo({top:0,behavior:'smooth'});return true;
+  }
+  nav.addEventListener('click',function(event){var a=event.target.closest('a[data-k]');if(!a)return;event.preventDefault();go(a.dataset.k);});
+  window.FitnessShell={go:go,mark:mark,report:report,connect:function(value){hooks=value;},get failed(){return failed;}};
+  window.addEventListener('error',function(event){if(event.error)report('工作台模块',event.error);});
+  window.addEventListener('unhandledrejection',function(event){report('异步模块',event.reason);});
+  mark('today');
+})();
+</script>
+
 <footer>
   <span>数据源：当前周期 JSON · 个人训练系统</span>
   <span>动态记录：Notion 训练系统</span>
@@ -2659,11 +2709,25 @@
 <script>
 (function(){
   var D = JSON.parse(document.getElementById('workbench-data').textContent);
+  if(!D||D.schema!==6||!D.meta||!D.days||typeof D.days!=='object')throw new Error('工作台数据结构不兼容，请先检查数据');
   var m = D.meta;
   var onboarding = D.onboarding || {completed:true, message:''};
   var systemInfo = D.system || {};
   var trainingStatus = D.status || {};
   var knowledge = D.knowledge || {};
+  window.FitnessShell.connect({
+    beforeLeave:function(){
+      if(document.body.classList.contains('nutrition-open')){
+        if(nutritionMealDraft&&!window.confirm('有尚未保存的餐食内容。放弃本次编辑并离开？'))return false;
+        closeNutritionMealDraft();closeNutritionConsumptionPanel();
+      }
+      if(document.body.classList.contains('training-record-open')){
+        trainingWriteLocal();closeTraining();
+      }
+      return true;
+    },
+    enter:function(key){if(key==='today')renderToday(todayName);}
+  });
   var bgVideo=document.getElementById('workbenchBgVideo');
   var motionPreference=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)');
   function loadAmbientVideo(){
@@ -2707,7 +2771,7 @@
   }
   function pad(n){ return n<10?'0'+n:''+n; }
 
-  document.getElementById('verChip').textContent = '来源 v' + m.source_version.replace('v','') + ' · 更新于 ' + m.updated_at;
+  document.getElementById('verChip').textContent = '来源 v' + String(m.source_version||'待确认').replace('v','') + ' · 更新于 ' + m.updated_at;
 
   var sync = D.sync || { status:'unknown', reason:null, stale_fields:[] };
   var syncBar = document.getElementById('syncBar');
@@ -2806,6 +2870,12 @@
     container.appendChild(wrap);
   }
   function renderToday(name){
+    try{return renderTodayContent(name);}catch(error){
+      window.FitnessShell.report('今日训练',error);
+      var list=document.getElementById('todayList');if(list)list.textContent='训练内容加载失败，请先检查数据再开始训练。';
+    }
+  }
+  function renderTodayContent(name){
     pills.innerHTML=''; advice.innerHTML=''; todayList.innerHTML=''; advice.classList.remove('has-next-plan');
     if(!onboarding.completed){
       heroHi.textContent = '待建档';
@@ -4871,12 +4941,15 @@
     var r = el('div','row'); r.appendChild(el('span','k',x[0])); r.appendChild(el('span','v',x[1])); ringInfo.appendChild(r);
   });
   var stageBar = document.getElementById('stageBar');
+  try {
   D.phases.forEach(function(p){
     var s = el('div','stg' + (p.start_week<=m.current_week && m.current_week<=p.end_week ? ' cur':''));
     s.style.flex = Math.max(1,p.end_week-p.start_week+1);
     s.innerHTML = '<span><b>' + p.label + '</b><em>W' + p.start_week + (p.end_week!==p.start_week ? '–' + p.end_week : '') + '</em></span>';
     stageBar.appendChild(s);
   });
+
+  } catch(error){window.FitnessShell.report('周期阶段',error);stageBar.textContent='阶段数据加载失败';}
 
   var dayGrid = document.getElementById('dayGrid');
   var order = ['上肢A','腿B','上肢B','腿A'];
@@ -5462,26 +5535,7 @@
     '<div class="how-step"><span class="num">03 / SYNC</span><b>同步数据</b><p>对 AI 说「同步工作台」，拉取 Notion 最新记录。</p></div>'+
     '<div class="how-step"><span class="num">04 / REVIEW</span><b>进入复盘</b><p>工作台看重点；点击复盘卡片可直接阅读完整判断。</p></div>';
 
-  var navBar = document.getElementById('navBar');
-  var navs = [['today','训练','今日训练'],['week','计划','周期计划'],['trend','负荷','负荷趋势'],['record','复盘','训练复盘'],['settings','指南','使用指南与规则']];
-  function setNav(k){
-    document.querySelectorAll('.nav a').forEach(function(a){ a.classList.toggle('on', a.dataset.k===k); });
-  }
-  navs.forEach(function(n){
-    var a = el('a', null); a.dataset.k = n[0]; a.href = '#';
-    a.appendChild(el('i',null)); a.appendChild(el('span',null,n[1]));
-    a.title = n[2];
-    a.onclick = function(e){
-      e.preventDefault();
-      document.body.classList.remove('nutrition-open');
-      if(n[0]==='today') renderToday(todayName);
-      document.querySelectorAll('section').forEach(function(s){ s.classList.remove('on'); });
-      document.getElementById('m-' + n[0]).classList.add('on');
-      setNav(n[0]);
-      window.scrollTo({top:0, behavior:'smooth'});
-    };
-    navBar.appendChild(a);
-  });
+  function setNav(k){window.FitnessShell.mark(k);}
   setNav('today');
 })();
 </script>
