@@ -13,7 +13,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-SUITE_VERSION = "3.2.0"
+SUITE_VERSION = "3.3.0"
 PORTABLE_CONFIG_VERSION = 1
 PROJECT_RELATIVE = Path("个人训练系统")
 BACKUP_RELATIVE = Path("系统/backups")

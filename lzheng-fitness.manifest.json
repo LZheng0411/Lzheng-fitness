@@ -1,6 +1,6 @@
 {
   "name": "Lzheng-fitness",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "license": "MIT",
   "language": "zh-CN",
   "skills": [
@@ -43,6 +43,16 @@
       "name": "lzheng-fitness-workbench-builder",
       "path": "skills/lzheng-fitness-workbench-builder",
       "standalone": false
+    },
+    {
+      "name": "lzheng-video-learning",
+      "path": "skills/lzheng-video-learning",
+      "standalone": true
+    },
+    {
+      "name": "lzheng-knowledge-library",
+      "path": "skills/lzheng-knowledge-library",
+      "standalone": true
     }
   ],
   "runtime": {
@@ -64,5 +74,13 @@
     }
   },
   "knowledge": "knowledge/00-lzheng-knowledge-map.md",
-  "validator": "tools/validate_bundle.py"
+  "validator": "tools/validate_bundle.py",
+  "third_party": {
+    "dbs-learning": {
+      "path": "third_party/dbs-learning",
+      "license": "CC-BY-NC-4.0",
+      "optional": true,
+      "default_install": false
+    }
+  }
 }

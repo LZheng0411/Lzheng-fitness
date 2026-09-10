@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.3.0 — 2026-09-10
+
+- Added portable video-source learning, arbitrary-topic selection, bounded batches, hash-based resume and explicit failure retries. Optional upstream interactive-learning content retains its CC BY-NC license.
+- Added an independent knowledge projection with dynamic authors/sources, safe text/table rendering and per-instance local feedback; included an opt-in public-video example without maintainer personal data.
+- Added nutrition/knowledge navigation, natural-week display, local schedule deferral, version-bound menu estimates, Agent meal request/candidate exchange and draft-set exports. Existing offline recording remains intact.
+- Added optional native Codex nutrition adapter, per-job protocol selection, bounded child-process execution and interactive-desktop URI diagnostics. No recurring service or automatic model call is installed.
+- Added one explicit upgrade wrapper and v3.2.0 migration coverage, preserving knowledge separately from training data and shell identity.
+
+
 ## 3.2.0 — 2026-09-05
 
 UI revision: `2026.09.05.1`.

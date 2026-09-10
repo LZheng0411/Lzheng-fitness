@@ -26,7 +26,7 @@ async function main() {
       } else if (rail.y + rail.height > 961 || rail.y < 700) {
         throw new Error('Mobile navigation is not at the bottom of the viewport');
       }
-      for (const key of ['today', 'week', 'trend', 'record', 'settings']) {
+      for (const key of ['today', 'week', 'trend', 'nutrition', 'knowledge', 'record', 'settings']) {
         const anchor = page.locator('#navBar a[data-k="' + key + '"]');
         if (!await anchor.isVisible()) throw new Error('Navigation not visible: ' + key);
         await anchor.click();

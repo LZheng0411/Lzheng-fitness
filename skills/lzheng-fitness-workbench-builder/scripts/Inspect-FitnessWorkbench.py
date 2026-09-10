@@ -20,7 +20,7 @@ DATA_BLOCK = re.compile(
     r'<script id="workbench-data" type="application/json">([\s\S]*?)</script>'
 )
 TEMPLATE_MARKER = 'data-ui-template="lzheng-fitness-workbench-v3"'
-NAV_LABELS = ("训练", "计划", "负荷", "复盘", "指南")
+NAV_LABELS = ("训练", "计划", "负荷", "饮食", "知识", "复盘", "指南")
 SECTION_IDS = ("m-today", "m-week", "m-trend", "m-record", "m-settings")
 
 if hasattr(sys.stdout, "reconfigure"):

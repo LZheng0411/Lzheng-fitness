@@ -89,3 +89,9 @@ python scripts/lzheng_training_system.py validate --root "<系统根目录>"
 - 在新的隔离空目录 `bootstrap` 成功，并显示“待建档”而不是假重量；
 - 整套系统移动到不同盘符或改名后，旧绝对路径自动迁移，`doctor` 与 `upgrade` 继续通过；
 - 每次正式复盘和接回均生成 `LZHENG_HANDOFF`，经 `process-handoffs` 获得带 checker PASS 和回执哈希的 `formal_refreshed`，或明确报告失败。
+
+## 一句话升级与视频学习
+
+用户要求升级整套系统时，在已核对的官方仓库读取 `docs/UPGRADE.md`，使用 `tools/upgrade.py` 完成界面检查、备份、保留记录与知识内容、更新安装 Skill。用户自定义界面由 Agent 按差异修复，不静默覆盖。安装更新不等于线上发布。
+
+用户要学习收藏或指定视频时，调用 `lzheng-video-learning`；不同主题均可，只有健身内容按需回到本系统。知识上工作台用 `lzheng-knowledge-library`，默认空知识库，不导入作者的私人内容。

@@ -438,6 +438,7 @@ def schedule_contract_snapshot(plan_json, plan_start, today):
             "date": date,
             "day": day_key,
             "week": week,
+            "schedule_status": item.get("schedule_status"),
             "exercises": item.get("exercises") or [],
         })
     dates = [dt.date.fromisoformat(item["date"]) for item in all_events if item.get("date")]
@@ -454,6 +455,8 @@ def schedule_contract_snapshot(plan_json, plan_start, today):
 
 def current_week_from_schedule(plan_json, plan_start, today):
     """排程明确覆盖今天时，以其唯一 Wn 为准，处理新周尚无训练复盘的窗口。"""
+    if calendar_policy(plan_json):
+        return calendar_window(plan_json, today)["week"]
     snapshot = schedule_contract_snapshot(plan_json, plan_start, today)
     if snapshot["missing_week_labels"] or len(snapshot["weeks"]) != 1:
         return None
@@ -1046,7 +1049,10 @@ def build_days(plan_json, current_week, plan_start, notion=None):
             main = main_key in cyc_by_name or e.get("priority") in ("main", "key")
             w, d, rpe = None, None, None
             if main:
-                if str(sets).startswith("实际："):
+                if calendar_policy(plan_json):
+                    w = extract_w(sets)
+                    d = sets or None
+                elif str(sets).startswith("实际："):
                     w = extract_peak_w(sets)
                     d = sets
                 else:
@@ -1082,6 +1088,8 @@ def build_days(plan_json, current_week, plan_start, notion=None):
                 "weight_source": weight_source,
             })
         item = {"role": role, "exercises": exercises, "date": parse_schedule_date(s.get("day", ""), plan_start), "label": s.get("label"), "title": s.get("title")}
+        if calendar_policy(plan_json):
+            item.update({key: s.get(key) for key in ("prescription_week", "schedule_status", "carryover", "schedule_key_date")})
         days[day_key] = item
         if item["date"]:
             completed = "已完成" in s.get("day", "") or session_is_done(item["date"], day_key)
@@ -1099,6 +1107,9 @@ def build_days(plan_json, current_week, plan_start, notion=None):
 
 
 def parse_schedule_date(text, plan_start):
+    full = re.search(r"(?<!\d)(\d{4}-\d{2}-\d{2})(?!\d)", text or "")
+    if full:
+        return dt.date.fromisoformat(full.group(1)).isoformat()
     m = re.search(r"(\d{2})-(\d{2})", text or "")
     if not m:
         return None
@@ -1111,10 +1122,63 @@ def parse_schedule_date(text, plan_start):
     return value.isoformat()
 
 
+def calendar_policy(plan_json):
+    return plan_json.get("plan", {}).get("week_policy") == "monday_sunday"
+
+def calendar_window(plan_json, today):
+    anchor = dt.date.fromisoformat(plan_json["plan"]["calendar_anchor"])
+    if anchor.weekday() != 0:
+        raise ValueError("calendar_anchor 必须为周一")
+    start = today - dt.timedelta(days=today.weekday())
+    return {"start": start.isoformat(), "end": (start + dt.timedelta(days=6)).isoformat(),
+            "week": (start - anchor).days // 7 + 1, "policy": "monday_sunday"}
+
+def validate_calendar_schedule(data, plan_json, today):
+    problems = []
+    window = calendar_window(plan_json, today)
+    if data.get("calendar_week") != window:
+        problems.append("日历周与周一至周日边界不一致")
+    if data.get("meta", {}).get("current_week") != window["week"]:
+        problems.append("日历周次不一致")
+    dated = []
+    names = set()
+    for source in plan_json.get("schedule", []):
+        date = parse_schedule_date(source.get("day", ""), plan_json["plan"]["calendar_anchor"])
+        if date:
+            dated.append(date)
+        if "exercises" not in source:
+            continue
+        name = schedule_day_key(source)
+        if name in names:
+            problems.append("训练单元重复: " + name)
+        names.add(name)
+        if not date and source.get("schedule_status") != "awaiting_date":
+            problems.append("无日期训练单元必须明确待排期: " + name)
+        target = data.get("days", {}).get(name, {})
+        if target.get("date") != date:
+            problems.append("训练卡日期与主源不一致: " + name)
+        if target.get("prescription_week") != source.get("prescription_week"):
+            problems.append("沿用处方周次丢失: " + name)
+        exercises = target.get("exercises", [])
+        if len(exercises) != len(source["exercises"]):
+            problems.append("完整训练日动作缺失: " + name)
+        for original, rendered in zip(source["exercises"], exercises):
+            if rendered.get("name") != original.get("name") or rendered.get("d") != original.get("sets") or rendered.get("rpe") != original.get("target"):
+                problems.append("训练卡未保持已确认完整处方: " + name)
+    start = dt.date.fromisoformat(window["start"])
+    expected = [(start + dt.timedelta(days=i)).isoformat() for i in range(7)]
+    if sorted(dated) != expected:
+        problems.append("当前排期必须恰好覆盖周一至周日七个日期，不允许跨周拼接或重复日期")
+    if sorted(x["date"] for x in data.get("timeline", [])) != expected:
+        problems.append("时间线未逐日复现本日历周")
+    return problems
+
 def validate_week_transition_contract(data, plan_json, today=None):
     """阻断旧排程、漏训练日、错误今日处方与自重覆盖。"""
     problems = []
     today = today or dt.date.today()
+    if calendar_policy(plan_json):
+        return validate_calendar_schedule(data, plan_json, today)
     meta = data.get("meta", {})
     plan_start = meta.get("plan_start")
     if not plan_start:
@@ -1141,11 +1205,14 @@ def validate_week_transition_contract(data, plan_json, today=None):
         expected_week = next(iter(snapshot["weeks"]))
 
     training = snapshot["training"]
-    valid_training = [item for item in training if item.get("date") and item.get("day")]
+    # `schedule_status=awaiting_date` is a valid current-plan entry: keep its
+    # complete prescription while excluding it from dated timeline checks.
+    recognized_training = [item for item in training if item.get("day") and (item.get("date") or item.get("schedule_status") == "awaiting_date")]
+    valid_training = [item for item in recognized_training if item.get("date")]
     declared_frequency = declared_training_frequency(plan_json)
     if declared_frequency is not None and len(training) != declared_frequency:
         problems.append("当前排程训练日数量与 plan.frequency 不一致: 计划 %d 练，实际 %d 个" % (declared_frequency, len(training)))
-    if len(valid_training) != len(training):
+    if len(recognized_training) != len(training):
         problems.append("当前排程存在无法识别日期或训练日名称的条目")
     dates = [item.get("date") for item in valid_training]
     day_keys = [item.get("day") for item in valid_training]
@@ -1925,6 +1992,7 @@ def main():
         integration_config = {"cloudbase": {"enabled": False, "env_id": "", "publishable_key": "", "sdk": None, "region": "", "bucket_name": ""}}
     data = {
         "schema": SCHEMA_VERSION,
+        "nutrition_planner": prev.get("nutrition_planner", {"schema": 1, "food_library": [], "learning": []}),
         "meta": meta,
         "onboarding": onboarding,
         "system": dict(build_system_info(), instance_id=(prev.get("system", {}).get("instance_id") if isinstance(prev.get("system"), dict) else None) or str(uuid.uuid4())),
@@ -1965,6 +2033,12 @@ def main():
         "integrations": integration_config,
         "provenance": build_provenance(plan_path, baseline, review_rows, sync, project),
     }
+    if calendar_policy(plan_json):
+        data["calendar_week"] = calendar_window(plan_json, dt.date.today())
+        data["calendar"] = {str(dt.date.fromisoformat(day["date"]).isoweekday()): name for name, day in days.items() if day.get("date")}
+        data["weekday"] = {name: (["周一", "周二", "周三", "周四", "周五", "周六", "周日"][dt.date.fromisoformat(day["date"]).weekday()] if day.get("date") else "日期待定") for name, day in days.items()}
+        data["rest_days"] = "未排期不等于休息或已完成；以日历上的实际安排为准"
+        data["week"] = [{"k": name, "v": "；".join(e["d"] or "" for e in day["exercises"] if e["main"]), "prescription_week": day.get("prescription_week"), "note": day["role"]} for name, day in days.items()]
     if not onboarding["completed"]:
         for day in data["days"].values():
             for exercise in day.get("exercises", []):

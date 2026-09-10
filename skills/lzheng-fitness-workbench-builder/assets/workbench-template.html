@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ui-template="lzheng-fitness-workbench-v3" data-ui-revision="2026.09.05.1">
+<html lang="zh-CN" data-ui-template="lzheng-fitness-workbench-v3" data-ui-revision="2026.09.10.1">
 <head>
 <meta charset="UTF-8">
-<meta name="workbench-shell-sha256" content="aca04103612d1f524ac47d09884a1c65aa270410264ad9690335d1c3c0befd7f">
+<meta name="workbench-shell-sha256" content="75413f6894e333174a9d951e233d859e531561461e29c84e1931f23b421c8cb1">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -2161,6 +2161,49 @@
   .shell-error-note{padding:14px;margin-bottom:16px;border:1px solid #777;background:#fff;color:#222}
   @media(min-width:900px){body.nutrition-open>.nav{display:flex!important}body.nutrition-open{padding-left:224px}body.nutrition-open main{width:100%;min-width:0}body.nutrition-open .nutrition-shell{max-width:100%}}
 </style>
+<style id="workbench-20260910">
+/* Shared transparent surfaces; record dialogs keep readable, bounded content. */
+:root{color-scheme:dark}
+body{--surface:rgba(12,12,14,.6)}
+.quick-destinations{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}
+.quick-destinations button,.learning-topic{padding:14px 20px;border:1px solid #ffffff35;border-radius:14px;background:rgba(0,0,0,.25);color:inherit;font:inherit;cursor:pointer}
+.quick-destinations button:hover,.learning-topic:hover{background:#ffffff18}
+#m-knowledge{max-width:1000px;margin:auto;padding-bottom:110px}
+#knowledgeTopics{display:flex;gap:10px;flex-wrap:wrap;margin:24px 0}
+#knowledgeBody article{padding:24px;border:1px solid #ffffff30;border-radius:18px;background:rgba(0,0,0,.42);margin:18px 0}
+#knowledgeBody p{white-space:pre-wrap;line-height:1.85;overflow-wrap:anywhere}
+#knowledgeBody a{display:block;color:inherit;text-decoration:underline;margin:10px 0;overflow-wrap:anywhere}
+#knowledgeBody textarea{width:100%;min-height:100px;box-sizing:border-box;padding:14px;border:1px solid #ffffff40;background:rgba(0,0,0,.25);color:inherit;font:inherit;border-radius:10px}
+.extension-panel{border:1px solid #ffffff30;background:rgba(0,0,0,.45);padding:20px;border-radius:18px;margin:18px 0;color:inherit}
+.extension-panel label{display:grid;gap:8px;margin:12px 0;font-size:14px}
+.extension-panel input,.extension-panel textarea,.extension-panel select{max-width:100%;min-width:0;padding:10px;box-sizing:border-box;background:#111;color:#fff;border:1px solid #ffffff35;border-radius:8px;font:inherit}
+.extension-panel button{background:#eee;color:#111;border:0;border-radius:8px;padding:12px 16px;margin:8px 8px 8px 0;cursor:pointer;font:inherit}
+.extension-panel summary{cursor:pointer;line-height:1.6}
+.extension-panel pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.7}
+.plan-calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin:18px 0}
+.plan-calendar>div{min-width:0;padding:12px 8px;border:1px solid #ffffff30;border-radius:10px;overflow-wrap:anywhere;background:#0005}
+.plan-calendar b{display:block;font-size:13px}.plan-calendar p{font-size:12px;margin-top:10px}
+.training-feedback{position:relative!important;inset:auto!important;transform:none!important;width:100%!important;max-width:100%!important;box-sizing:border-box}
+.training-adjust-panel,.training-exercise-panel{max-height:calc(100dvh - 40px);overflow:auto;overscroll-behavior:contain}
+#nutritionPreview:not(:has(img[src])) .nutrition-preview-media{display:none}
+.nutrition-estimate-summary,.nutrition-macro-item{font-variant-numeric:tabular-nums}
+.nutrition-estimate-summary strong{font-size:clamp(20px,3vw,30px)}
+body.training-modal-open>main{isolation:isolate}
+@media(max-width:899px){.extension-panel{padding:16px}.plan-calendar{grid-template-columns:repeat(2,minmax(0,1fr))}.plan-calendar>div:last-child{grid-column:1/-1}.quick-destinations{margin:12px 0;gap:8px}.quick-destinations button{flex:1;padding:12px;font-size:14px}#knowledgeBody article{padding:18px}input,select,textarea{font-size:16px!important}.training-adjust-panel,.training-exercise-panel{max-width:calc(100vw - 20px)!important}.training-feedback>*{min-width:0}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important}}
+
+body.nutrition-open>#navBar{display:flex!important}
+body.nutrition-open main{padding-bottom:100px!important}
+/* Keep readable contrast over both light and dark user artwork. */
+#knowledgeBody article,.extension-panel,.learning-topic,.quick-destinations button{background:rgba(12,12,14,.92)!important;color:#f5f5f5!important}
+body.dark-background-theme .extension-panel,body.dark-background-theme .extension-panel *{color:#f5f5f5!important}
+body.dark-background-theme .extension-panel button{background:#f3f3f3!important;color:#111!important}
+body.dark-background-theme #m-knowledge>p{display:inline-block;background:#151515;padding:10px 14px;border-radius:8px;color:#fff!important}
+body.dark-background-theme>.appbar{background:rgba(248,248,246,.97)!important;box-shadow:0 1px 0 #0002!important}
+body.dark-background-theme>#navBar{background:rgba(245,245,242,.96)!important}
+body.dark-background-theme #m-nutrition .nutrition-back,body.dark-background-theme #m-nutrition .nutrition-cloud-refresh,body.dark-background-theme #m-nutrition .nutrition-profile-toggle{color:#171717!important;background:rgba(255,255,252,.92)!important;border-radius:6px!important;padding:6px 10px!important}
+@media(max-width:899px){#navBar a{min-width:0;font-size:11px;letter-spacing:0}.quick-destinations{display:none}.nutrition-mobile-nav{bottom:65px!important}}
+</style>
 </head>
 <body class="dark-background-theme">
 
@@ -2519,6 +2562,7 @@
     <div class="note">点击任一复盘卡片即可在工作台内直接阅读完整内容；本地打开时仍可选择进入 Obsidian 编辑。</div>
   </section>
 
+  <section id="m-knowledge" aria-label="知识库"><h2>知识库 <small>LEARN &amp; APPLY</small></h2><p>保留来源，记录自己的理解。</p><div id="knowledgeTopics"></div><div id="knowledgeBody"></div></section>
   <section id="m-settings">
     <h2>怎么用</h2>
     <div class="note" id="howNote"></div>
@@ -2548,6 +2592,8 @@
 <a data-k="today" href="#m-today" class="on" aria-current="page"><i aria-hidden="true"></i><span>训练</span></a>
 <a data-k="week" href="#m-week"><i aria-hidden="true"></i><span>计划</span></a>
 <a data-k="trend" href="#m-trend"><i aria-hidden="true"></i><span>负荷</span></a>
+<a data-k="nutrition" href="#m-nutrition"><i aria-hidden="true"></i><span>饮食</span></a>
+<a data-k="knowledge" href="#m-knowledge"><i aria-hidden="true"></i><span>知识</span></a>
 <a data-k="record" href="#m-record"><i aria-hidden="true"></i><span>复盘</span></a>
 <a data-k="settings" href="#m-settings"><i aria-hidden="true"></i><span>指南</span></a>
 </nav>
@@ -2595,6 +2641,7 @@
 </footer>
 
 <script id="workbench-data" type="application/json">{}</script>
+<script id="knowledge-library-data" type="application/json">[]</script>
 <script id="fitness-local-store">
 /* Local records and photos share one transactional database. No network or model client. */
 (function(root){
@@ -2710,6 +2757,7 @@
 (function(){
   var D = JSON.parse(document.getElementById('workbench-data').textContent);
   if(!D||D.schema!==6||!D.meta||!D.days||typeof D.days!=='object')throw new Error('工作台数据结构不兼容，请先检查数据');
+  applyStoredSchedule(D);
   var m = D.meta;
   var onboarding = D.onboarding || {completed:true, message:''};
   var systemInfo = D.system || {};
@@ -2726,7 +2774,7 @@
       }
       return true;
     },
-    enter:function(key){if(key==='today')renderToday(todayName);}
+    enter:function(key){if(key==='today')renderToday(todayName);if(key==='nutrition')openNutrition();if(key==='knowledge')renderKnowledge();}
   });
   var bgVideo=document.getElementById('workbenchBgVideo');
   var motionPreference=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -5534,6 +5582,131 @@
     '<div class="how-step"><span class="num">02 / RECORD</span><b>记录结果</b><p>复制练后模板，填入实际表现和身体反馈。</p></div>'+
     '<div class="how-step"><span class="num">03 / SYNC</span><b>同步数据</b><p>对 AI 说「同步工作台」，拉取 Notion 最新记录。</p></div>'+
     '<div class="how-step"><span class="num">04 / REVIEW</span><b>进入复盘</b><p>工作台看重点；点击复盘卡片可直接阅读完整判断。</p></div>';
+
+  // Knowledge is an independent user-owned projection. Never interpret its text as markup.
+  var extensionInstance=String((D.system&&D.system.instance_id)||'anonymous-shell');
+  var extensionKey='fitness.extensions.v1.'+extensionInstance+'.';
+  function extensionNode(tag,text,parent){var n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(parent)parent.appendChild(n);return n;}
+  function extensionButton(label,parent,action){var b=extensionNode('button',label,parent);b.type='button';b.onclick=action;return b;}
+  function extensionSave(key,value){localStorage.setItem(extensionKey+key,JSON.stringify(value));}
+  function extensionRead(key,fallback){try{var raw=localStorage.getItem(extensionKey+key);return raw?JSON.parse(raw):fallback;}catch(_){return fallback;}}
+  function extensionDownload(name,value){var url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(function(){URL.revokeObjectURL(url);},5000);}
+  function knowledgeInline(node,value){
+    // Restricted formatting: text and HTTPS links only; never interpret raw HTML.
+    var text=String(value).replace(/\*\*/g,''),re=/\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g,last=0,m;
+    while((m=re.exec(text))){node.appendChild(document.createTextNode(text.slice(last,m.index)));var a=document.createElement('a');a.textContent=m[1];try{var u=new URL(m[2]);if(u.protocol==='https:'&&!u.username&&!u.password){a.href=u.href;a.target='_blank';a.rel='noopener noreferrer';}}catch(_){}node.appendChild(a);last=re.lastIndex;}
+    node.appendChild(document.createTextNode(text.slice(last)));
+  }
+  function knowledgeMarkdown(parent,body){
+    var lines=String(body).split(/\r?\n/),i=0;
+    while(i<lines.length){
+      if(lines[i].trim().startsWith('|')&&i+1<lines.length&&/^\|[\s:|\-]+\|$/.test(lines[i+1].trim())){
+        var wrap=extensionNode('div',undefined,parent);wrap.style.overflowX='auto';var table=extensionNode('table',undefined,wrap);table.style.cssText='border-collapse:collapse;width:100%;margin:16px 0;font-size:14px';
+        var first=true;
+        while(i<lines.length&&lines[i].trim().startsWith('|')){var line=lines[i++].trim();if(/^\|[\s:|\-]+\|$/.test(line))continue;var tr=extensionNode('tr',undefined,table);line.slice(1,-1).split('|').forEach(function(value){var cell=extensionNode(first?'th':'td',undefined,tr);cell.style.cssText='padding:10px 8px;text-align:left;border-bottom:1px solid #ffffff30';knowledgeInline(cell,value.trim());});first=false;}
+      }else{var block=[];while(i<lines.length&&lines[i].trim()&&!(lines[i].trim().startsWith('|')&&i+1<lines.length&&/^\|[\s:|\-]+\|$/.test(lines[i+1].trim())))block.push(lines[i++]);if(block.length)knowledgeInline(extensionNode('p',undefined,parent),block.join('\n'));else i++;}
+    }
+  }
+
+  function renderKnowledge(topic){
+    var topics=document.getElementById('knowledgeTopics'),host=document.getElementById('knowledgeBody');topics.replaceChildren();host.replaceChildren();
+    var rows;try{rows=JSON.parse(document.getElementById('knowledge-library-data').textContent);if(!Array.isArray(rows))throw Error();}catch(_){extensionNode('p','知识数据无法读取，请让 Agent 检查，原文件未改动。',host);return;}
+    extensionButton('使用指南',topics,function(){FitnessShell.go('settings');});
+    if(!rows.length){extensionNode('p','这里还没有学习专题。把想学习的视频交给 Agent，确认整理内容后再加入。',host);return;}
+    Array.from(new Set(rows.map(function(r){return r.topic;}))).forEach(function(t){var b=extensionButton(t,topics,function(){renderKnowledge(t);});b.className='learning-topic';b.setAttribute('aria-pressed',String(t===(topic||rows[0].topic)));});
+    rows.filter(function(r){return r.topic===(topic||rows[0].topic);}).forEach(function(row){
+      var card=extensionNode('article',undefined,host);extensionNode('h3',row.title,card);extensionNode('small',(row.example?'公开学习示例 · ':'')+row.author+' · '+row.date,card);extensionNode('p',row.summary,card);
+      var detail=extensionNode('details',undefined,card);extensionNode('summary','展开学习内容',detail);knowledgeMarkdown(detail,row.body);
+      (row.sources||[]).forEach(function(s){try{var u=new URL(s.url);if(u.protocol!=='https:'||u.username||u.password)return;var a=extensionNode('a',s.title+(s.time_range?' · '+s.time_range:''),detail);a.href=u.href;a.target='_blank';a.rel='noopener noreferrer';}catch(_){}});
+      var label=extensionNode('label','我的理解与疑问',detail),input=extensionNode('textarea',undefined,label),key='knowledge.'+row.id;input.value=extensionRead(key,'');input.setAttribute('aria-label',row.title+'：我的理解与疑问');var note=extensionNode('small','只保存到本机，不代表已掌握或已同步。',detail);
+      input.oninput=function(){try{extensionSave(key,input.value);note.textContent='已保存到本机 · 未同步';}catch(_){note.textContent='本机保存失败，请复制保留后重试';}};
+    });
+  }
+  var quick=extensionNode('div');quick.className='quick-destinations';quick.id='quickDestinations';
+  extensionButton('今日饮食',quick,function(){FitnessShell.go('nutrition');});extensionButton('知识库',quick,function(){FitnessShell.go('knowledge');});extensionButton('训练档案',quick,function(){openTrainingArchive();});
+  document.querySelector('main').prepend(quick);
+  // Versioned menus are planned food, never confirmed intake.
+  var planner=D.nutrition_planner||{},menuPanel=extensionNode('details');menuPanel.className='extension-panel';menuPanel.id='mealPlanner';extensionNode('summary','三餐规划与长期食物资料',menuPanel);
+  var menuBody=extensionNode('div',undefined,menuPanel);document.getElementById('m-nutrition').prepend(menuPanel);
+  function renderMealPlanner(){
+    menuBody.replaceChildren();var plan=planner.current_plan||null;
+    if(!plan){extensionNode('p','尚未制定三餐方案。让 Agent 根据你的目标、现有食物和偏好安排；这里不会套用示例数字。',menuBody);}
+    else{
+      extensionNode('h3',plan.title||'三餐安排',menuBody);extensionNode('p','目标版本 '+String(plan.target_version||'待确认')+' · 菜单版本 '+String(plan.version||'待确认'),menuBody);
+      if(!plan.target_version||!plan.target||plan.target.version!==plan.target_version){extensionNode('p','目标与菜单版本不匹配，暂不显示达标判断，请交给 Agent 核对。',menuBody);}
+      else extensionNode('p','目标：'+JSON.stringify(plan.target.macros||{})+'\n依据：'+String(plan.target.method||'待补充'),menuBody);
+      var total={calories:0,protein_g:0,carbs_g:0,fat_g:0},known=true;
+      (plan.meals||[]).forEach(function(meal){var box=extensionNode('details',undefined,menuBody);extensionNode('summary',meal.name||'餐次',box);(meal.foods||[]).forEach(function(food){extensionNode('p',food.name+' · '+(food.portion||'份量待确认'),box);Object.keys(total).forEach(function(k){if(food.macros&&Number.isFinite(food.macros[k]))total[k]+=food.macros[k];else known=false;});});});
+      extensionNode('p',known?'菜单估算合计：'+Object.keys(total).map(function(k){return k+' '+Math.round(total[k]*10)/10;}).join(' / '):'菜单中有未知营养值，暂不能给出完整全天合计。',menuBody);
+      extensionNode('small','菜单是计划，不是已吃；确认报餐后才进入摄入记录。',menuBody);
+    }
+    var noteLabel=extensionNode('label','口味、可用食物和需要调整的地方',menuBody),note=extensionNode('textarea',undefined,noteLabel);note.id='mealPlannerNote';note.value=extensionRead('planner.note','');var status=extensionNode('small','长期资料仅保存本机。',menuBody);note.oninput=function(){try{extensionSave('planner.note',note.value);status.textContent='已保存到本机';}catch(_){status.textContent='保存失败，请复制保留';}};
+    extensionButton('导出给 Agent',menuBody,function(){extensionDownload('nutrition-planning-request.json',{kind:'nutrition_planning',note:note.value,current_plan:plan,food_library:planner.food_library||[],instruction:'生成候选方案，保留方法依据，不确认摄入或自动激活'});});
+  }
+  renderMealPlanner();
+  // A calendar view uses actual dates; undated prescriptions remain available below it.
+  var weekCalendar=extensionNode('div');weekCalendar.className='plan-calendar';weekCalendar.id='naturalWeekCalendar';document.getElementById('m-week').prepend(weekCalendar);
+  function renderNaturalWeek(){
+    weekCalendar.replaceChildren();var start=new Date(todayIso+'T12:00:00');start.setDate(start.getDate()-(start.getDay()+6)%7);
+    for(var i=0;i<7;i++){var d=new Date(start);d.setDate(d.getDate()+i);var date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),cell=extensionNode('div',undefined,weekCalendar);extensionNode('b',['周一','周二','周三','周四','周五','周六','周日'][i]+' '+date.slice(5),cell);var events=(D.timeline||[]).filter(function(e){return e.date===date;});extensionNode('p',events.length?events.map(function(e){return e.day||e.title||'已安排';}).join(' / '):'未排期',cell);}
+  }
+  renderNaturalWeek();
+  // Export unfinished actual sets without declaring a session complete.
+  var draftTools=extensionNode('details');draftTools.className='extension-panel';extensionNode('summary','草稿与 Agent 核对',draftTools);
+  extensionButton('导出本次有效实际组',draftTools,function(){var exercises=(trainingState.exercises||[]).map(function(e){return {name:e.actualName||e.plannedName,sets:trainingSetRows(e).filter(function(s){return Number(s.reps)>0;})};});extensionDownload('training-draft.json',{status:trainingState.completed?'completed':'draft',plan_version:trainingState.planVersion,day:trainingState.dayName,exercises:exercises});});
+  document.getElementById('m-training').appendChild(draftTools);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden&&bgVideo&&bgVideo.dataset.loaded==='true'&&!(motionPreference&&motionPreference.matches)){var p=bgVideo.play();if(p&&p.catch)p.catch(function(){});}});
+  var agentMealTools=extensionNode('details');agentMealTools.className='extension-panel';agentMealTools.id='agentMealTools';extensionNode('summary','交给 Agent 分析 / 导入结果',agentMealTools);
+  var agentMealStatus=extensionNode('p','先选中一条已保存的餐食。分析结果仍需确认才入账。',agentMealTools);
+  async function extensionImage(photoId){var p=await offlineStore.read('photo',photoId);if(!p)return null;return new Promise(function(resolve,reject){var reader=new FileReader();reader.onload=function(){resolve(reader.result);};reader.onerror=reject;reader.readAsDataURL(p.blob);});}
+  extensionButton('导出这餐的分析请求',agentMealTools,async function(){
+    try{
+      if(!isOffline())throw Error('云端模式请使用当前餐食的云端分析入口');
+      var meal=offlineSelectedMeal;if(!meal)throw Error('先在餐食列表选中这餐');
+      var stage=(meal.after_photos||[]).length||meal.consumption_note?'after':'before';var photoIds=stage==='after'?meal.after_photos:meal.photos;
+      var images=await Promise.all((photoIds||[]).map(extensionImage));
+      extensionDownload('meal-agent-request.json',{meal_id:meal.id,meal_revision:meal.revision,stage:stage,meal_name:meal.meal_name,note:meal.pre_meal_note||'',after_note:meal.consumption_note||'',images:images.filter(Boolean),confirmed_food_labels:planner.food_library||[],instruction:'按用户原话、份量和标签分析，只生成候选；原样返回meal_id、meal_revision和stage'});
+      agentMealStatus.textContent='已交给浏览器下载，请把文件交给 Agent；包含私人餐食信息，不要提交到开源仓库。';
+    }catch(error){agentMealStatus.textContent=error.message;}
+  });
+  var resultLabel=extensionNode('label','导入 Agent 候选 JSON',agentMealTools),resultFile=extensionNode('input',undefined,resultLabel);resultFile.type='file';resultFile.accept='.json';resultFile.id='agentMealResult';
+  resultFile.onchange=async function(){
+    var file=this.files[0];this.value='';if(!file)return;
+    try{
+      if(!isOffline())throw Error('云端餐食不使用本机导入');
+      if(file.size>2000000)throw Error('结果文件过大');
+      var result=JSON.parse(await file.text()),meal=offlineSelectedMeal;
+      if(!meal||result.meal_id!==meal.id||result.meal_revision!==meal.revision)throw Error('餐食或版本不一致，请针对当前记录重新分析');
+      if(result.stage!=='before'&&result.stage!=='after')throw Error('缺少餐前/饭后阶段');
+      if(!result.summary||typeof result.summary!=='string')throw Error('缺少分析依据');
+      await offlineStore.candidate(meal.id,meal.revision,result.stage,result.nutrition,'Agent 候选，用户尚未确认：'+result.summary);
+      await refreshOfflineMeals();openOfflineMeal(nutritionCloudMeals.find(function(r){return r.id===meal.id;}));
+      agentMealStatus.textContent='已导入候选，尚未入账。请核对数值后点击确认。';
+    }catch(error){agentMealStatus.textContent='未导入：'+error.message;}
+  };
+  document.getElementById('m-nutrition').appendChild(agentMealTools);
+
+  function scheduleStorageKey(data){return 'fitness.schedule.v1.'+String((data.system&&data.system.instance_id)||'anonymous-shell')+'.'+String(data.meta&&data.meta.source_version||'plan');}
+  function scheduleBase(data){return JSON.stringify(Object.keys(data.days||{}).sort().map(function(k){return [k,data.days[k].date||null];}));}
+  function scheduleDateValid(value){if(value===null)return true;if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;var d=new Date(value+'T12:00:00Z');return !isNaN(d)&&d.toISOString().slice(0,10)===value;}
+  function applyStoredSchedule(data){
+    data._scheduleOriginal=scheduleBase(data);
+    try{var raw=localStorage.getItem(scheduleStorageKey(data));if(!raw)return;var saved=JSON.parse(raw);if(saved.base!==data._scheduleOriginal||!saved.dates)return;var used=new Set();Object.keys(saved.dates).forEach(function(k){var date=saved.dates[k];if(!data.days[k]||!scheduleDateValid(date)||(date&&used.has(date)))throw Error('Invalid schedule');if(date)used.add(date);});
+      Object.keys(saved.dates).forEach(function(k){data.days[k].date=saved.dates[k];data.days[k].schedule_status=saved.dates[k]?'scheduled':'awaiting_date';});
+      data.timeline=(data.timeline||[]).filter(function(e){return e.type!=='training'&&!used.has(e.date);});Object.keys(data.days).forEach(function(k){var d=data.days[k];if(d.date)data.timeline.push({date:d.date,type:'training',day:k,status:'planned'});});data.timeline.sort(function(a,b){return a.date.localeCompare(b.date);});
+      data.weekday={};data.calendar={};Object.keys(data.days).forEach(function(k){var d=data.days[k];if(d.date){var n=(new Date(d.date+'T12:00:00').getDay()+6)%7;data.weekday[k]=['周一','周二','周三','周四','周五','周六','周日'][n];data.calendar[String(n+1)]=k;}else data.weekday[k]='日期待定';});
+    }catch(_){data._scheduleWarning='本机排期无法读取，保留原计划；可让 Agent 检查。';}
+  }
+  var schedulePanel=extensionNode('details');schedulePanel.className='extension-panel';schedulePanel.id='scheduleEditor';extensionNode('summary','调整训练日期 / 顺延',schedulePanel);extensionNode('p','日期留空表示本次顺延，完整处方保留到下次同类训练；未排期不等于休息或已完成。修改仅保存本机，可导出给 Agent 更新正式计划。',schedulePanel);
+  var scheduleInputs={},scheduleKey=scheduleStorageKey(D),scheduleBefore=localStorage.getItem(scheduleKey),scheduleStatus=extensionNode('p',D._scheduleWarning||'',schedulePanel);
+  Object.keys(D.days||{}).forEach(function(name){var label=extensionNode('label',name,schedulePanel),input=extensionNode('input',undefined,label);input.type='date';input.value=D.days[name].date||'';input.dataset.scheduleDay=name;scheduleInputs[name]=input;});
+  extensionButton('保存本机排期',schedulePanel,function(){
+    try{if(localStorage.getItem(scheduleKey)!==scheduleBefore)throw Error('另一页面已修改排期，请刷新后核对');var dates={},used=new Set();Object.keys(scheduleInputs).forEach(function(k){var date=scheduleInputs[k].value||null;if(!scheduleDateValid(date))throw Error('日期无效');if(date&&used.has(date))throw Error('两个训练日使用同一天，请先调整');if(date)used.add(date);dates[k]=date;});var value={base:D._scheduleOriginal,dates:dates,updated_at:new Date().toISOString()};localStorage.setItem(scheduleKey,JSON.stringify(value));location.reload();}catch(error){scheduleStatus.textContent='未保存：'+error.message;}
+  });
+  extensionButton('导出排期给 Agent',schedulePanel,function(){extensionDownload('schedule-proposal.json',{plan_version:m.source_version,proposal:JSON.parse(localStorage.getItem(scheduleKey)||'null'),instruction:'核对后更新正式计划；不要把排期当实际训练记录'});});
+  document.getElementById('m-week').appendChild(schedulePanel);
+
+  window.FitnessLearning={render:renderKnowledge,renderPlanner:renderMealPlanner};
 
   function setNav(k){window.FitnessShell.mark(k);}
   setNav('today');

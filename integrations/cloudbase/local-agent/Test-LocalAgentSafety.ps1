@@ -32,5 +32,7 @@ foreach($invalid in @('lzheng-fitness-agent://run?path=bad','lzheng-fitness-agen
   & (Join-Path $root 'Invoke-NutritionLocalAgentProtocol.ps1') -Uri 'lzheng-fitness-agent://run'
   if($capture.Count -ne 1 -or $capture[0].style -ne 'Hidden') { throw 'Protocol must launch exactly one hidden process' }
   if($capture[0].args -notcontains '-Once' -or $capture[0].args -notcontains '"fixture with spaces/FitnessRunnerPath.ps1"' -or $capture[0].args -notcontains '"fixture with spaces/FitnessConfigPath.ps1"') { throw 'Protocol did not preserve quoted paths and once-only mode' }
+  & (Join-Path $root 'Invoke-NutritionLocalAgentProtocol.ps1') -Uri 'lzheng-fitness-agent://run?job=12345678-1234-1234-1234-123456789012'
+  if($capture.Count -ne 2 -or $capture[1].args -notcontains '-JobId' -or $capture[1].args -notcontains '12345678-1234-1234-1234-123456789012') { throw 'Protocol did not forward the validated job id' }
 }
 [ordered]@{passed=$true;mode='manual-on-demand-once';automaticTriggers=0;emptyQueueModelCalls=0;watchMaxMinutes=10;watchEmptyCircuit=3;watchFailureCircuit=3}|ConvertTo-Json

@@ -50,7 +50,7 @@ LOCAL_EDIT_EXPRESSION = re.compile(
 TEXT_RELEASE_SUFFIXES = {".html", ".json", ".md", ".txt", ".css", ".js", ".svg", ".xml", ".yml", ".yaml", ".toml"}
 WORKBENCH_TEMPLATE_MARKER = 'data-ui-template="lzheng-fitness-workbench-v3"'
 WORKBENCH_SECTION_IDS = ("m-today", "m-week", "m-trend", "m-record", "m-settings")
-WORKBENCH_NAV_ITEMS = (("today", "训练"), ("week", "计划"), ("trend", "负荷"), ("record", "复盘"), ("settings", "指南"))
+WORKBENCH_NAV_ITEMS = (("today", "训练"), ("week", "计划"), ("trend", "负荷"), ("nutrition", "饮食"), ("knowledge", "知识"), ("record", "复盘"), ("settings", "指南"))
 
 
 def run_utf8(command):
