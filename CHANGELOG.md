@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.3.0 — unreleased candidate
+## 3.3.0 — 2026-09-10
 
 - Added portable video-source learning, arbitrary-topic selection, bounded batches, hash-based resume and explicit failure retries. Optional upstream interactive-learning content retains its CC BY-NC license.
 - Added an independent knowledge projection with dynamic authors/sources, safe text/table rendering and per-instance local feedback; included an opt-in public-video example without maintainer personal data.

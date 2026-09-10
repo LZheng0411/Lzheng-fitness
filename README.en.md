@@ -1,10 +1,10 @@
 # Lzheng Fitness Skills
 
-Portable, offline-first Agent Skills for a personal training system. The 3.3.0 candidate adds video learning, an independent knowledge library, and simpler Agent-assisted upgrades to the existing training and nutrition workbench.
+Portable, offline-first Agent Skills for a personal training system. Version 3.3.0 adds video learning, an independent knowledge library, and simpler Agent-assisted upgrades to the existing training and nutrition workbench.
 
 The public bundle contains no personal training records, account data, or fixed machine paths. It includes the Garou workbench artwork with authorization from this repository's maintainer, so a new computer can run the workbench fully offline.
 
-## 3.3.0 candidate
+## 3.3.0
 
 Ten MIT-owned Skills now include topic-neutral Douyin video learning and a separate knowledge library. Collection processing is explicitly scoped, resumable and source-traceable. A prepared transcript is not evidence of learner mastery. Workbenches start with an empty library; the optional public-source example contains no maintainer profile or private learning answers.
 
