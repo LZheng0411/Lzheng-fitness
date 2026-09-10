@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ui-template="lzheng-fitness-workbench-v3" data-ui-revision="2026.09.10.1">
+<html lang="zh-CN" data-ui-template="lzheng-fitness-workbench-v3" data-ui-revision="2026.09.10.2">
 <head>
 <meta charset="UTF-8">
-<meta name="workbench-shell-sha256" content="75413f6894e333174a9d951e233d859e531561461e29c84e1931f23b421c8cb1">
+<meta name="workbench-shell-sha256" content="6ccd6e9e74759f432e1c2f5968bfc49055fff9e4e40ee1479b31d162722ed9cf">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -5689,19 +5689,53 @@ body.dark-background-theme #m-nutrition .nutrition-back,body.dark-background-the
   function scheduleStorageKey(data){return 'fitness.schedule.v1.'+String((data.system&&data.system.instance_id)||'anonymous-shell')+'.'+String(data.meta&&data.meta.source_version||'plan');}
   function scheduleBase(data){return JSON.stringify(Object.keys(data.days||{}).sort().map(function(k){return [k,data.days[k].date||null];}));}
   function scheduleDateValid(value){if(value===null)return true;if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;var d=new Date(value+'T12:00:00Z');return !isNaN(d)&&d.toISOString().slice(0,10)===value;}
+  // Move only selected occurrences. Other event objects and fields stay intact.
+  function patchTrainingDates(events,originalDays,updatedDays){
+    var changes=Object.keys(updatedDays).filter(function(name){return originalDays[name]&&(originalDays[name].date||null)!==(updatedDays[name].date||null);});
+    if(!changes.length)return events.slice();
+    var selected=new Set(),moved=[],origins=new Set(),destinations=new Set();
+    changes.forEach(function(name){
+      var from=originalDays[name].date||null,to=updatedDays[name].date||null;
+      var matches=events.map(function(e,i){return {event:e,index:i};}).filter(function(x){return from&&x.event.type==='training'&&x.event.day===name&&x.event.date===from;});
+      if(matches.length>1)throw Error('原日期有多条同名训练，请先核对后再调整');
+      matches.forEach(function(x){selected.add(x.index);});if(from)origins.add(from);
+      if(to){if(destinations.has(to))throw Error('目标日期已有训练，请另选日期');destinations.add(to);moved.push(Object.assign({},matches.length?matches[0].event:{type:'training',day:name,status:'planned'},{date:to}));}
+    });
+    var remaining=events.filter(function(e,i){return !selected.has(i);});
+    if(remaining.some(function(e){return e.type==='training'&&destinations.has(e.date);}))throw Error('目标日期已有训练，请另选日期');
+    // Only replace the destination's empty/rest placeholder; keep other activities.
+    remaining=remaining.filter(function(e){return !(destinations.has(e.date)&&(e.type==='rest'||e.type==='recovery'));});
+    moved.forEach(function(e){remaining.push(e);});
+    origins.forEach(function(date){if(!remaining.some(function(e){return e.date===date;}))remaining.push({date:date,type:'recovery',title:'未排期',role:'仅移走本次训练，不代表已休息或已完成'});});
+    return remaining.sort(function(a,b){return a.date.localeCompare(b.date);});
+  }
   function applyStoredSchedule(data){
     data._scheduleOriginal=scheduleBase(data);
-    try{var raw=localStorage.getItem(scheduleStorageKey(data));if(!raw)return;var saved=JSON.parse(raw);if(saved.base!==data._scheduleOriginal||!saved.dates)return;var used=new Set();Object.keys(saved.dates).forEach(function(k){var date=saved.dates[k];if(!data.days[k]||!scheduleDateValid(date)||(date&&used.has(date)))throw Error('Invalid schedule');if(date)used.add(date);});
-      Object.keys(saved.dates).forEach(function(k){data.days[k].date=saved.dates[k];data.days[k].schedule_status=saved.dates[k]?'scheduled':'awaiting_date';});
-      data.timeline=(data.timeline||[]).filter(function(e){return e.type!=='training'&&!used.has(e.date);});Object.keys(data.days).forEach(function(k){var d=data.days[k];if(d.date)data.timeline.push({date:d.date,type:'training',day:k,status:'planned'});});data.timeline.sort(function(a,b){return a.date.localeCompare(b.date);});
-      data.weekday={};data.calendar={};Object.keys(data.days).forEach(function(k){var d=data.days[k];if(d.date){var n=(new Date(d.date+'T12:00:00').getDay()+6)%7;data.weekday[k]=['周一','周二','周三','周四','周五','周六','周日'][n];data.calendar[String(n+1)]=k;}else data.weekday[k]='日期待定';});
-    }catch(_){data._scheduleWarning='本机排期无法读取，保留原计划；可让 Agent 检查。';}
+    try{
+      var raw=localStorage.getItem(scheduleStorageKey(data));if(!raw)return;
+      var saved=JSON.parse(raw);if(saved.base!==data._scheduleOriginal||!saved.dates)return;
+      var updated=Object.assign({},data.days),changed=[];
+      Object.keys(saved.dates).forEach(function(k){var date=saved.dates[k];if(!data.days[k]||!scheduleDateValid(date))throw Error('日期无效');if((data.days[k].date||null)===date)return;changed.push(k);updated[k]=Object.assign({},data.days[k],{date:date,schedule_status:date?'scheduled':'awaiting_date'});});
+      var nextTimeline=patchTrainingDates(data.timeline||[],data.days,updated);
+      var weekday=Object.assign({},data.weekday),calendar=Object.assign({},data.calendar);
+      changed.forEach(function(k){Object.keys(calendar).forEach(function(key){if(calendar[key]===k)delete calendar[key];});var date=updated[k].date;if(date){var n=(new Date(date+'T12:00:00').getDay()+6)%7;weekday[k]=['周一','周二','周三','周四','周五','周六','周日'][n];if(!calendar[String(n+1)])calendar[String(n+1)]=k;}else weekday[k]='日期待定';});
+      data.days=updated;data.timeline=nextTimeline;data.weekday=weekday;data.calendar=calendar;
+    }catch(error){data._scheduleWarning='本机排期未应用：'+error.message+'；保留原计划。';}
   }
   var schedulePanel=extensionNode('details');schedulePanel.className='extension-panel';schedulePanel.id='scheduleEditor';extensionNode('summary','调整训练日期 / 顺延',schedulePanel);extensionNode('p','日期留空表示本次顺延，完整处方保留到下次同类训练；未排期不等于休息或已完成。修改仅保存本机，可导出给 Agent 更新正式计划。',schedulePanel);
   var scheduleInputs={},scheduleKey=scheduleStorageKey(D),scheduleBefore=localStorage.getItem(scheduleKey),scheduleStatus=extensionNode('p',D._scheduleWarning||'',schedulePanel);
   Object.keys(D.days||{}).forEach(function(name){var label=extensionNode('label',name,schedulePanel),input=extensionNode('input',undefined,label);input.type='date';input.value=D.days[name].date||'';input.dataset.scheduleDay=name;scheduleInputs[name]=input;});
-  extensionButton('保存本机排期',schedulePanel,function(){
-    try{if(localStorage.getItem(scheduleKey)!==scheduleBefore)throw Error('另一页面已修改排期，请刷新后核对');var dates={},used=new Set();Object.keys(scheduleInputs).forEach(function(k){var date=scheduleInputs[k].value||null;if(!scheduleDateValid(date))throw Error('日期无效');if(date&&used.has(date))throw Error('两个训练日使用同一天，请先调整');if(date)used.add(date);dates[k]=date;});var value={base:D._scheduleOriginal,dates:dates,updated_at:new Date().toISOString()};localStorage.setItem(scheduleKey,JSON.stringify(value));location.reload();}catch(error){scheduleStatus.textContent='未保存：'+error.message;}
+  extensionButton('保存本机排期',schedulePanel,async function(){
+    try{
+      if(localStorage.getItem(scheduleKey)!==scheduleBefore)throw Error('另一页面已修改排期，请刷新后核对');
+      var dates={},updated=Object.assign({},D.days),changed=[];
+      Object.keys(scheduleInputs).forEach(function(k){var date=scheduleInputs[k].value||null;if(!scheduleDateValid(date))throw Error('日期无效');dates[k]=date;if((D.days[k].date||null)!==date){changed.push(k);updated[k]=Object.assign({},D.days[k],{date:date});}});
+      if(!changed.length){scheduleStatus.textContent='日期没有变化';return;}
+      patchTrainingDates(D.timeline||[],D.days,updated);
+      for(var i=0;i<changed.length;i++){var k=changed[i];if(isOffline()&&await offlineStore.read('session',offlineSessionId(k,m.source_version)))throw Error('这次训练已有记录，请到训练日历查看或纠错');}
+      if(localStorage.getItem(scheduleKey)!==scheduleBefore)throw Error('另一页面已修改排期，请刷新后核对');
+      var value={base:D._scheduleOriginal,dates:dates,updated_at:new Date().toISOString()};localStorage.setItem(scheduleKey,JSON.stringify(value));location.reload();
+    }catch(error){scheduleStatus.textContent='未保存：'+error.message;}
   });
   extensionButton('导出排期给 Agent',schedulePanel,function(){extensionDownload('schedule-proposal.json',{plan_version:m.source_version,proposal:JSON.parse(localStorage.getItem(scheduleKey)||'null'),instruction:'核对后更新正式计划；不要把排期当实际训练记录'});});
   document.getElementById('m-week').appendChild(schedulePanel);
