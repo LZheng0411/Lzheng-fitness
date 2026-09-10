@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse, asyncio, contextlib, hashlib, json, os, sys
 from pathlib import Path
 from types import SimpleNamespace
+from urllib.error import HTTPError
 import pipeline as base
 import question_tools as source
 
@@ -19,6 +20,33 @@ def valid_artifact(entry, kind):
 
 def remember(entry, kind, path):
     entry[kind]={'path':str(Path(path).resolve()),'sha256':fingerprint(path)}
+
+def refreshable_address_error(error):
+    return (isinstance(error,source.MediaAddressUnavailable) or
+            isinstance(error,HTTPError) and error.code in (401,403,404,410))
+
+def capture_metadata(s,entry,identifier,runtime):
+    # Forget unusable pointers before capture so a failed refresh cannot pin retries
+    # to an old URL. Existing files remain on disk for inspection.
+    for kind in ('metadata','media','transcript','packet'):entry.pop(kind,None)
+    base.save(runtime/'learning-state.json',s)
+    metadata=asyncio.run(source.capture(SimpleNamespace(id=identifier)))
+    remember(entry,'metadata',metadata)
+    base.save(runtime/'learning-state.json',s)
+
+def capture_selected(args,runtime):
+    identifier=base.identifier(args.id)
+    metadata=asyncio.run(source.capture(SimpleNamespace(id=identifier)))
+    s=state(runtime);entry=s['works'].get(identifier)
+    if entry is not None:
+        remember(entry,'metadata',metadata)
+        # A new source snapshot needs a new packet, but verified media and its
+        # transcript can still be reused for this same work ID.
+        entry.pop('packet',None);entry.pop('question_sha256',None)
+        entry.update(content_reviewed=False,user_mastery='unknown')
+        if entry.get('status')!='failed':entry['status']='selected'
+        base.save(runtime/'learning-state.json',s)
+    return metadata
 
 def paths(args):
     root=Path(args.workspace).expanduser().resolve()
@@ -78,12 +106,18 @@ def batch(args,runtime):
         base.save(runtime/'learning-state.json',s)
         try:
             if not valid_artifact(e,'metadata'):
-                metadata=asyncio.run(source.capture(SimpleNamespace(id=identifier)))
-                remember(e,'metadata',metadata)
-                for k in ('media','transcript','packet'):e.pop(k,None)
-                base.save(runtime/'learning-state.json',s)
+                capture_metadata(s,e,identifier,runtime)
             if not valid_artifact(e,'media'):
-                media=source.download(SimpleNamespace(metadata=e['metadata']['path']))
+                try:
+                    media=source.download(SimpleNamespace(metadata=e['metadata']['path']))
+                except Exception as error:
+                    if not refreshable_address_error(error):raise
+                    capture_metadata(s,e,identifier,runtime)
+                    try:
+                        media=source.download(SimpleNamespace(metadata=e['metadata']['path']))
+                    except Exception as retry_error:
+                        if refreshable_address_error(retry_error):e.pop('metadata',None)
+                        raise
                 remember(e,'media',media)
                 for k in ('transcript','packet'):e.pop(k,None)
                 base.save(runtime/'learning-state.json',s)
@@ -96,7 +130,7 @@ def batch(args,runtime):
             e.update(status='source_ready',question_sha256=question_hash,error=None,content_reviewed=False,user_mastery='unknown')
         except Exception as exc:
             # Do not put signed media URLs or browser state in an error report.
-            e.update(status='failed',error=type(exc).__name__+': inspect source/login and rerun capture if media expired')
+            e.update(status='failed',error=type(exc).__name__+': check source, login or local files; use batch --retry-failed after resolving')
         finally:base.save(runtime/'learning-state.json',s)
     print(json.dumps({'processed':processed,'states':{i:s['works'][i]['status'] for i in s['selection']}},ensure_ascii=False))
 
@@ -122,7 +156,7 @@ def main():
     if a.command=='candidates':candidates(a,runtime);return
     with lock(runtime):
         if a.command=='scan':asyncio.run(base.scan(a))
-        elif a.command=='capture':asyncio.run(source.capture(a))
+        elif a.command=='capture':capture_selected(a,runtime)
         elif a.command in ('download','transcribe','prepare'):getattr(source,a.command)(a)
         else:globals()[a.command](a,runtime)
 

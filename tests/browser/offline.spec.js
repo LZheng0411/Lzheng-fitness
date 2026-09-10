@@ -99,7 +99,18 @@ test('Agent meal candidates bind to the selected revision and never auto-confirm
   await expect(page.locator('#agentMealTools')).toContainText('餐食或版本不一致');
 });
 
+async function scheduleFixture(page){
+  await page.route(base+'/',async route=>{
+    const response=await route.fetch();let html=await response.text();
+    html=html.replace(/(<script id="workbench-data" type="application\/json">)([\s\S]*?)(<\/script>)/,(_,a,raw,z)=>{
+      const data=JSON.parse(raw);data.days['测试A']={...data.days['测试A'],date:'2030-01-08'};data.days['测试B']={...data.days['测试A'],date:'2030-01-10'};
+      data.timeline=[{date:'2030-01-01',type:'training',day:'测试A',status:'done',marker:'history'},{date:'2030-01-08',type:'training',day:'测试A',status:'planned',marker:'move only this'},{date:'2030-01-09',type:'recovery',title:'休息',marker:'restore'},{date:'2030-01-09',type:'cardio',title:'散步',marker:'keep'},{date:'2030-01-10',type:'training',day:'测试B',status:'planned'},{date:'2030-01-15',type:'training',day:'测试A',status:'planned',marker:'future'}];
+      return a+JSON.stringify(data)+z;
+    });await route.fulfill({response,body:html});
+  });await page.goto(base);await page.waitForFunction(()=>!!window.__fitnessTest);
+}
 test('schedule defer preserves prescriptions and leaves actual records unchanged',async({page})=>{
+  await scheduleFixture(page);
   const before=await page.evaluate(()=>JSON.stringify(window.__fitnessTest.D.days['测试A'].exercises));
   await page.locator('#navBar a[data-k="week"]').click();
   await page.locator('#scheduleEditor>summary').click();
@@ -109,6 +120,42 @@ test('schedule defer preserves prescriptions and leaves actual records unchanged
   expect(await page.evaluate(()=>JSON.stringify(window.__fitnessTest.D.days['测试A'].exercises))).toBe(before);
   expect(await page.evaluate(()=>window.__fitnessTest.D.days['测试A'].date)).toBeNull();
   expect(await page.evaluate(()=>window.__fitnessTest.offlineStore.all('session'))).toEqual([]);
+});
+
+test('date edits affect only origin and destination; undo restores all original events',async({page})=>{
+  await scheduleFixture(page);
+  const before=await page.evaluate(()=>({timeline:window.__fitnessTest.D.timeline,days:window.__fitnessTest.D.days}));
+  async function move(date){
+    await page.locator('#navBar a[data-k="week"]').click();await page.locator('#scheduleEditor>summary').click();
+    await page.locator('input[data-schedule-day="测试A"]').fill(date);
+    await page.locator('#scheduleEditor button').filter({hasText:'保存本机排期'}).click();await page.waitForFunction(expected=>!!window.__fitnessTest&&window.__fitnessTest.D.days['测试A'].date===expected,date);
+  }
+  await move('2030-01-09');
+  const after=await page.evaluate(()=>({timeline:window.__fitnessTest.D.timeline,days:window.__fitnessTest.D.days}));
+  const unaffected=rows=>rows.filter(e=>!['2030-01-08','2030-01-09'].includes(e.date));
+  expect(unaffected(after.timeline)).toEqual(unaffected(before.timeline));expect(after.days['测试B']).toEqual(before.days['测试B']);expect(after.days['测试A'].exercises).toEqual(before.days['测试A'].exercises);
+  expect(after.timeline.find(e=>e.marker==='keep')).toEqual(before.timeline.find(e=>e.marker==='keep'));
+  await move('2030-01-08');expect(await page.evaluate(()=>window.__fitnessTest.D.timeline)).toEqual(before.timeline);
+});
+
+test('date edits cannot move a recorded session or change its saved records',async({page})=>{
+  await scheduleFixture(page);await completeTraining(page);
+  const before=await page.evaluate(()=>window.__fitnessTest.offlineStore.exportBackup());
+  await page.goto(base);await page.waitForFunction(()=>!!window.__fitnessTest);
+  await page.locator('#navBar a[data-k="week"]').click();await page.locator('#scheduleEditor>summary').click();
+  await page.locator('input[data-schedule-day="测试A"]').fill('2030-01-09');await page.locator('#scheduleEditor button').filter({hasText:'保存本机排期'}).click();
+  await expect(page.locator('#scheduleEditor')).toContainText('这次训练已有记录');
+  expect(await page.evaluate(()=>window.__fitnessTest.D.days['测试A'].date)).toBe('2030-01-08');
+  expect((await page.evaluate(()=>window.__fitnessTest.offlineStore.exportBackup())).records).toEqual(before.records);
+});
+
+test('date collision with an event outside current day slots does not save',async({page})=>{
+  await scheduleFixture(page);const before=await page.evaluate(()=>JSON.stringify(window.__fitnessTest.D.timeline));
+  await page.locator('#navBar a[data-k="week"]').click();await page.locator('#scheduleEditor>summary').click();
+  await page.locator('input[data-schedule-day="测试A"]').fill('2030-01-15');await page.locator('#scheduleEditor button').filter({hasText:'保存本机排期'}).click();
+  await expect(page.locator('#scheduleEditor')).toContainText('目标日期已有训练');
+  expect(await page.evaluate(()=>JSON.stringify(window.__fitnessTest.D.timeline))).toBe(before);
+  expect(await page.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('fitness.schedule.v1.')))).toEqual([]);
 });
 
 async function completeTraining(page) {
