@@ -51,3 +51,7 @@ python scripts/validate_nutrition_contract.py <nutrition-contract-vNN.json>
 4. 估算、实际摄入候选与确认入账三段没有混用；
 5. 默认无自动触发器、无后台空查、无自动确认；
 6. 示例保持匿名且体重为 `null`，不得出现虚构处方或私人配置。
+
+## 视频学习与三餐报餐
+
+用户要把学到的饮食方法用于三餐、文字/照片报餐或标签复用时，读取 [学习与报餐](references/learning-and-meals.md)。保留用户接受的方法和目标版本，不用新的菜单替换计算依据。

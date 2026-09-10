@@ -6,7 +6,7 @@ import json
 import re
 from pathlib import Path
 
-UI_REVISION = "2026.09.05.1"
+UI_REVISION = "2026.09.10.1"
 HERE = Path(__file__).resolve().parent
 TEMPLATE = HERE.parent / "assets/workbench-template.html"
 DATA = re.compile(r'(<script id="workbench-data" type="application/json">)([\s\S]*?)(</script>)')
@@ -17,7 +17,7 @@ BACKGROUND = re.compile(r'(/\* FITNESS_WORKBENCH_BACKGROUND_CONFIG_START \*/)([\
 VARIABLE = re.compile(r'(--workbench-(?:background-image|background-desktop-position|background-mobile-position|hero-desktop-position|hero-mobile-position|nav-position)\s*:\s*)([^;]+)(;)')
 VIDEO = re.compile(r'<video\s+id="workbenchBgVideo"[\s\S]*?</video>')
 HASH = re.compile(r'(<meta name="workbench-shell-sha256" content=")[^"]*(">)')
-ITEMS = (("today", "训练"), ("week", "计划"), ("trend", "负荷"), ("record", "复盘"), ("settings", "指南"))
+ITEMS = (("today", "训练"), ("week", "计划"), ("trend", "负荷"), ("nutrition", "饮食"), ("knowledge", "知识"), ("record", "复盘"), ("settings", "指南"))
 
 
 def digest(value: str | bytes) -> str:
@@ -39,6 +39,8 @@ def canonical(html: str, *, ignore_navigation: bool = False) -> str:
     """Ignore only documented customizations; unknown CSS/JS still changes the hash."""
     html = html.replace("\r\n", "\n").lstrip("\ufeff")
     html = DATA.sub(lambda m: m[1] + "{}" + m[3], html)
+    from workbench_extras import KNOWLEDGE
+    html = KNOWLEDGE.sub(lambda m: m[1] + "[]" + m[3], html)
     html = TITLE.sub("<title>__TITLE__</title>", html)
     html = BRAND.sub(lambda m: m[1] + "__FWB_BRAND__" + m[3] + m[4], html)
     html = BACKGROUND.sub(lambda m: m[1] + VARIABLE.sub(lambda v: v[1] + "__VALUE__" + v[3], m[2]) + m[3], html)

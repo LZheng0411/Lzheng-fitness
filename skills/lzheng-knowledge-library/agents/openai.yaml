@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lzheng 更新工作台知识库"
+  short_description: "将用户确认的学习材料作为独立知识数据接入健身工作台，保留作者、来源与学习反馈，支持多主题和本地更新；不自动公开私人内容或"
+  default_prompt: "使用 $lzheng-knowledge-library 帮我更新工作台知识库。"

@@ -158,3 +158,10 @@ python "<skill>/scripts/Validate-FitnessWorkbenchSkill.py" --skill "<skill>"
 - `assets/workbench-template.html`：不含个人事实的界面模板。
 - `assets/backgrounds/`：工作台内置视频、静态兜底和兼容图片。
 - `assets/examples/`：匿名计划与 Notion 输入示例。
+
+
+## 学习与日常交互
+
+新版保持离线记录，增加常驻饮食/知识入口、自然周日历、本机改期与顺延、独立知识数据和三餐目标版本展示。排期与学习反馈保存本机，不冒充云同步；日期留空保留处方，不改实际训练记录。
+
+知识内容通过 `lzheng-knowledge-library` 的独立数据写入器维护。界面升级必须保留 `knowledge-library-data`；日常刷新仍只替换训练数据块。原浏览器身份与路径不变，才能延续本机记录。

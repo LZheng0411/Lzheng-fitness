@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lzheng 视频学习"
+  short_description: "围绕用户问题学习抖音收藏或指定视频，核对作者与来源、获取并转写、分批保存进度，再按真实反馈组织交互学习；支持不同主题，不"
+  default_prompt: "使用 $lzheng-video-learning 帮我视频学习。"

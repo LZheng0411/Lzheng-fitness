@@ -1,8 +1,16 @@
 # Lzheng Fitness Skills
 
-Portable, offline-first Agent Skills for a personal training system. Version 2.0 adds a system controller and a responsive local workbench to the existing planning, return-to-training, cycle-design, and review Skills.
+Portable, offline-first Agent Skills for a personal training system. The 3.3.0 candidate adds video learning, an independent knowledge library, and simpler Agent-assisted upgrades to the existing training and nutrition workbench.
 
 The public bundle contains no personal training records, account data, or fixed machine paths. It includes the Garou workbench artwork with authorization from this repository's maintainer, so a new computer can run the workbench fully offline.
+
+## 3.3.0 candidate
+
+Ten MIT-owned Skills now include topic-neutral Douyin video learning and a separate knowledge library. Collection processing is explicitly scoped, resumable and source-traceable. A prepared transcript is not evidence of learner mastery. Workbenches start with an empty library; the optional public-source example contains no maintainer profile or private learning answers.
+
+The workbench adds permanent nutrition/knowledge navigation, a Monday–Sunday calendar, local date deferral, versioned menu display, and explicit Agent meal candidate exchange. Use the [upgrade flow](docs/UPGRADE.md) to preserve the original path, data and background, with browser checks and rollback. Local date edits and feedback are not claimed as cloud-synced.
+
+The optional original `dbs-learning` component is **CC BY-NC 4.0**, not MIT and not installed by `--all`. See [third-party notices](THIRD-PARTY-NOTICES.md). Cangjie remains an optional MIT upstream tool. The optional Codex meal adapter uses the user's existing CLI login only on an explicit request.
 
 ## Skills
 
@@ -13,7 +21,7 @@ The public bundle contains no personal training records, account data, or fixed 
 - `lzheng-training-system`: bootstrap, migration, diagnostics, protected upgrades, and suite validation.
 - `lzheng-fitness-workbench-builder`: builds a responsive offline workbench from plans, reviews, and optional dynamic-data input.
 
-Python 3.10+ is required; no third-party Python package is needed.
+Python 3.10+ is required for core tools. Optional video collection and transcription use the dependencies listed in the video-learning Skill; workbench browser checks use Playwright.
 
 ## Install and verify
 

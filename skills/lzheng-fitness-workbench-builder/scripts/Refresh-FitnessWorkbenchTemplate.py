@@ -112,6 +112,8 @@ def main():
         html,
         count=1,
     )
+    from workbench_extras import KNOWLEDGE
+    html = KNOWLEDGE.sub(lambda m: m[1]+"[]"+m[3], html)
     replacements = {
         'content:"LZ / ";': 'content:"__FWB_BRAND__ / ";',
         'content:"LZ\\A TRAINING";': 'content:"__FWB_BRAND__\\A TRAINING";',
@@ -127,24 +129,30 @@ def main():
     # A finished personal page can contain its live optional-sync adapter.
     # The public template must instead read an anonymous, disabled config from
     # workbench-data and load the SDK only after that config is enabled.
-    html = CLOUDBASE_SDK_RE.sub("\n", html)
-    html, cloud_count = CLOUD_STATE_RE.subn(GENERIC_CLOUD_STATE, html, count=1)
-    if cloud_count != 1:
-        fail("没有找到唯一的 CloudBase 运行配置块")
-    init_marker = "  async function initNutritionCloud(){\n    setNutritionCloudState('checking','正在检查云端同步');"
-    if init_marker not in html:
-        fail("没有找到 CloudBase 初始化入口")
-    html = html.replace(init_marker, GENERIC_SDK_LOADER, 1)
-    html, obsidian_count = OBSIDIAN_HREF_RE.subn(
-        "  function obsidianLocalHref(relative){ return ''; }", html, count=1
-    )
-    if obsidian_count != 1:
-        fail("没有找到可选 Obsidian 编辑入口")
-    html, nutrition_count = NUTRITION_CONTRACT_RE.subn(
-        GENERIC_NUTRITION_CONTRACT, html, count=1
-    )
-    if nutrition_count != 1:
-        fail("没有找到唯一的营养默认值与契约加载块")
+    if "var integrationConfig=" not in html:
+        html = CLOUDBASE_SDK_RE.sub("\n", html)
+        html, cloud_count = CLOUD_STATE_RE.subn(GENERIC_CLOUD_STATE, html, count=1)
+        if cloud_count != 1:
+            fail("没有找到唯一的 CloudBase 运行配置块")
+        init_marker = "  async function initNutritionCloud(){\n    setNutritionCloudState('checking','正在检查云端同步');"
+        if init_marker not in html:
+            fail("没有找到 CloudBase 初始化入口")
+        html = html.replace(init_marker, GENERIC_SDK_LOADER, 1)
+        html, obsidian_count = OBSIDIAN_HREF_RE.subn(
+            "  function obsidianLocalHref(relative){ return ''; }", html, count=1
+        )
+        if obsidian_count != 1:
+            fail("没有找到可选 Obsidian 编辑入口")
+        html, nutrition_count = NUTRITION_CONTRACT_RE.subn(
+            GENERIC_NUTRITION_CONTRACT, html, count=1
+        )
+        if nutrition_count != 1:
+            fail("没有找到唯一的营养默认值与契约加载块")
+
+    else:
+        from workbench_ui import BRAND, TITLE
+        html = BRAND.sub(lambda m: m[1]+"__FWB_BRAND__"+m[3]+m[4], html)
+        html = TITLE.sub("<title>__FWB_BRAND__ 健身工作台</title>", html)
 
     if "__FWB_BRAND__" not in html:
         fail("没有生成品牌占位符，请检查源页面品牌写法")

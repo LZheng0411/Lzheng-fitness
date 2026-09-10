@@ -131,6 +131,8 @@ def prepare(html: str, project: Path) -> tuple[str, dict]:
         raise ValueError("运行模板未通过界面校验：" + ";".join(problems))
     new = preserve_customizations(html, new, project)
     new = DATA.sub(lambda m: m[1] + raw + m[3], new)
+    from workbench_extras import preserve
+    new = preserve(html, new)
     new = seal(new)
     if data_block(new)[0] != raw or shell_problems(new):
         raise ValueError("候选页面数据保留或界面校验失败")

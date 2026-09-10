@@ -25,6 +25,8 @@ EXPECTED = (
     "lzheng-nutrition-system",
     "lzheng-training-system",
     "lzheng-fitness-workbench-builder",
+    "lzheng-video-learning",
+    "lzheng-knowledge-library",
 )
 TEXT_SUFFIXES = {".md", ".json", ".yaml", ".yml", ".py", ".ps1", ".js", ".cjs", ".sql", ".txt"}
 BLOCKED = {
@@ -512,6 +514,8 @@ def validate_install(temp: Path) -> None:
 
 
 def main() -> None:
+    run([sys.executable, "-B", str(ROOT / "tools/test_video_learning.py")])
+    run([sys.executable, "-B", str(ROOT / "tools/test_learning_outputs.py")])
     run([sys.executable, "-B", str(SKILLS_ROOT / "lzheng-fitness-workbench-builder/scripts/Test-FitnessWorkbenchUiUpgrade.py")])
     validate_beginner_guide()
     validate_repository_hygiene()

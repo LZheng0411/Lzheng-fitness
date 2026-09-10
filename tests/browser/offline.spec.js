@@ -48,6 +48,69 @@ test.afterEach(async ({ page }) => {
   expect(page.__external).toEqual([]);
 });
 
+test('knowledge supports multiple authors, escapes content and persists real feedback locally', async ({page}) => {
+  await page.evaluate(() => {
+    document.getElementById('knowledge-library-data').textContent=JSON.stringify([
+      {id:'sample-a',title:'公开阅读示例',summary:'来源与理解分开',body:'<img src=x onerror=alert(1)>',author:'作者A',topic:'饮食',date:'2026-09-10',sources:[{title:'原视频',url:'https://www.douyin.com/video/123456789',time_range:'00:01–00:10'}]},
+      {id:'sample-b',title:'另一个主题',summary:'可扩展',body:'文字',author:'作者B',topic:'训练',date:'2026-09-10',sources:[{title:'非法地址',url:'javascript:alert(1)'}]}
+    ]);
+    window.FitnessShell.go('knowledge');
+  });
+  await expect(page.locator('#knowledgeBody')).toContainText('作者A');
+  await page.locator('#knowledgeBody summary').click();
+  await expect(page.locator('#knowledgeBody img')).toHaveCount(0);
+  await page.locator('#knowledgeBody textarea').fill('这是用户真实输入');
+  await expect(page.locator('#knowledgeBody')).toContainText('已保存到本机');
+  await page.locator('#knowledgeTopics button').filter({hasText:'训练'}).click();
+  await expect(page.locator('#knowledgeBody')).toContainText('作者B');
+  await expect(page.locator('#knowledgeBody a')).toHaveCount(0);
+  await page.locator('#knowledgeTopics button').filter({hasText:'饮食'}).click();
+  await expect(page.locator('#knowledgeBody textarea')).toHaveValue('这是用户真实输入');
+});
+
+test('new learning and meal-planner surfaces fit mobile and desktop; notes survive reload', async ({page}) => {
+  for(const width of [375,390,1440]){
+    await page.setViewportSize({width,height:900});
+    await page.locator('#navBar a[data-k="knowledge"]').click();
+    await expect(page.locator('#m-knowledge')).toBeVisible();
+    await expect(page.locator('#knowledgeBody')).toContainText('还没有学习专题');
+    await page.locator('#navBar a[data-k="nutrition"]').click();
+    await page.locator('#mealPlanner>summary').click();
+    await expect(page.locator('#mealPlanner')).toContainText('尚未制定三餐方案');
+    await page.locator('#mealPlannerNote').fill('喜欢清淡，长期保留');
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();
+    await page.locator('#mealPlanner>summary').click();
+  }
+  await page.reload();await page.waitForFunction(()=>!!window.__fitnessTest);
+  await page.evaluate(()=>window.FitnessShell.go('nutrition'));
+  await page.locator('#mealPlanner>summary').click();
+  await expect(page.locator('#mealPlannerNote')).toHaveValue('喜欢清淡，长期保留');
+});
+
+test('Agent meal candidates bind to the selected revision and never auto-confirm', async ({page}) => {
+  await newMeal(page);
+  const meal=(await page.evaluate(()=>window.__fitnessTest.offlineStore.all('meal')))[0];
+  await page.locator('#agentMealTools>summary').click();
+  const value={meal_id:meal.id,meal_revision:meal.revision,stage:'before',summary:'依据用户说明的候选',nutrition:{calories:400,protein_g:20,carbs_g:50,fat_g:10}};
+  await page.locator('#agentMealResult').setInputFiles({name:'candidate.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(value))});
+  await expect(page.locator('#agentMealTools')).toContainText('已导入候选，尚未入账');
+  expect((await page.evaluate(()=>window.__fitnessTest.offlineStore.all('meal')))[0].confirmed_nutrition).toBeNull();
+  await page.locator('#agentMealResult').setInputFiles({name:'stale.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(value))});
+  await expect(page.locator('#agentMealTools')).toContainText('餐食或版本不一致');
+});
+
+test('schedule defer preserves prescriptions and leaves actual records unchanged',async({page})=>{
+  const before=await page.evaluate(()=>JSON.stringify(window.__fitnessTest.D.days['测试A'].exercises));
+  await page.locator('#navBar a[data-k="week"]').click();
+  await page.locator('#scheduleEditor>summary').click();
+  await page.locator('input[data-schedule-day="测试A"]').fill('');
+  await page.locator('#scheduleEditor button').filter({hasText:'保存本机排期'}).click();
+  await page.waitForFunction(()=>!!window.__fitnessTest);
+  expect(await page.evaluate(()=>JSON.stringify(window.__fitnessTest.D.days['测试A'].exercises))).toBe(before);
+  expect(await page.evaluate(()=>window.__fitnessTest.D.days['测试A'].date)).toBeNull();
+  expect(await page.evaluate(()=>window.__fitnessTest.offlineStore.all('session'))).toEqual([]);
+});
+
 async function completeTraining(page) {
   await page.evaluate(async () => {
     const h = window.__fitnessTest;
@@ -241,7 +304,7 @@ test('mobile local meal form and desktop navigation remain usable', async ({ pag
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.locator('#nutritionBack').click();
   await page.locator('#navBar a').first().click();
-  await expect(page.locator('#navBar a')).toHaveCount(5);
+  await expect(page.locator('#navBar a')).toHaveCount(7);
   for (const link of await page.locator('#navBar a').all()) await expect(link).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('desktop-workbench.png'), fullPage: true });
 });
@@ -257,7 +320,7 @@ test('navigation survives broken JSON and a business script syntax error', async
     await expect(page.locator('#workbenchError')).toBeVisible();
     for (const width of [375, 899, 900, 1440]) {
       await page.setViewportSize({ width, height: 960 });
-      for (const key of ['today', 'week', 'trend', 'record', 'settings']) {
+      for (const key of ['today', 'week', 'trend', 'nutrition', 'knowledge', 'record', 'settings']) {
         const link = page.locator('#navBar a[data-k="' + key + '"]');
         await expect(link).toBeVisible(); await link.click();
         await expect(page.locator('#m-' + key)).toBeVisible();
@@ -318,7 +381,7 @@ test('desktop nutrition preserves navigation, protects drafts, and clears page m
   await expect(page.locator('body')).not.toHaveClass(/nutrition-open|training-record-open/);
   await page.setViewportSize({ width: 375, height: 812 });
   await page.evaluate(() => window.__fitnessTest.openNutrition());
-  await expect(page.locator('#navBar')).toBeHidden();
+  await expect(page.locator('#navBar')).toBeVisible();
   await page.locator('#nutritionBack').click();
   await expect(page.locator('#navBar')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
@@ -362,7 +425,7 @@ test('real v3.1.1 upgrades in the same file without losing records, photos, or i
     expect(restored.photos[0]).toBeGreaterThan(0);
     // Export includes timestamps; compare the persistent records and attachments themselves.
     expect(restored.backup.records).toEqual(oldBackup.records);
-    for (const key of ['today', 'week', 'trend', 'record', 'settings']) {
+    for (const key of ['today', 'week', 'trend', 'nutrition', 'knowledge', 'record', 'settings']) {
       await page.locator('#navBar a[data-k="' + key + '"]').click();
       await expect(page.locator('#m-' + key)).toBeVisible();
     }
