@@ -635,6 +635,30 @@ def check_deploy(
         else:
             expected_files.add(Path(target).relative_to(root).as_posix())
 
+    lesson_match = re.search(r'<script[^>]*id="knowledge-lessons-data"[^>]*>(.*?)</script>', html, re.S)
+    if lesson_match:
+        try:
+            for lesson in json.loads(lesson_match.group(1)):
+                target = resolve_project_entry(root, lesson.get("path"))
+                if not target or not Path(target).is_file():
+                    problems.append("教学页面缺失或路径无效")
+                    continue
+                expected_files.add(Path(target).relative_to(root).as_posix())
+                for ref in extract_asset_paths(Path(target).read_text(encoding="utf-8")):
+                    asset = resolve_project_entry(Path(target).parent, ref)
+                    if not asset or not Path(asset).is_file():
+                        problems.append("教学资源缺失或越界: " + ref)
+                    else:
+                        expected_files.add(Path(asset).relative_to(root).as_posix())
+        except (ValueError, TypeError, AttributeError):
+            problems.append("教学数据或资源路径无效")
+    for rel in extract_asset_paths(html):
+        target = resolve_project_entry(root, rel)
+        if not target or not os.path.isfile(target):
+            problems.append("发布目录缺少页面资源: " + rel)
+        else:
+            expected_files.add(Path(target).relative_to(root).as_posix())
+
     if deploy_data is not None:
         release = deploy_data.get("release", {})
         if not isinstance(release, dict):

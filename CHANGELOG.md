@@ -4,6 +4,7 @@
 
 - Change only selected training occurrences and their origin/destination placeholders when adjusting dates; retain other weeks, mixed activities, statuses and prescriptions, reject occupied dates, and restore original events on undo. Support upgrades from v3.3.0.
 - Refresh unavailable video media addresses once before retrying a download, checkpoint refreshed metadata, and connect manual capture to the selected batch entry. Preserve verified media/transcripts and stop repeated failures without exposing signed URLs.
+- Add `lzheng-video-lessons` for verified timestamped lessons, learner-focused step explanations, reusable mobile playback, knowledge-base integration and release verification. Include only fictional fixtures in the public bundle.
 
 ## 3.3.0 — 2026-09-10
 

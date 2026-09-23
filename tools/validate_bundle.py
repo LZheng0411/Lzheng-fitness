@@ -26,6 +26,7 @@ EXPECTED = (
     "lzheng-training-system",
     "lzheng-fitness-workbench-builder",
     "lzheng-video-learning",
+    "lzheng-video-lessons",
     "lzheng-knowledge-library",
 )
 TEXT_SUFFIXES = {".md", ".json", ".yaml", ".yml", ".py", ".ps1", ".js", ".cjs", ".sql", ".txt"}
