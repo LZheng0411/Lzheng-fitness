@@ -50,6 +50,11 @@
       "standalone": true
     },
     {
+      "name": "lzheng-video-lessons",
+      "path": "skills/lzheng-video-lessons",
+      "standalone": true
+    },
+    {
       "name": "lzheng-knowledge-library",
       "path": "skills/lzheng-knowledge-library",
       "standalone": true

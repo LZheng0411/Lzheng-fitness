@@ -26,6 +26,7 @@ SKILLS = (
     "lzheng-training-system",
     "lzheng-fitness-workbench-builder",
     "lzheng-video-learning",
+    "lzheng-video-lessons",
     "lzheng-knowledge-library",
 )
 EXPERT_DEPENDENTS = {

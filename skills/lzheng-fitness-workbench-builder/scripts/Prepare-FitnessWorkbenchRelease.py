@@ -14,7 +14,7 @@ import stat
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
-from urllib.parse import unquote, urlparse
+from urllib.parse import quote, unquote, urlparse
 
 
 DATA_BLOCK = re.compile(r'(<script id="workbench-data" type="application/json">)([\s\S]*?)(</script>)')
@@ -266,6 +266,27 @@ def extract_asset_paths(html: str) -> list[str]:
         if relative not in paths:
             paths.append(relative)
     return paths
+
+
+def lesson_dependencies(project: Path, html: str) -> list[str]:
+    match = re.search(r'<script[^>]*id="knowledge-lessons-data"[^>]*>(.*?)</script>', html, re.S)
+    if not match:
+        return []
+    entries = json.loads(match.group(1))
+    found = []
+    for entry in entries:
+        relative = entry.get("path")
+        source = project_file(project, relative)
+        if source is None or not source.is_file() or source.suffix != ".html":
+            fail("教学页面路径无效")
+        found.append(quote(source.relative_to(project).as_posix(),safe="/"))
+        for ref in extract_asset_paths(source.read_text(encoding="utf-8")):
+            asset = project_file(source.parent, ref)
+            if asset is None or not asset.is_file():
+                fail("教学资源缺失或越界: " + ref)
+            found.append(quote(asset.relative_to(project).as_posix(),safe="/"))
+    return list(dict.fromkeys(found))
+
 
 
 def is_link_like(path: Path) -> bool:
@@ -561,7 +582,7 @@ def main() -> None:
     try:
         (staging / "index.html").write_text(sanitized, encoding="utf-8")
         if args.mode == "private-portable":
-            for relative in extract_asset_paths(sanitized):
+            for relative in extract_asset_paths(sanitized) + lesson_dependencies(project, sanitized):
                 copy_relative_file(project, staging, relative)
             plan_relative = cleaned_data.get("meta", {}).get("plan_file")
             if not plan_relative:

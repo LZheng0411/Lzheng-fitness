@@ -13,6 +13,10 @@ ROOT = None
 import pipeline as base
 
 
+class MediaAddressUnavailable(ValueError):
+    """The official page must supply a usable media address again."""
+
+
 def read(path):
     return json.loads(Path(path).read_text(encoding='utf-8-sig'))
 
@@ -134,7 +138,7 @@ def download(args):
     identifier = base.identifier(data.get('aweme_id', ''))
     item = item_at(args.metadata, identifier)
     if not base.valid_media_url(item.get('media_url')):
-        raise ValueError('No supported official media URL; recapture')
+        raise MediaAddressUnavailable('No supported official media URL; recapture')
     class Redirect(HTTPRedirectHandler):
         def redirect_request(self, req, fp, code, msg, headers, newurl):
             if not base.valid_media_url(newurl):
@@ -143,8 +147,10 @@ def download(args):
     dest = workdir('media-' + identifier)
     request = Request(item['media_url'], headers={'Referer': 'https://www.douyin.com/', 'User-Agent': 'Mozilla/5.0'})
     with build_opener(Redirect).open(request, timeout=45) as response:
-        if not base.valid_media_url(response.url) or response.headers.get_content_type() not in ('video/mp4', 'video/webm', 'application/octet-stream'):
+        if not base.valid_media_url(response.url):
             raise ValueError('Unsupported media response')
+        if response.headers.get_content_type() not in ('video/mp4', 'video/webm', 'application/octet-stream'):
+            raise MediaAddressUnavailable('Official media address no longer returns video')
         total = 0
         with (dest / 'video.partial').open('xb') as output:
             while block := response.read(1024 * 1024):

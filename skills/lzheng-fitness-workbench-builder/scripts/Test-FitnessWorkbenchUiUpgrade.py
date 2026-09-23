@@ -44,7 +44,7 @@ class UpgradeTests(unittest.TestCase):
         self.before = self.formal.read_bytes()
 
     def test_official_history_and_same_path(self):
-        for tag in ("v2.3.0", "v2.3.1", "v3.1.0", "v3.1.1", "v3.2.0"):
+        for tag in ("v2.3.0", "v2.3.1", "v3.1.0", "v3.1.1", "v3.2.0", "v3.3.0"):
             with self.subTest(tag=tag):
                 old = gzip.decompress((self.fixtures / (tag+".html.gz")).read_bytes()).decode("utf-8").replace("__FWB_BRAND__", "TEST")
                 self.formal.write_text(DATA.sub(lambda m: m[1]+self.raw+m[3], old), encoding="utf-8")

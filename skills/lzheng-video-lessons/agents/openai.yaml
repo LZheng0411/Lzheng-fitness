@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lzheng 分段视频教学"
+  short_description: "核对视频片段、详细解释、生成播放器、接入知识库并按授权发布"
+  default_prompt: "使用 $lzheng-video-lessons 把这个视频做成分段教学并接入健身系统。"
