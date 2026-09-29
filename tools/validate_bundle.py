@@ -26,6 +26,7 @@ EXPECTED = (
     "lzheng-training-system",
     "lzheng-fitness-workbench-builder",
     "lzheng-video-learning",
+    "douyin-question-distiller",
     "lzheng-video-lessons",
     "lzheng-knowledge-library",
 )
@@ -87,7 +88,7 @@ def parse_frontmatter(path: Path) -> dict[str, str]:
 
 def validate_skill(skill: Path) -> None:
     name = skill.name
-    if not re.fullmatch(r"lzheng-[a-z0-9-]+", name):
+    if not re.fullmatch(r"(?:lzheng-[a-z0-9-]+|douyin-question-distiller)", name):
         fail(f"Invalid Lzheng Skill folder name: {name}")
 
     skill_md = skill / "SKILL.md"
@@ -515,6 +516,7 @@ def validate_install(temp: Path) -> None:
 
 
 def main() -> None:
+    run([sys.executable, "-B", str(SKILLS_ROOT / "douyin-question-distiller/scripts/test_distill_report.py")])
     run([sys.executable, "-B", str(ROOT / "tools/test_video_learning.py")])
     run([sys.executable, "-B", str(ROOT / "tools/test_learning_outputs.py")])
     run([sys.executable, "-B", str(SKILLS_ROOT / "lzheng-fitness-workbench-builder/scripts/Test-FitnessWorkbenchUiUpgrade.py")])

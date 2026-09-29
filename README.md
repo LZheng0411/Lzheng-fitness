@@ -18,7 +18,7 @@
 - 文字或照片餐食可以导出给 Agent，导入与餐食版本匹配的分析候选，再由用户确认入账。可选 Codex 适配器支持用户说明、食品标签与图片；网页本身不内置模型。
 - 说“帮我升级健身系统，保留记录和壁纸”。Agent 按[升级说明](docs/UPGRADE.md)执行，保留原文件路径、训练数据、知识正文和背景，检查失败回滚；不自动部署网站。
 
-主体包含 **11 个 MIT 自有 Skill**。另附原版 `dbs-learning` 可选交互学习组件，使用 **CC BY-NC 4.0**，不在主体 `--all` 内默认安装；仓颉使用 MIT，按需安装官方版本。请阅读[第三方许可](THIRD-PARTY-NOTICES.md)。非商业开源分享不意味着所有组件都可商用。
+主体包含 **12 个 MIT 自有 Skill**。另附原版 `dbs-learning` 可选交互学习组件，使用 **CC BY-NC 4.0**，不在主体 `--all` 内默认安装；仓颉使用 MIT，按需安装官方版本。请阅读[第三方许可](THIRD-PARTY-NOTICES.md)。非商业开源分享不意味着所有组件都可商用。
 
 排期修改、学习反馈与长期偏好目前保存于本机；CloudBase 仍为可选适配。通用升级不复制任何维护者的云环境、账号或个人任务。实际抖音登录、验证码由用户完成；当前发行测试使用匿名来源夹具，不宣称所有收藏、账号或设备均已实测。
 
@@ -33,6 +33,7 @@
 | `lzheng-training-expert-library` | 六个来源限定专家模块、选择协议和验证状态 | 是；安装四个专业 Skill 时自动带上 |
 | `lzheng-nutrition-system` | 营养建档、日型宏量目标、餐食确认链与两周复盘契约 | 是 |
 | `lzheng-video-learning` | 收藏/指定视频来源核对、转写、批次恢复与交互学习衔接 | 是 |
+| `douyin-question-distiller` | 指定抖音视频的详细蒸馏和时间段证据检查 | 需 `lzheng-video-learning`；安装器自动带上 |
 | `lzheng-video-lessons` | 分段教学、解释视角讲解、播放器生成、知识库接入与发布核验 | 是 |
 | `lzheng-knowledge-library` | 多专题知识展示、来源回看与独立更新 | 是 |
 | `lzheng-training-system` | 新电脑初始化、迁移、诊断、升级保护和整套校验 | 与工作台构建器配套 |
@@ -167,3 +168,5 @@ GitHub 自动检查同时运行 Linux 和 Windows 两组任务。两组都检查
 MIT © 2026 Lzheng
 
 分段课程使用 [lzheng-video-lessons](skills/lzheng-video-lessons/SKILL.md)：读取视频 → 核对起止点 → 编号详细讲解 → 生成课程 → 接入知识库 → 按授权发布与线上核验。媒体留在用户 workspace，开源包只含虚构示例。
+
+指定视频的详细蒸馏使用 [douyin-question-distiller](skills/douyin-question-distiller/SKILL.md)：来源工具准备带时间段的转写，Agent 核对原声与画面后撰写报告，脚本检查报告结构和来源版本。安装器会同时安装 `lzheng-video-learning`；账号登录、视频和报告留在使用者自己的 workspace。

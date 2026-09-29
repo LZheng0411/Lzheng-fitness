@@ -50,6 +50,12 @@
       "standalone": true
     },
     {
+      "name": "douyin-question-distiller",
+      "path": "skills/douyin-question-distiller",
+      "standalone": false,
+      "requires": ["lzheng-video-learning"]
+    },
+    {
       "name": "lzheng-video-lessons",
       "path": "skills/lzheng-video-lessons",
       "standalone": true
