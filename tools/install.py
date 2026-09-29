@@ -26,6 +26,7 @@ SKILLS = (
     "lzheng-training-system",
     "lzheng-fitness-workbench-builder",
     "lzheng-video-learning",
+    "douyin-question-distiller",
     "lzheng-video-lessons",
     "lzheng-knowledge-library",
 )
@@ -382,6 +383,8 @@ def selected_skills(args: argparse.Namespace, parser: argparse.ArgumentParser) -
     desired = set(requested)
     if desired & EXPERT_DEPENDENTS:
         desired.add("lzheng-training-expert-library")
+    if "douyin-question-distiller" in desired:
+        desired.add("lzheng-video-learning")
     return [name for name in SKILLS if name in desired]
 
 

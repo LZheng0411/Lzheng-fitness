@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lzheng 抖音视频蒸馏"
+  short_description: "按问题读取指定视频，核对来源并生成带时间定位的详细蒸馏报告"
+  default_prompt: "使用 $douyin-question-distiller 围绕我的问题蒸馏这条抖音视频。"
