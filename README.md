@@ -139,9 +139,9 @@ python <skills目录>/lzheng-fitness-workbench-builder/scripts/Replace-FitnessWo
 python tools/validate_bundle.py
 ```
 
-验证会检查八个 Skill 的元数据、链接、隐私残留和脚本语法，另外核验六个专家模块与营养契约的来源边界、路由、安全分流和匿名默认值；随后渲染 HTML，校验工作台的训练档案、图片、视频、内置文档和计划入口，并在临时目录中完成初始化、改名移动、旧配置迁移、无 Obsidian 发布和故障拦截。
+验证会检查全部 Skill 的元数据、链接、隐私残留和脚本语法，另外核验六个专家模块与营养契约的来源边界、路由、安全分流和匿名默认值；随后渲染 HTML，校验工作台的训练档案、图片、视频、内置文档和计划入口，并在临时目录中完成初始化、改名移动、旧配置迁移、无 Obsidian 发布和故障拦截。
 
-GitHub 自动检查同时运行 Linux 和 Windows 两组任务。两组都检查八个 Skill、隐私、匿名模板、数据库契约、渲染与安装迁移；Windows 组额外实际运行本地 Agent 的安全和并发测试。Linux 明确跳过这些 Windows 专用进程测试，不要求安装 Windows PowerShell；Windows 缺少 PowerShell 或任何一项测试失败仍会阻止检查通过。
+GitHub 自动检查同时运行 Linux 和 Windows 两组任务。两组都检查全部 Skill、隐私、匿名模板、数据库契约、渲染与安装迁移；Windows 组额外实际运行本地 Agent 的安全和并发测试。Linux 明确跳过这些 Windows 专用进程测试，不要求安装 Windows PowerShell；Windows 缺少 PowerShell 或任何一项测试失败仍会阻止检查通过。
 
 ## 本地记录与可选同步
 
