@@ -105,7 +105,7 @@ def preserve_customizations(old: str, new: str, project: Path) -> str:
     if not re.fullmatch(r'<video\b[^>]*>\s*(?:<source\b[^>]*>\s*)?</video>', video):
         raise ValueError("视频块有未知内容")
     for tag in re.findall(r'<(?:video|source)\b([^>]*)>', video):
-        rest = re.sub(r'\b(?:id|class|data-background-mode|preload|poster|aria-hidden|src|data-src|type)="[^"]*"|\b(?:muted|loop|playsinline)\b', '', tag)
+        rest = re.sub(r'\b(?:id|class|data-background-mode|preload|poster|aria-hidden|data-mobile-src|data-src|src|type)="[^"]*"|\b(?:muted|loop|playsinline)\b', '', tag)
         if rest.strip():
             raise ValueError("视频块有未知属性")
     for value in re.findall(r'(?:poster|src|data-src)="([^"]+)"', video):

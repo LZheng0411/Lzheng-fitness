@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 3.5.0 — 2026-11-01
+
+- Match the maintainer-approved background set and shared typography, transparent surfaces, spacing, desktop sidebar and mobile dock. Include the exact static and motion assets with source hashes, without private records or account settings.
+- Keep the portable offline engine, backups and correction history; adapt routing to a main element hosted by the presentation shell and preserve unsaved-edit protection and error navigation.
+- Add responsive visual acceptance, source-asset integrity and reduced-motion/mobile-video checks. Preserve official v3.4.0 migration fingerprints and the user's existing wallpaper during upgrades.
+
+## 3.4.0 — 2026-11-01
+
 - Refresh the workbench in the same interaction after personal facts or a confirmed plan change. Separate real-plan intake from missing fields and load calibration; keep known information visible, use local pending labels, and retain calibration prescriptions without inventing weights.
 
 - Synchronize the goal/role progression protocol v9 across plan, review, strength-cycle, return and system Skills; expose a versioned, hashed knowledge projection without private source materials.

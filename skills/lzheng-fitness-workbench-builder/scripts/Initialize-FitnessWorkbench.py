@@ -157,6 +157,7 @@ def main():
     from html import escape
     from workbench_ui import seal
     template = re.sub(r"<title>.*?</title>", lambda _: "<title>" + escape(args.title) + "</title>", template, count=1)
+    template = template.replace('<script id="workbench-data" type="application/json">{}</script>', '<script id="workbench-data" type="application/json">'+json.dumps({"system":{"brand":brand}},ensure_ascii=False)+'</script>',1)
     template = seal(template)
     write_text(target / "健身工作台.html", template)
 

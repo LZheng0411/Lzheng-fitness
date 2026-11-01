@@ -62,6 +62,8 @@ REQUIRED = [
     "assets/workbench-template.html",
     "assets/backgrounds/workbench-background.mp4",
     "assets/backgrounds/workbench-background.png",
+    "assets/backgrounds/workbench-background.webp",
+    "assets/backgrounds/workbench-background-mobile.mp4",
     "assets/backgrounds/garou-cosmic-crouch.png",
     "assets/backgrounds/garou-landscape.png",
     "assets/backgrounds/garou-portrait.png",
@@ -106,7 +108,7 @@ def main():
         from workbench_ui import shell_problems, identity
         if shell_problems(html) or not identity(html)['declared_hash_matches']:
             problems.append("模板缺少固定侧栏/底栏导航结构")
-        if "workbench-background.png" not in html or "workbench-background.mp4" not in html:
+        if "workbench-background.webp" not in html or "workbench-background.mp4" not in html or "workbench-background-mobile.mp4" not in html:
             problems.append("模板没有引用正式动态背景及静态兜底")
         if "onboarding" not in html or "trainingStatus" not in html:
             problems.append("模板未实现 schema 6 建档或状态显示")
