@@ -2222,7 +2222,7 @@ def main():
         "nutrition_planner": prev.get("nutrition_planner", {"schema": 1, "food_library": [], "learning": []}),
         "meta": meta,
         "onboarding": onboarding,
-        "system": dict(build_system_info(), brand=(prev.get("system", {}).get("brand") if isinstance(prev.get("system"), dict) else None) or "LZ", instance_id=(prev.get("system", {}).get("instance_id") if isinstance(prev.get("system"), dict) else None) or str(uuid.uuid4())),
+        "system": dict(build_system_info(), brand=(prev.get("system", {}).get("brand") if isinstance(prev.get("system"), dict) else None), instance_id=(prev.get("system", {}).get("instance_id") if isinstance(prev.get("system"), dict) else None) or str(uuid.uuid4())),
         "knowledge": build_knowledge_info(project),
         "status": build_status_info(baseline, meta, onboarding, find_latest_status_artifact(project)),
         "calendar": DEFAULT_CALENDAR,

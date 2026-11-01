@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-ui-template="lzheng-fitness-workbench-v3" data-ui-revision="2026.11.01.2">
 <head>
 <meta charset="UTF-8">
-<meta name="workbench-shell-sha256" content="a8cfc7fed6a2dede902def9331ed03f1e38f1279d69853d3f019427699a5753d">
+<meta name="workbench-shell-sha256" content="1f1e6d74bd5ff4d98ac39300f71b4a0129359a0beee762c97f83140af3abf2a7">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -9082,6 +9082,7 @@ body.workbench-background-managed :is(h1,h2,h3,p,button,a,span,strong){text-shad
   function cycleProgressLabel(){return '第 '+m.current_week+' / '+m.total_weeks+' 周';}
   function flowDate(value){return value?new Date(value+'T12:00:00').toLocaleDateString('zh-CN',{month:'long',day:'numeric'}):'日期待定';}
   function themeNode(tag,cls,text){var n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n;}
+  function presentationBrand(){var value=D.system&&D.system.brand;if(value)return String(value);var css=Array.from(document.querySelectorAll('style')).map(function(node){return node.textContent;}).join('\n'),match=css.match(/\.appbar h1:before\{content:"([^"]+) \/ ";/);return match?match[1]:'LZ';}
   function themeButton(text,action,cls){var b=themeNode('button',cls||'px-text-button',text);b.type='button';b.onclick=action;return b;}
   var originalThemeToday=renderToday;
   renderToday=function(name){
@@ -9185,7 +9186,7 @@ body.workbench-background-managed :is(h1,h2,h3,p,button,a,span,strong){text-shad
 
       var rail=pxNode('aside','px-desktop-rail');
 
-      var brand=pxNode('a','px-brand');brand.href='#today';brand.append(pxNode('span','px-brand-mark',String((D.system&&D.system.brand)||'LZ')),pxNode('span','px-brand-copy','TRAINING\nPERSONAL WORKSPACE'));brand.addEventListener('click',function(e){e.preventDefault();pxGo('today');});
+      var brand=pxNode('a','px-brand');brand.href='#today';brand.append(pxNode('span','px-brand-mark',presentationBrand()),pxNode('span','px-brand-copy','TRAINING\nPERSONAL WORKSPACE'));brand.addEventListener('click',function(e){e.preventDefault();pxGo('today');});
 
       var railFoot=pxNode('div','px-rail-foot');railFoot.append(pxNode('span','px-eyebrow','ONE DAY AT A TIME'),pxNode('p','','训练、记录、复盘。'));
 
@@ -9207,7 +9208,7 @@ body.workbench-background-managed :is(h1,h2,h3,p,button,a,span,strong){text-shad
 
       var shell=pxNode('div','px-shell px-mobile-shell');
 
-      var header=pxNode('header','px-mobile-header'),wordmark=pxNode('div','px-mobile-wordmark');wordmark.append(pxNode('span','px-brand-mark',String((D.system&&D.system.brand)||'LZ')),pxNode('span','','PERSONAL TRAINING'));
+      var header=pxNode('header','px-mobile-header'),wordmark=pxNode('div','px-mobile-wordmark');wordmark.append(pxNode('span','px-brand-mark',presentationBrand()),pxNode('span','','PERSONAL TRAINING'));
 
       pxDate=pxNode('p','px-date-line');pxHeading=pxNode('h1','px-page-heading');header.append(wordmark,pxDate,pxHeading);
 

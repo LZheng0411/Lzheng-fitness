@@ -527,7 +527,9 @@ for (const release of ['v2.3.0', 'v2.3.1', 'v3.1.0', 'v3.4.0']) {
     const formal = path.join(fixture, '健身工作台.html');
     const before = fs.readFileSync(formal);
     const dataRe = /(<script id="workbench-data" type="application\/json">)([\s\S]*?)(<\/script>)/;
-    const raw = before.toString('utf8').match(dataRe)[2];
+    const legacyData = JSON.parse(before.toString('utf8').match(dataRe)[2]);
+    if (release === 'v3.4.0') delete legacyData.system.brand;
+    const raw = JSON.stringify(legacyData);
     const old = gunzipSync(fs.readFileSync(path.join(repo, 'tests/fixtures/ui-history/' + release + '.html.gz'))).toString('utf8')
       .replaceAll('__FWB_BRAND__', 'TEST').replace(dataRe, (_, a, b, c) => a + raw + c);
     try {
@@ -541,6 +543,7 @@ for (const release of ['v2.3.0', 'v2.3.1', 'v3.1.0', 'v3.4.0']) {
       await page.goto(pathToFileURL(formal).href);
       await navigate(page,'settings');
       await expect(page.locator('#m-settings')).toBeVisible();
+      await expect(page.locator('.px-brand-mark').first()).toHaveText('TEST');
     } finally { fs.writeFileSync(formal, before); }
   });
 }
