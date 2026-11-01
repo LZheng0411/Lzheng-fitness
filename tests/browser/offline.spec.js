@@ -116,7 +116,10 @@ test('schedule defer preserves prescriptions and leaves actual records unchanged
   await navigate(page,'week');
   await page.locator('#scheduleEditor>summary').click();
   await page.locator('input[data-schedule-day="测试A"]').fill('');
-  await page.locator('#scheduleEditor button').filter({hasText:'保存本机排期'}).click();
+  await Promise.all([
+    page.waitForNavigation({waitUntil:'load'}),
+    page.locator('#scheduleEditor button').filter({hasText:'保存本机排期'}).click(),
+  ]);
   await page.waitForFunction(()=>!!window.__fitnessTest);
   expect(await page.evaluate(()=>JSON.stringify(window.__fitnessTest.D.days['测试A'].exercises))).toBe(before);
   expect(await page.evaluate(()=>window.__fitnessTest.D.days['测试A'].date)).toBeNull();
