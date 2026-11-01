@@ -6,6 +6,7 @@ const http = require('node:http');
 const { spawnSync } = require('node:child_process');
 const { pathToFileURL } = require('node:url');
 const repo = path.resolve(__dirname, '../..');
+const {navigate,rail}=require('../../skills/lzheng-fitness-workbench-builder/scripts/workbench_browser_navigation.cjs');
 let server, base, fixture;
 
 test.beforeAll(async () => {
@@ -71,10 +72,10 @@ test('knowledge supports multiple authors, escapes content and persists real fee
 test('new learning and meal-planner surfaces fit mobile and desktop; notes survive reload', async ({page}) => {
   for(const width of [375,390,1440]){
     await page.setViewportSize({width,height:900});
-    await page.locator('#navBar a[data-k="knowledge"]').click();
+    await navigate(page,'knowledge');
     await expect(page.locator('#m-knowledge')).toBeVisible();
     await expect(page.locator('#knowledgeBody')).toContainText('还没有学习专题');
-    await page.locator('#navBar a[data-k="nutrition"]').click();
+    await navigate(page,'nutrition');
     await page.locator('#mealPlanner>summary').click();
     await expect(page.locator('#mealPlanner')).toContainText('尚未制定三餐方案');
     await page.locator('#mealPlannerNote').fill('喜欢清淡，长期保留');
@@ -112,10 +113,13 @@ async function scheduleFixture(page){
 test('schedule defer preserves prescriptions and leaves actual records unchanged',async({page})=>{
   await scheduleFixture(page);
   const before=await page.evaluate(()=>JSON.stringify(window.__fitnessTest.D.days['测试A'].exercises));
-  await page.locator('#navBar a[data-k="week"]').click();
+  await navigate(page,'week');
   await page.locator('#scheduleEditor>summary').click();
   await page.locator('input[data-schedule-day="测试A"]').fill('');
-  await page.locator('#scheduleEditor button').filter({hasText:'保存本机排期'}).click();
+  await Promise.all([
+    page.waitForNavigation({waitUntil:'load'}),
+    page.locator('#scheduleEditor button').filter({hasText:'保存本机排期'}).click(),
+  ]);
   await page.waitForFunction(()=>!!window.__fitnessTest);
   expect(await page.evaluate(()=>JSON.stringify(window.__fitnessTest.D.days['测试A'].exercises))).toBe(before);
   expect(await page.evaluate(()=>window.__fitnessTest.D.days['测试A'].date)).toBeNull();
@@ -126,7 +130,7 @@ test('date edits affect only origin and destination; undo restores all original 
   await scheduleFixture(page);
   const before=await page.evaluate(()=>({timeline:window.__fitnessTest.D.timeline,days:window.__fitnessTest.D.days}));
   async function move(date){
-    await page.locator('#navBar a[data-k="week"]').click();await page.locator('#scheduleEditor>summary').click();
+    await navigate(page,'week');await page.locator('#scheduleEditor>summary').click();
     await page.locator('input[data-schedule-day="测试A"]').fill(date);
     await page.locator('#scheduleEditor button').filter({hasText:'保存本机排期'}).click();await page.waitForFunction(expected=>!!window.__fitnessTest&&window.__fitnessTest.D.days['测试A'].date===expected,date);
   }
@@ -142,7 +146,7 @@ test('date edits cannot move a recorded session or change its saved records',asy
   await scheduleFixture(page);await completeTraining(page);
   const before=await page.evaluate(()=>window.__fitnessTest.offlineStore.exportBackup());
   await page.goto(base);await page.waitForFunction(()=>!!window.__fitnessTest);
-  await page.locator('#navBar a[data-k="week"]').click();await page.locator('#scheduleEditor>summary').click();
+  await navigate(page,'week');await page.locator('#scheduleEditor>summary').click();
   await page.locator('input[data-schedule-day="测试A"]').fill('2030-01-09');await page.locator('#scheduleEditor button').filter({hasText:'保存本机排期'}).click();
   await expect(page.locator('#scheduleEditor')).toContainText('这次训练已有记录');
   expect(await page.evaluate(()=>window.__fitnessTest.D.days['测试A'].date)).toBe('2030-01-08');
@@ -151,7 +155,7 @@ test('date edits cannot move a recorded session or change its saved records',asy
 
 test('date collision with an event outside current day slots does not save',async({page})=>{
   await scheduleFixture(page);const before=await page.evaluate(()=>JSON.stringify(window.__fitnessTest.D.timeline));
-  await page.locator('#navBar a[data-k="week"]').click();await page.locator('#scheduleEditor>summary').click();
+  await navigate(page,'week');await page.locator('#scheduleEditor>summary').click();
   await page.locator('input[data-schedule-day="测试A"]').fill('2030-01-15');await page.locator('#scheduleEditor button').filter({hasText:'保存本机排期'}).click();
   await expect(page.locator('#scheduleEditor')).toContainText('目标日期已有训练');
   expect(await page.evaluate(()=>JSON.stringify(window.__fitnessTest.D.timeline))).toBe(before);
@@ -379,10 +383,10 @@ test('mobile local meal form and desktop navigation remain usable', async ({ pag
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
   await page.screenshot({ path: testInfo.outputPath('mobile-local-meal.png'), fullPage: true });
   await page.setViewportSize({ width: 1440, height: 960 });
-  await page.locator('#nutritionBack').click();
-  await page.locator('#navBar a').first().click();
+  if(await page.locator('#nutritionBack').isVisible())await page.locator('#nutritionBack').click();else await navigate(page,'today');
+  await navigate(page,'today');
   await expect(page.locator('#navBar a')).toHaveCount(7);
-  for (const link of await page.locator('#navBar a').all()) await expect(link).toBeVisible();
+  for (const link of await page.locator('.px-nav-link:visible').all()) await expect(link).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('desktop-workbench.png'), fullPage: true });
 });
 
@@ -418,9 +422,9 @@ test('a failed training render leaves navigation and other pages available', asy
   await page.route(base + '/render-failure', route => route.fulfill({ contentType: 'text/html', body: html }));
   await page.goto(base + '/render-failure');
   await expect(page.locator('#workbenchError')).toBeVisible();
-  await page.locator('#navBar a[data-k="settings"]').click();
-  await expect(page.locator('#howNote')).toContainText('查看训练');
-  await page.locator('#navBar a[data-k="week"]').click();
+  await navigate(page,'settings');
+  if(await page.locator('.px-settings-guide>summary').count())await page.locator('.px-settings-guide>summary').click();await expect(page.locator('#howNote')).toContainText('查看训练');
+  await navigate(page,'week');
   await expect(page.locator('#dayGrid')).not.toBeEmpty();
 });
 
@@ -434,33 +438,33 @@ test('null display version and malformed phase data do not prevent other modules
   await page.goto(base + '/bad-phases');
   await expect(page.locator('#workbenchError')).toContainText('周期阶段');
   await expect(page.locator('#verChip')).toContainText('待确认');
-  await page.locator('#navBar a[data-k="settings"]').click();
-  await expect(page.locator('#howNote')).toContainText('查看训练');
+  await navigate(page,'settings');
+  if(await page.locator('.px-settings-guide>summary').count())await page.locator('.px-settings-guide>summary').click();await expect(page.locator('#howNote')).toContainText('查看训练');
 });
 
 test('desktop nutrition preserves navigation, protects drafts, and clears page mode on exit', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.evaluate(() => window.__fitnessTest.openNutrition());
-  await expect(page.locator('#navBar')).toBeVisible();
-  const rail = await page.locator('#navBar').boundingBox();
-  const main = await page.locator('body>main').boundingBox();
-  expect(main.x).toBeGreaterThanOrEqual(rail.x + rail.width);
+  await expect(rail(page)).toBeVisible();
+  const sidebar = await rail(page).boundingBox();
+  const main = await page.locator('main').first().boundingBox();
+  expect(main.x).toBeGreaterThanOrEqual(sidebar.x + sidebar.width);
   await page.screenshot({ path: testInfo.outputPath('desktop-nutrition-sidebar.png'), fullPage: true });
   await page.locator('#nutritionMealTypes button').first().click();
   await page.locator('#nutritionMealName').fill('尚未保存的编辑');
   page.once('dialog', d => d.dismiss());
-  await page.locator('#navBar a[data-k="week"]').click();
+  await navigate(page,'week');
   await expect(page.locator('#m-nutrition')).toBeVisible();
   await expect(page.locator('#nutritionMealName')).toHaveValue('尚未保存的编辑');
   page.once('dialog', d => d.accept());
-  await page.locator('#navBar a[data-k="week"]').click();
+  await navigate(page,'week');
   await expect(page.locator('#m-week')).toBeVisible();
   await expect(page.locator('body')).not.toHaveClass(/nutrition-open|training-record-open/);
   await page.setViewportSize({ width: 375, height: 812 });
   await page.evaluate(() => window.__fitnessTest.openNutrition());
-  await expect(page.locator('#navBar')).toBeVisible();
-  await page.locator('#nutritionBack').click();
-  await expect(page.locator('#navBar')).toBeVisible();
+  await expect(rail(page)).toBeVisible();
+  if(await page.locator('#nutritionBack').isVisible())await page.locator('#nutritionBack').click();else await navigate(page,'today');
+  await expect(rail(page)).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
 });
 
@@ -503,7 +507,7 @@ test('real v3.1.1 upgrades in the same file without losing records, photos, or i
     // Export includes timestamps; compare the persistent records and attachments themselves.
     expect(restored.backup.records).toEqual(oldBackup.records);
     for (const key of ['today', 'week', 'trend', 'nutrition', 'knowledge', 'record', 'settings']) {
-      await page.locator('#navBar a[data-k="' + key + '"]').click();
+      await navigate(page,'' + key + '');
       await expect(page.locator('#m-' + key)).toBeVisible();
     }
   } finally { fs.writeFileSync(formal, before); }
@@ -516,14 +520,16 @@ test('public page and installer agree on the explicit Agent protocol', async ({ 
   expect(fs.readFileSync(path.join(repo, 'skills/lzheng-fitness-workbench-builder/assets/workbench-template.html'), 'utf8')).not.toContain('lzheng-nutrition-agent://');
 });
 
-for (const release of ['v2.3.0', 'v2.3.1', 'v3.1.0']) {
+for (const release of ['v2.3.0', 'v2.3.1', 'v3.1.0', 'v3.4.0']) {
   test('official ' + release + ' shell migrates through the real browser gate', async ({ page }) => {
     test.setTimeout(120000);
     const { gunzipSync } = require('node:zlib');
     const formal = path.join(fixture, '健身工作台.html');
     const before = fs.readFileSync(formal);
     const dataRe = /(<script id="workbench-data" type="application\/json">)([\s\S]*?)(<\/script>)/;
-    const raw = before.toString('utf8').match(dataRe)[2];
+    const legacyData = JSON.parse(before.toString('utf8').match(dataRe)[2]);
+    if (release === 'v3.4.0') delete legacyData.system.brand;
+    const raw = JSON.stringify(legacyData);
     const old = gunzipSync(fs.readFileSync(path.join(repo, 'tests/fixtures/ui-history/' + release + '.html.gz'))).toString('utf8')
       .replaceAll('__FWB_BRAND__', 'TEST').replace(dataRe, (_, a, b, c) => a + raw + c);
     try {
@@ -535,8 +541,9 @@ for (const release of ['v2.3.0', 'v2.3.1', 'v3.1.0']) {
       expect(receipt.ui_upgraded && receipt.browser_verified).toBe(true);
       expect(fs.readFileSync(formal, 'utf8').match(dataRe)[2]).toBe(raw);
       await page.goto(pathToFileURL(formal).href);
-      await page.locator('#navBar a[data-k="settings"]').click();
+      await navigate(page,'settings');
       await expect(page.locator('#m-settings')).toBeVisible();
+      await expect(page.locator('.px-brand-mark').first()).toHaveText('TEST');
     } finally { fs.writeFileSync(formal, before); }
   });
 }

@@ -1,0 +1,12 @@
+{
+  "kind": "maintainer-approved-presentation",
+  "scope": "backgrounds and UI only",
+  "source_styles_sha256": "5cb6d0422a7b6d31adddb6412a9730a83a4c538c94cf61ec6e8e287cb57db571",
+  "backgrounds": {
+    "workbench-background.png": "507da25c083bcd84e3b4265260b392c7025b055472114dafe6d7b5206610a2ee",
+    "workbench-background.webp": "25b498dc35a5bb18c21881cd4a893e2b4fc284e94171050ddd7ad686bfaae117",
+    "workbench-background.mp4": "3445c95d2e44a83657256ad3d91e44c1d074a343b0b45782e683001fe4d64142",
+    "workbench-background-mobile.mp4": "e3a7ab1555c5d1029dd2c28d1f1ec3734c0dd36454de8f70339c461b35570574"
+  },
+  "personal_data_included": false
+}
