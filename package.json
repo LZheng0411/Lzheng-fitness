@@ -1,7 +1,7 @@
 {
   "name": "lzheng-fitness-checks",
   "private": true,
-  "version": "3.3.0",
+  "version": "3.4.0",
   "scripts": { "test": "node tools/test_schedule_patch.cjs && playwright test" },
   "devDependencies": { "@playwright/test": "1.62.1" }
 }

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Refresh the workbench in the same interaction after personal facts or a confirmed plan change. Separate real-plan intake from missing fields and load calibration; keep known information visible, use local pending labels, and retain calibration prescriptions without inventing weights.
+
+- Synchronize the goal/role progression protocol v9 across plan, review, strength-cycle, return and system Skills; expose a versioned, hashed knowledge projection without private source materials.
+- Accept frozen member training snapshots alongside SQL exports. Require complete pagination and revision/hash, retain real recorded sets in unfinished sessions, preserve actual replacements, and exclude pending input and zero-rep attempts.
+- Project verified training snapshots into the existing read-only archive without importing browser storage or changing the original cloud records. Preserve customized personal shells during data refresh.
+- Keep calendar weeks and carried prescriptions independent; preserve valid past schedules while displaying the current week as unplanned. Add anonymous snapshot, role and calendar regressions.
+
+
 - Add a portable `douyin-question-distiller` Skill for user-specified videos, source-bound detailed reports and anonymous report validation. The installer includes its video-source dependency; private chats, scheduled collection and personal runtime data stay outside the public bundle.
 - Change only selected training occurrences and their origin/destination placeholders when adjusting dates; retain other weeks, mixed activities, statuses and prescriptions, reject occupied dates, and restore original events on undo. Support upgrades from v3.3.0.
 - Refresh unavailable video media addresses once before retrying a download, checkpoint refreshed metadata, and connect manual capture to the selected batch entry. Preserve verified media/transcripts and stop repeated failures without exposing signed URLs.

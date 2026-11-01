@@ -26,7 +26,7 @@ def load_text(exercise: dict[str, Any]) -> tuple[str, str]:
         value = f"{load.get('working_weight', '')}{load.get('unit', '')}".strip()
         return f"{value} {sets}".strip(), "verified"
     if load.get("status") == "calibration_required":
-        return "待校准：" + str(load.get("starting_instruction", "先按校准引导确定工作重量")), "calibration_required"
+        return (sets + "；重量待校准：" + str(load.get("starting_instruction", "先按校准引导确定工作重量"))).lstrip("；"), "calibration_required"
     return sets, "not_weight_based"
 
 
@@ -76,6 +76,7 @@ def adapt(contract: dict[str, Any], start_date: str | None = None) -> dict[str, 
     rules.append({"title": "负荷校准", "body": "待校准动作按页面引导确定重量；完成后写入实际重量、次数、余力和动作质量。"})
     return {
         "plan": {
+            "record_nature": "user_plan",
             "title": meta.get("title", "个人训练计划"),
             "subtitle": meta.get("subtitle", meta.get("phase_goal", "")),
             "weeks": meta.get("weeks", 4),

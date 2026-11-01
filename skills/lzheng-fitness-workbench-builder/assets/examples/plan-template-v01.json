@@ -1,5 +1,6 @@
 {
   "plan": {
+    "record_nature": "example",
     "title": "匿名四练日工作台示例计划 v01",
     "subtitle": "仅用于验证工作台构建流程，正式使用前必须替换为个人计划",
     "weeks": 8,

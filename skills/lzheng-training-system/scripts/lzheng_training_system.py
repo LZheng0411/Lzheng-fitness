@@ -410,6 +410,8 @@ def process_handoffs(args: argparse.Namespace) -> None:
         "--backup-dir",
         str(selected_backup),
     ]
+    if getattr(args, "training_snapshot", None):
+        command += ["--training-snapshot", args.training_snapshot]
     if args.notion:
         command += ["--notion", args.notion]
     if args.notion_mode:
@@ -433,6 +435,8 @@ def refresh_workbench(args: argparse.Namespace) -> None:
         "--backup-dir",
         str(selected_backup),
     ]
+    if getattr(args, "training_snapshot", None):
+        command += ["--training-snapshot", args.training_snapshot]
     if args.notion:
         command += ["--notion", args.notion]
     if args.notion_mode:
@@ -490,8 +494,8 @@ def main() -> None:
     mode.add_argument("--check-only", action="store_true"); mode.add_argument("--apply", action="store_true")
     p.set_defaults(func=upgrade_workbench_ui)
     p = subs.add_parser("inspect"); p.add_argument("--root", required=True); p.add_argument("--pretty", action="store_true"); p.set_defaults(func=inspect_system)
-    p = subs.add_parser("process-handoffs"); p.add_argument("--root", required=True); p.add_argument("--notion"); p.add_argument("--notion-mode", choices=("incremental", "full")); p.add_argument("--backup-dir"); p.add_argument("--dry-run", action="store_true"); p.set_defaults(func=process_handoffs)
-    p = subs.add_parser("refresh-workbench"); p.add_argument("--root", required=True); p.add_argument("--notion"); p.add_argument("--notion-mode", choices=("incremental", "full")); p.add_argument("--replace-main-lift-history", action="store_true"); p.add_argument("--confirm-replace-main-lift-history", action="store_true"); p.add_argument("--backup-dir"); p.add_argument("--receipt"); p.add_argument("--deploy"); p.add_argument("--release-mode", choices=("private-portable", "public-anonymized")); p.add_argument("--confirm-private-portable", action="store_true"); p.set_defaults(func=refresh_workbench)
+    p = subs.add_parser("process-handoffs"); p.add_argument("--root", required=True); p.add_argument("--training-snapshot"); p.add_argument("--notion"); p.add_argument("--notion-mode", choices=("incremental", "full")); p.add_argument("--backup-dir"); p.add_argument("--dry-run", action="store_true"); p.set_defaults(func=process_handoffs)
+    p = subs.add_parser("refresh-workbench"); p.add_argument("--root", required=True); p.add_argument("--training-snapshot"); p.add_argument("--notion"); p.add_argument("--notion-mode", choices=("incremental", "full")); p.add_argument("--replace-main-lift-history", action="store_true"); p.add_argument("--confirm-replace-main-lift-history", action="store_true"); p.add_argument("--backup-dir"); p.add_argument("--receipt"); p.add_argument("--deploy"); p.add_argument("--release-mode", choices=("private-portable", "public-anonymized")); p.add_argument("--confirm-private-portable", action="store_true"); p.set_defaults(func=refresh_workbench)
     p = subs.add_parser("install-skill"); p.add_argument("--root", required=True); p.add_argument("--name", required=True); p.set_defaults(func=install_skill)
     p = subs.add_parser("import-private-pack"); p.add_argument("--root", required=True); p.add_argument("--source", required=True); p.set_defaults(func=import_private_pack)
     args = parser.parse_args()

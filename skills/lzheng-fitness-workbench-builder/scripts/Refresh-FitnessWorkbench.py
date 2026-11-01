@@ -479,6 +479,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--project", required=True)
     parser.add_argument("--notion")
+    parser.add_argument("--training-snapshot")
     parser.add_argument("--notion-mode", choices=("incremental", "full"))
     parser.add_argument("--integration-config", help="可选公开客户端同步配置；缺省保留当前实例配置")
     parser.add_argument("--replace-main-lift-history", action="store_true")
@@ -501,6 +502,7 @@ def main() -> None:
     project = Path(args.project).resolve()
     formal = project / "健身工作台.html"
     notion_source = Path(args.notion).resolve() if args.notion else None
+    training_source = Path(args.training_snapshot).expanduser().absolute() if args.training_snapshot else None
     deploy_input = Path(args.deploy).expanduser().absolute() if args.deploy else None
     deploy_link_component = first_link_component(deploy_input) if deploy_input else None
     # Do not resolve through a detected junction/reparse point even for error
@@ -617,6 +619,16 @@ def main() -> None:
             if not args.confirm_replace_main_lift_history:
                 raise PipelineFailure("权威替换整份主项实际历史必须显式传入 --confirm-replace-main-lift-history")
         run_dir.mkdir(parents=True, exist_ok=True)
+        if training_source:
+            if first_link_component(training_source) or not training_source.is_file():
+                raise PipelineFailure("训练快照必须是可读取的普通文件")
+            original_training_source = training_source
+            frozen_training = run_dir / "training-input.json"
+            frozen_training.write_bytes(training_source.read_bytes())
+            receipt["artifacts"]["training_snapshot"] = {
+                "path": str(original_training_source), "sha256": sha256_file(frozen_training),
+                "effective_path": str(frozen_training), "provided": True}
+            training_source = frozen_training
         effective_notion = prepare_effective_notion(notion_source, args.notion_mode, run_dir, receipt)
         changed_link = first_link_component(deploy_input) if deploy_input else None
         if changed_link:
@@ -626,6 +638,8 @@ def main() -> None:
             receipt["evidence"]["existing_deploy"]["owned_manifest"] = True
             receipt["evidence"]["existing_deploy"]["tree_hashes_pass"] = True
         build_base = [sys.executable, str(BUILDER), "--project", str(project)]
+        if training_source:
+            build_base += ["--training-snapshot", str(training_source)]
         if effective_notion:
             build_base += ["--notion", str(effective_notion)]
         if args.notion_mode:
@@ -652,6 +666,8 @@ def main() -> None:
             "FITNESS_WORKBENCH_DATA: PASS",
         )
         check_command = [sys.executable, str(CHECKER), "--project", str(project)]
+        if training_source:
+            check_command += ["--training-snapshot", str(training_source)]
         if effective_notion:
             check_command += ["--notion", str(effective_notion)]
         if args.notion_mode:
@@ -690,6 +706,8 @@ def main() -> None:
                 "--expect-release-mode",
                 args.release_mode,
             ]
+            if training_source:
+                deploy_check += ["--training-snapshot", str(training_source)]
             if effective_notion:
                 deploy_check += ["--notion", str(effective_notion)]
             if args.notion_mode:

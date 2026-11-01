@@ -123,8 +123,11 @@ def run_builder(
     restore_notion_from_html=None,
     notion_mode=None,
     replace_main_lift_history=False,
+    training_snapshot=None,
 ):
     cmd = [PY, os.path.join(SCRIPT_DIR, "Build-FitnessWorkbenchData.py"), "--project", project, "--check-only"]
+    if training_snapshot:
+        cmd += ["--training-snapshot", training_snapshot]
     if notion and os.path.isfile(notion):
         cmd += ["--notion", notion]
         if notion_mode:
@@ -145,8 +148,11 @@ def load_generated_data(
     restore_notion_from_html=None,
     notion_mode=None,
     replace_main_lift_history=False,
+    training_snapshot=None,
 ):
     cmd = [PY, os.path.join(SCRIPT_DIR, "Build-FitnessWorkbenchData.py"), "--project", project, "--check-only", "--out", "-"]
+    if training_snapshot:
+        cmd += ["--training-snapshot", training_snapshot]
     if notion and os.path.isfile(notion):
         cmd += ["--notion", notion]
         if notion_mode:
@@ -359,6 +365,9 @@ def validate_public_anonymized_data(data):
         problems.append("公开匿名版渲染契约类型错误: weekday")
 
     notion = data.get("notion", {})
+    training = data.get("training")
+    if training and any(training.get(key) for key in ("sessions", "records", "main_lifts", "latest_by_exercise")):
+        problems.append("公开匿名版不得包含 CloudBase 个人训练记录")
     if not isinstance(notion, dict):
         problems.append("公开匿名版渲染契约类型错误: notion 必须是对象")
         notion = {}
@@ -445,6 +454,7 @@ def check_html(
     restore_notion_from_html=None,
     notion_mode=None,
     replace_main_lift_history=False,
+    training_snapshot=None,
 ):
     problems = []
     html_path = os.path.join(project, "健身工作台.html")
@@ -468,6 +478,7 @@ def check_html(
         restore_notion_from_html,
         notion_mode,
         replace_main_lift_history,
+        training_snapshot,
     )
     if generated is None:
         problems.append("无法生成用于比对的最新数据")
@@ -528,7 +539,8 @@ def check_html(
         for exercise in mains:
             if data.get("onboarding", {}).get("completed") is False:
                 continue
-            if not exercise.get("w") or not exercise.get("d"):
+            calibration = exercise.get("load_status") == "calibration_required"
+            if not exercise.get("d") or (not exercise.get("w") and not calibration):
                 problems.append("主项缺少精确处方: %s/%s" % (day, exercise.get("name")))
     for review in data.get("reviews", []):
         target = resolve_project_entry(project, review.get("file_path"))
@@ -724,6 +736,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--project", required=True)
     ap.add_argument("--notion")
+    ap.add_argument("--training-snapshot")
     ap.add_argument("--notion-mode", choices=("incremental", "full"))
     ap.add_argument("--restore-notion-from-html")
     ap.add_argument("--replace-main-lift-history", action="store_true")
@@ -749,6 +762,7 @@ def main():
         args.restore_notion_from_html,
         args.notion_mode,
         args.replace_main_lift_history,
+        args.training_snapshot,
     )
     if err:
         fail(err)
@@ -759,6 +773,7 @@ def main():
         args.restore_notion_from_html,
         args.notion_mode,
         args.replace_main_lift_history,
+        args.training_snapshot,
     )
     if problems:
         fail("HTML 检查未通过；".join(problems))

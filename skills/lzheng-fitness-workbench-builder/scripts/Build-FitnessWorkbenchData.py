@@ -45,6 +45,7 @@ MAIN_LIFT_ALIASES = {
     "杠铃深蹲": "深蹲",
     "硬拉": "硬拉",
     "杠铃硬拉": "硬拉",
+    "传统硬拉": "硬拉",
 }
 MAIN_LIFT_NAMES = ("负重引体", "卧推", "深蹲", "硬拉")
 NOTION_HISTORY_KEYS = {
@@ -68,6 +69,10 @@ class NotionSyncConflict(ValueError):
 def canonical_main_lift_name(name):
     """Normalize portable aliases without turning accessory variants into main lifts."""
     text = str(name or "").strip()
+    # Only explicit prescription roles are removable, not arbitrary variants.
+    role = re.fullmatch(r"(.+?)[｜|]\s*(顶组|回退|容量)\s*", text)
+    if role:
+        text = role.group(1).strip()
     return MAIN_LIFT_ALIASES.get(text, text)
 
 
@@ -438,7 +443,6 @@ def schedule_contract_snapshot(plan_json, plan_start, today):
             "date": date,
             "day": day_key,
             "week": week,
-            "schedule_status": item.get("schedule_status"),
             "exercises": item.get("exercises") or [],
         })
     dates = [dt.date.fromisoformat(item["date"]) for item in all_events if item.get("date")]
@@ -721,6 +725,7 @@ def build_meta(plan_json, plan_file_name, current_week, baseline, project_root):
         "current_week": current_week,
         "total_weeks": plan.get("weeks", 8),
         "test_week": plan.get("weeks", 8),
+        "completion_policy": plan.get("completion_policy"),
         "phase": phase_for_week(plan_json.get("phases", []), current_week),
         "plan_start": baseline.get("week_start") or baseline.get("period_start"),
         "plan_end": baseline.get("period_end"),
@@ -735,30 +740,43 @@ def build_meta(plan_json, plan_file_name, current_week, baseline, project_root):
 
 
 def build_onboarding(plan_json, baseline, review_rows):
-    """新系统只能显示待建档；现有真实计划可显示已建档但保留来源边界。"""
+    """Project known facts now; intake, field completion and load calibration are separate."""
     plan = plan_json.get("plan", {})
     title = str(plan.get("title") or "")
-    demo = any(token in title for token in ("示例", "匿名", "待建档"))
+    # A privacy alias or a stale page title does not turn a real plan into a demo.
+    demo = plan.get("record_nature") == "example" or plan.get("is_example") is True or (
+        plan.get("record_nature") != "user_plan" and "示例" in title
+    )
+    has_plan = any(item.get("exercises") for item in plan_json.get("schedule", [])) and not demo
     missing = []
     for key, label in (("athlete", "使用者"), ("goal", "目标"), ("frequency", "训练频率")):
         if not plan.get(key):
             missing.append(label)
     if not baseline.get("source_version"):
         missing.append("执行基准")
-    if demo:
-        missing.append("已确认的真实训练计划")
+    if not has_plan:
+        missing.append("训练计划")
     calibration_needed = any(
         exercise.get("load_status") == "calibration_required"
         for item in plan_json.get("schedule", [])
         for exercise in item.get("exercises", [])
     )
-    if calibration_needed:
-        missing.append("动作重量校准")
+    mode = ("needs_calibration" if calibration_needed else "needs_details" if missing else "ready") if has_plan else "needs_intake"
+    message = "已同步个人信息与训练计划。"
+    if has_plan and calibration_needed:
+        message += "部分动作重量待校准，按首练引导确认；已知处方继续显示。"
+    if has_plan and missing:
+        message += "待填写：" + "、".join(missing) + "；不影响已有信息展示。"
+    if not has_plan:
+        message = "个人信息已同步，训练计划待填写。" if any(plan.get(k) for k in ("athlete", "goal", "frequency")) and not demo else "待建档：当前仅有初始化示例，请填写个人信息和训练计划。"
     return {
-        "completed": not missing,
-        "mode": "ready" if not missing else ("needs_calibration" if calibration_needed and set(missing) == {"动作重量校准"} else "needs_intake"),
+        "completed": bool(has_plan),
+        "mode": mode,
         "missing": list(dict.fromkeys(missing)),
-        "message": "已完成建档，可按当前计划执行。" if not missing else ("待校准：按训练日中的逐步引导确定未知动作重量。" if calibration_needed else "待建档：补齐必要信息前不显示正式训练重量。"),
+        "calibration_required": calibration_needed,
+        "is_example": demo,
+        "profile": {key: plan.get(key) or None for key in ("athlete", "goal", "frequency", "constraints")},
+        "message": message,
         "review_count": len(review_rows),
     }
 
@@ -911,6 +929,9 @@ def build_status_info(baseline, meta, onboarding, artifact=None):
     artifact_state = status_from_artifact(artifact)
     if artifact_state:
         return artifact_state
+    policy = meta.get("completion_policy") or {}
+    if policy.get("mode") == "until_completed" and policy.get("status") == "active":
+        return {"state": "active", "effective_until": None, "reason": "周期顺延中；剩余训练及验证实际完成后复盘结案", "source": meta.get("plan_file")}
     if not baseline.get("period_end"):
         return {"state": "unknown", "effective_until": None, "reason": "执行基准缺少有效期", "source": baseline.get("file")}
     state = "active" if dt.date.today().isoformat() <= baseline["period_end"] else "stale"
@@ -1048,9 +1069,12 @@ def build_days(plan_json, current_week, plan_start, notion=None):
             main_key = conditional_key or canonical.get(ex_name, ex_name)
             main = main_key in cyc_by_name or e.get("priority") in ("main", "key")
             w, d, rpe = None, None, None
-            if main:
+            if e.get("load_status") == "calibration_required":
+                d = sets or "重量待校准"
+                rpe = target or None
+            elif main:
                 if calendar_policy(plan_json):
-                    w = extract_w(sets)
+                    w = extract_work_w(sets)
                     d = sets or None
                 elif str(sets).startswith("实际："):
                     w = extract_peak_w(sets)
@@ -1061,19 +1085,19 @@ def build_days(plan_json, current_week, plan_start, notion=None):
                         w = extract_w(cell)
                         d = cell
                     else:
-                        w = extract_w(sets)
+                        w = extract_work_w(sets)
                         d = sets or None
                 rpe = target if target else None
             else:
                 w = extract_w(sets)
                 d = sets if sets else None
                 rpe = target if target else None
-            if "自重" in str(sets):
+            if "自重" in str(sets) and w is None:
                 w = "自重"
                 d = sets
             observed = latest.get(ex_name) or latest.get(aliases.get(ex_name, "")) or {}
             weight_source = e.get("load_source")
-            if w is None and observed.get("weight") is not None:
+            if w is None and e.get("load_status") != "calibration_required" and observed.get("weight") is not None:
                 suffix = "/手" if observed.get("per_hand") else ""
                 w = ("%g" % observed["weight"]) + "kg" + suffix
                 weight_source = observed.get("source")
@@ -1086,6 +1110,7 @@ def build_days(plan_json, current_week, plan_start, notion=None):
                 "muscle_groups": e.get("muscle_groups", []),
                 "planned_sets": e.get("planned_sets"),
                 "weight_source": weight_source,
+                "load_status": e.get("load_status"),
             })
         item = {"role": role, "exercises": exercises, "date": parse_schedule_date(s.get("day", ""), plan_start), "label": s.get("label"), "title": s.get("title")}
         if calendar_policy(plan_json):
@@ -1167,10 +1192,13 @@ def validate_calendar_schedule(data, plan_json, today):
                 problems.append("训练卡未保持已确认完整处方: " + name)
     start = dt.date.fromisoformat(window["start"])
     expected = [(start + dt.timedelta(days=i)).isoformat() for i in range(7)]
-    if sorted(dated) != expected:
+    expired = expired_calendar_schedule(plan_json, today)
+    if sorted(dated) != expected and not expired:
         problems.append("当前排期必须恰好覆盖周一至周日七个日期，不允许跨周拼接或重复日期")
     if sorted(x["date"] for x in data.get("timeline", [])) != expected:
         problems.append("时间线未逐日复现本日历周")
+    if expired and data.get("timeline") != project_calendar_timeline(plan_json, [], today):
+        problems.append("旧排期结束后本周只能标记未安排，不得自动顺延、完成或标记休息")
     return problems
 
 def validate_week_transition_contract(data, plan_json, today=None):
@@ -1205,14 +1233,11 @@ def validate_week_transition_contract(data, plan_json, today=None):
         expected_week = next(iter(snapshot["weeks"]))
 
     training = snapshot["training"]
-    # `schedule_status=awaiting_date` is a valid current-plan entry: keep its
-    # complete prescription while excluding it from dated timeline checks.
-    recognized_training = [item for item in training if item.get("day") and (item.get("date") or item.get("schedule_status") == "awaiting_date")]
-    valid_training = [item for item in recognized_training if item.get("date")]
+    valid_training = [item for item in training if item.get("date") and item.get("day")]
     declared_frequency = declared_training_frequency(plan_json)
     if declared_frequency is not None and len(training) != declared_frequency:
         problems.append("当前排程训练日数量与 plan.frequency 不一致: 计划 %d 练，实际 %d 个" % (declared_frequency, len(training)))
-    if len(recognized_training) != len(training):
+    if len(valid_training) != len(training):
         problems.append("当前排程存在无法识别日期或训练日名称的条目")
     dates = [item.get("date") for item in valid_training]
     day_keys = [item.get("day") for item in valid_training]
@@ -1249,7 +1274,7 @@ def validate_week_transition_contract(data, plan_json, today=None):
         if not target or target.get("date") != source["date"]:
             problems.append("训练卡未同步当前排程: %s %s" % (source["date"], source["day"]))
             continue
-        selfweight_count = sum(1 for exercise in source["exercises"] if "自重" in str(exercise.get("sets") or ""))
+        selfweight_count = sum(1 for exercise in source["exercises"] if extract_work_w(exercise.get("sets")) == "自重")
         if selfweight_count:
             resolved = [exercise for exercise in target.get("exercises", []) if exercise.get("w") == "自重" and not exercise.get("weight_source")]
             if len(resolved) < selfweight_count:
@@ -1366,6 +1391,19 @@ def build_charts(plan_json, notion=None, review_rows=None):
             if p.get("name") == key
         ]
         charts[key] = {"cap": ch.get("strength_label", "强度"), "strength": strength, "actual": actual}
+    # A plan without fixed load progression still owns its recorded history.
+    # Dates keep past cycles separate from the current cycle's week numbering.
+    history = (notion or {}).get("main_lifts", [])
+    names = set(plan_mapping) | {canonical_main_lift_name(p.get("name")) for p in history}
+    for key in ("负重引体", "卧推", "深蹲", "硬拉"):
+        if key in charts or key not in names:
+            continue
+        actual = [attach_chart_review(p, review_rows, plan_mapping) for p in history
+                  if canonical_main_lift_name(p.get("name")) == key
+                  and _is_iso_date(p.get("date"))
+                  and isinstance(p.get("value"), (int, float))]
+        actual.sort(key=lambda p: p["date"])
+        charts[key] = {"cap": "历史实测负重", "strength": [], "actual": actual, "x_axis": "date"}
     return charts
 
 
@@ -1775,6 +1813,12 @@ def validate(data, plan_json, project_root):
                 src = c["chart"]["strength"]
                 break
         if src is None:
+            if chart.get("x_axis") == "date" and not chart.get("strength"):
+                expected = build_charts(plan_json, merge_training_history(data.get("notion"), data.get("training") or {}))
+                facts = lambda rows: [{k: v for k, v in p.items() if not k.startswith("review_")} for p in rows]
+                if name not in expected or facts(chart.get("actual", [])) != facts(expected[name]["actual"]):
+                    problems.append("历史曲线与实测主源不一致: " + name)
+                continue
             problems.append("图表缺少主源: " + name)
             continue
         dst = [(p.get("week"), p.get("v")) for p in chart.get("strength", [])]
@@ -1794,7 +1838,8 @@ def validate(data, plan_json, project_root):
         for exercise in active_main:
             if data.get("onboarding", {}).get("completed") is False:
                 continue
-            if not exercise.get("w") or not exercise.get("d"):
+            calibration = exercise.get("load_status") == "calibration_required"
+            if not exercise.get("d") or (not exercise.get("w") and not calibration):
                 problems.append("主项缺少精确处方: %s/%s" % (day, exercise.get("name")))
     for review in data.get("reviews", []):
         review_target = resolve_project_href(project_root, browser_href(review.get("file_path", "")))
@@ -1861,9 +1906,171 @@ def apply_data(html_path, data, backup_dir):
         print("previous version backed up to: " + os.path.join(backup_dir, "pre-apply-workbench.html"))
 
 
+def expired_calendar_schedule(plan_json, today):
+    """Only a complete, valid past week may degrade to an unplanned current week."""
+    if not calendar_policy(plan_json):
+        return False
+    dates = [parse_schedule_date(s.get("day", ""), plan_json["plan"]["calendar_anchor"])
+             for s in plan_json.get("schedule", [])]
+    dates = sorted(d for d in dates if d)
+    if len(dates) != 7:
+        return False
+    start = dt.date.fromisoformat(dates[0])
+    expected = [(start + dt.timedelta(days=i)).isoformat() for i in range(7)]
+    return (start.weekday() == 0 and dates == expected
+            and dates[-1] < calendar_window(plan_json, today)["start"])
+
+
+def project_calendar_timeline(plan_json, timeline, today):
+    if not expired_calendar_schedule(plan_json, today):
+        return timeline
+    start = dt.date.fromisoformat(calendar_window(plan_json, today)["start"])
+    return [{"date": (start + dt.timedelta(days=i)).isoformat(),
+             "type": "unplanned", "status": "unplanned", "title": "未安排训练", "role": ""}
+            for i in range(7)]
+
+
+def extract_work_w(text):
+    """工作重量优先取顶组，避免热身重量占据训练卡摘要。"""
+    if not text:
+        return None
+    pieces = re.split(r"[；;]", str(text))
+    for piece in pieces:
+        if "顶组" in piece:
+            return extract_w(piece) or ("自重" if "自重" in piece else None)
+    for piece in pieces:
+        if "热身" not in piece:
+            return extract_w(piece) or ("自重" if "自重" in piece else None)
+    return extract_w(text) or ("自重" if "自重" in text else None)
+
+
+def training_set_note(row):
+    try:
+        note = json.loads(row.get("note") or "{}")
+        return note if isinstance(note, dict) else {}
+    except (TypeError, ValueError):
+        return {}
+
+
+def actual_training_from_snapshot(path, plan_json):
+    """Only performed sets with recorded reps can create a training fact."""
+    from training_snapshot import load_snapshot
+    try:
+        raw = load_snapshot(path, plan_json)
+    except (ValueError, TypeError, KeyError) as exc:
+        fail("训练快照校验失败：" + str(exc))
+    sessions, exercises, sets = (raw.get(key) for key in ("sessions", "exercises", "sets"))
+    if not all(isinstance(rows, list) for rows in (sessions, exercises, sets)):
+        fail("CloudBase 快照必须含 sessions / exercises / sets 数组")
+    session_ids = {str(row.get("id")) for row in sessions}
+    exercise_ids = {str(row.get("id")) for row in exercises}
+    if len(session_ids) != len(sessions) or len(exercise_ids) != len(exercises):
+        fail("CloudBase 快照的场次或动作 ID 重复")
+    if any(str(row.get("session_id")) not in session_ids for row in exercises):
+        fail("CloudBase 快照有无归属动作")
+    if any(str(row.get("exercise_id")) not in exercise_ids for row in sets):
+        fail("CloudBase 快照有无归属组")
+    performed = {}
+    for row in sets:
+        try:
+            reps = int(row.get("reps"))
+        except (TypeError, ValueError):
+            reps = 0
+        if str(row.get("is_completed")).lower() == "true" and reps > 0:
+            performed.setdefault(str(row["exercise_id"]), []).append(row)
+    by_session = {}
+    for exercise in exercises:
+        valid_sets = performed.get(str(exercise["id"]), [])
+        if valid_sets:
+            by_session.setdefault(str(exercise["session_id"]), []).append((exercise, valid_sets))
+    output = {"source": raw["source"], "queried_at": raw["queried_at"],
+              "revision": raw.get("revision"), "hash": raw.get("hash"), "records": [],
+              "sessions": [], "main_lifts": [], "latest_by_exercise": {}}
+    mapping = build_main_lift_day_map(plan_json)
+    lift_points = {}
+    for session in sessions:
+        done_exercises = by_session.get(str(session["id"]), [])
+        if not done_exercises:
+            continue
+        date = normalized_full_date(session.get("training_date"))
+        day = str(session.get("training_day") or "")
+        if not date or not day:
+            fail("CloudBase 有逐组记录的场次缺少日期或训练职责")
+        output["sessions"].append({
+            "date": date, "day": day, "status": session.get("status"),
+            "session_id": session["id"], "revision": session.get("client_revision"),
+            "recorded_sets": sum(len(rows) for _, rows in done_exercises),
+        })
+        record = dict(session)
+        record["read_only_snapshot"] = True
+        record["exercises"] = [dict(exercise, sets=rows) for exercise, rows in done_exercises]
+        output["records"].append(record)
+        for exercise, rows in done_exercises:
+            name = str(exercise.get("actual_name") or exercise.get("planned_name") or "")
+            working = [(row, training_set_note(row)) for row in rows]
+            working = [(row, note) for row, note in working
+                       if note.get("set_type") != "warmup" and "热身" not in str(note.get("label") or "")]
+            if not working:
+                continue
+            weighted = [(row, note) for row, note in working if row.get("weight") is not None]
+            if weighted:
+                latest = max(weighted, key=lambda pair: (date, int(pair[0].get("set_number") or 0)))
+                weight = float(latest[0]["weight"])
+                previous = output["latest_by_exercise"].get(name)
+                if not previous or date >= previous.get("date", ""):
+                    output["latest_by_exercise"][name] = {
+                        "weight": weight, "date": date, "source": "CloudBase 逐组实录",
+                        "per_hand": "/手" in str(exercise.get("weight_unit") or ""),
+                    }
+            lift = canonical_main_lift_name(name)
+            if lift not in MAIN_LIFT_NAMES or not day_labels_match(mapping.get(lift), day) or not weighted:
+                continue
+            top = [(row, note) for row, note in weighted
+                   if note.get("set_type") == "top" or "顶组" in str(note.get("label") or "")]
+            exercise_is_top = bool(re.search(r"[｜|]\s*顶组\s*$", name))
+            selected = max(top or weighted, key=lambda pair: float(pair[0]["weight"]))[0]
+            value = float(selected["weight"])
+            reps = int(selected["reps"])
+            rpe = selected.get("rpe")
+            detail = ("%s%gkg×%d" % ("+" if lift == "负重引体" else "", value, reps))
+            if rpe is not None:
+                detail += " @%g" % float(rpe)
+            point = {
+                "name": lift, "week": int(session.get("week_number") or 0),
+                "value": value, "detail": detail, "date": date, "day": day,
+                "session_status": session.get("status"), "session_id": session["id"],
+            }
+            # A top set and separate backoff exercise represent one exposure.
+            key = (str(session["id"]), lift)
+            rank = (bool(top) or exercise_is_top, value)
+            if key not in lift_points or rank > lift_points[key][0]:
+                lift_points[key] = (rank, point)
+    output["main_lifts"] = [point for _rank, point in lift_points.values()]
+    return output
+
+
+def merge_training_history(notion, training):
+    """CloudBase wins where a real performed set overlaps older Notion history."""
+    merged = dict(notion or {})
+    cloud_sessions = training.get("sessions", [])
+    cloud_keys = {(row["date"], normalized_day_label(row["day"])) for row in cloud_sessions}
+    merged["sessions"] = [row for row in (notion or {}).get("sessions", [])
+                          if (normalized_full_date(row.get("date")), normalized_day_label(row.get("day"))) not in cloud_keys]
+    merged["sessions"].extend(cloud_sessions)
+    cloud_lifts = training.get("main_lifts", [])
+    cloud_lift_keys = {(row["name"], row["date"]) for row in cloud_lifts}
+    merged["main_lifts"] = [row for row in (notion or {}).get("main_lifts", [])
+                            if (canonical_main_lift_name(row.get("name")), normalized_full_date(row.get("date"))) not in cloud_lift_keys]
+    merged["main_lifts"].extend(cloud_lifts)
+    merged["latest_by_exercise"] = {**(notion or {}).get("latest_by_exercise", {}),
+                                     **training.get("latest_by_exercise", {})}
+    return merged
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--project", required=True)
+    ap.add_argument("--training-snapshot")
     ap.add_argument("--notion")
     ap.add_argument(
         "--notion-mode",
@@ -1954,6 +2161,24 @@ def main():
     history_problems = validate_main_lift_history(notion, current_week, plan_json)
     if history_problems:
         fail("；".join(history_problems))
+    if args.training_snapshot:
+        training = actual_training_from_snapshot(args.training_snapshot, plan_json)
+    else:
+        training = prev.get("training") if isinstance(prev.get("training"), dict) else None
+        if training:
+            training = dict(training)
+            # An empty initialization placeholder is still missing, not a queried cache.
+            training["source_state"] = "cached" if training.get("queried_at") else "missing"
+        else:
+            training = {"source": "CloudBase PostgreSQL", "queried_at": None,
+                        "source_state": "missing", "sessions": [], "main_lifts": [],
+                        "latest_by_exercise": {}}
+    if args.training_snapshot:
+        training["source_state"] = "queried"
+    actual_history = merge_training_history(notion, training)
+    actual_problems = validate_main_lift_history(actual_history, current_week, plan_json)
+    if actual_problems:
+        fail("；".join(actual_problems))
     sync = build_sync_metadata(
         notion,
         prev.get("sync", {}),
@@ -1963,7 +2188,9 @@ def main():
         attempted_at,
     )
 
-    days, timeline = build_days(plan_json, current_week, baseline.get("week_start") or baseline["period_start"], notion)
+    days, timeline = build_days(plan_json, current_week, baseline.get("week_start") or baseline["period_start"], actual_history)
+    original_timeline = timeline
+    timeline = project_calendar_timeline(plan_json, timeline, dt.date.today())
     meta = build_meta(plan_json, plan_name, current_week, baseline, project)
     onboarding = build_onboarding(plan_json, baseline, review_rows)
     review_documents = build_reviews(review_rows, project)
@@ -2006,7 +2233,7 @@ def main():
         "timeline": timeline,
         "week": build_week(plan_json, current_week),
         "phases": plan_json.get("phases", []),
-        "charts": build_charts(plan_json, notion, review_documents),
+        "charts": build_charts(plan_json, actual_history, review_documents),
         "goal_metrics": build_goal_metrics(plan_json, days, timeline, notion),
         "reviews": review_documents,
         "rules": ["%s：%s" % (r.get("title"), r.get("body")) for r in plan_json.get("rules", [])],
@@ -2028,14 +2255,22 @@ def main():
             "activity": [],
             "note": "Notion 数据未提供；页面将显示待同步状态。",
         },
+        "training": training,
         "sync": sync,
         "nutrition_contract": nutrition_contract,
         "integrations": integration_config,
         "provenance": build_provenance(plan_path, baseline, review_rows, sync, project),
     }
+    data["provenance"]["training"] = {
+        "source": training.get("source"),
+        "verified_at": training.get("queried_at"),
+        "trust": training.get("source_state"),
+        "sessions_with_recorded_sets": len(training.get("sessions", [])),
+    }
     if calendar_policy(plan_json):
         data["calendar_week"] = calendar_window(plan_json, dt.date.today())
-        data["calendar"] = {str(dt.date.fromisoformat(day["date"]).isoweekday()): name for name, day in days.items() if day.get("date")}
+        data["schedule_history"] = original_timeline if expired_calendar_schedule(plan_json, dt.date.today()) else []
+        data["calendar"] = {str(dt.date.fromisoformat(day["date"]).isoweekday()): name for name, day in days.items() if day.get("date") and data["calendar_week"]["start"] <= day["date"] <= data["calendar_week"]["end"]}
         data["weekday"] = {name: (["周一", "周二", "周三", "周四", "周五", "周六", "周日"][dt.date.fromisoformat(day["date"]).weekday()] if day.get("date") else "日期待定") for name, day in days.items()}
         data["rest_days"] = "未排期不等于休息或已完成；以日历上的实际安排为准"
         data["week"] = [{"k": name, "v": "；".join(e["d"] or "" for e in day["exercises"] if e["main"]), "prescription_week": day.get("prescription_week"), "note": day["role"]} for name, day in days.items()]

@@ -1,6 +1,6 @@
 {
   "name": "Lzheng-fitness",
-  "version": "3.3.0",
+  "version": "3.4.0",
   "license": "MIT",
   "language": "zh-CN",
   "skills": [
@@ -53,7 +53,9 @@
       "name": "douyin-question-distiller",
       "path": "skills/douyin-question-distiller",
       "standalone": false,
-      "requires": ["lzheng-video-learning"]
+      "requires": [
+        "lzheng-video-learning"
+      ]
     },
     {
       "name": "lzheng-video-lessons",
