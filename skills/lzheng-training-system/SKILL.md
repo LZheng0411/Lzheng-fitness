@@ -7,6 +7,18 @@ description: 初始化、升级、诊断、校验和迁移 Lzheng 本地训练�
 
 把本 Skill 当作套件总控层：它只做安装、配置、路由、升级保护和验收；训练处方由四个训练处方 Skill 生成，营养系统独立维护 `nutrition_contract`，专家库只作为共享知识层，工作台只负责展示。
 
+## 主动同步个人工作台（每轮必须检查）
+
+用户提供或更正个人信息、确认训练计划、补充实际训练或体感后，同轮将已知内容写入其对应主源，并主动运行工作台 `refresh-workbench`，检查正式 HTML 成功后再交付。不要等待用户再次说“刷新”，不要只写计划/交接文件就结束。没有待处理交接不代表页面已更新；必要时直接运行刷新闭环。
+
+个人资料、训练计划与动作负荷校准分别判断。已经提供真实计划时立即展示，不能因体重、训练经验、部分重量或其他非阻断字段未知而把整套系统继续显示为“待建档”。未知字段分别标“待填写”“待校准”或留空，已知信息与处方照常展示；缺失且会影响训练执行的信息只限制对应执行建议，不隐藏其他已知资料。过程中每次取得新事实继续增量刷新，不补造数据、不自动改正式计划、不部署网站、不建立后台监听。刷新失败则说明具体缺口并继续修复，不能报告已更新。
+
+## 共同训练判断协议
+
+处理训练数据、RPE、下一次调整、计划渐进或失败反馈时，先读 [训练数据判断与渐进协议](references/training-progression-protocol.md)。它统一力量、增肌、减脂保肌三类目标，允许有理由的多变量联合调整；优先于旧参考中的固定单变量和机械重复规则，不覆盖本 Skill 的数据读取、正式记录及计划写入权限。未知 RPE、体感或休息不抹掉已完成组；先给能确定的分析，影响具体决定的未知再轻量核实，不循环追问用户已表示不记得的内容。
+
+维护内置 AI 或训练 Skill 的共同决策规则时，执行该协议末尾的联动维护检查，不仅更新一端。
+
 ## 首次使用者引导
 
 当用户刚完成安装、刚下载本套件，或第一次说“开始”“想增肌/减脂/提升力量”“帮我建立健身系统”时，不要要求用户先阅读 README、输入命令或记住 Skill 名称。直接回复：
@@ -67,8 +79,8 @@ python scripts/lzheng_training_system.py upgrade-workbench-ui --root "<系统根
 python scripts/lzheng_training_system.py upgrade-workbench-ui --root "<系统根目录>" --apply
 python scripts/lzheng_training_system.py install-skill --root "<系统根目录>" --name lzheng-fitness-plan
 python scripts/lzheng_training_system.py import-private-pack --root "<系统根目录>" --source "<用户明确指定的目录>"
-python scripts/lzheng_training_system.py refresh-workbench --root "<系统根目录>" [--notion "<notion-data.json>" --notion-mode incremental|full]
-python scripts/lzheng_training_system.py process-handoffs --root "<系统根目录>" [--notion "<notion-data.json>" --notion-mode incremental|full]
+python scripts/lzheng_training_system.py refresh-workbench --root "<系统根目录>" [--training-snapshot "<私有训练快照.json>"] [--notion "<notion-data.json>" --notion-mode incremental|full]
+python scripts/lzheng_training_system.py process-handoffs --root "<系统根目录>" [--training-snapshot "<私有训练快照.json>"] [--notion "<notion-data.json>" --notion-mode incremental|full]
 python scripts/lzheng_training_system.py validate --root "<系统根目录>"
 ```
 
@@ -95,3 +107,9 @@ python scripts/lzheng_training_system.py validate --root "<系统根目录>"
 用户要求升级整套系统时，在已核对的官方仓库读取 `docs/UPGRADE.md`，使用 `tools/upgrade.py` 完成界面检查、备份、保留记录与知识内容、更新安装 Skill。用户自定义界面由 Agent 按差异修复，不静默覆盖。安装更新不等于线上发布。
 
 用户要学习收藏或指定视频时，调用 `lzheng-video-learning`；不同主题均可，只有健身内容按需回到本系统。知识上工作台用 `lzheng-knowledge-library`，默认空知识库，不导入作者的私人内容。
+
+## 当前训练记录与同步
+
+已有系统先运行紧凑 `inspect`，再读取当前计划、执行基准和本次相关复盘。网站或小程序记录优先于重叠日期的历史导出；使用账号授权的只读连接器，读完分页并冻结同一 revision/hash 的快照。已记录且有实际次数的完成组即为事实，未结束场次保留原状态；未提交输入、计划值和缺失记录不能被写成已完成或未训练。实际动作替换、热身与工作组、实际休息与计划休息分别核对。
+
+日历周与处方周遵守当前计划，不能以日期自动加重、顺移整周或补排未确认训练。正式计划、周期结构和训练事实不因工具升级而自动改变。需要刷新时将快照交给工作台构建器；更新 Skill、个人 HTML、公开源码和线上部署分别验收。

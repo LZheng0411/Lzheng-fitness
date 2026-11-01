@@ -105,6 +105,7 @@ def refresh(
     project: Path,
     notion: str | None,
     notion_mode: str | None,
+    training_snapshot: str | None,
     backup_dir: Path,
     receipt_path: Path,
 ) -> tuple[bool, str, dict | None]:
@@ -124,6 +125,8 @@ def refresh(
         command += ["--notion", notion]
     if notion_mode:
         command += ["--notion-mode", notion_mode]
+    if training_snapshot:
+        command += ["--training-snapshot", training_snapshot]
     env = os.environ.copy()
     env["PYTHONUTF8"] = "1"
     result = subprocess.run(command, text=True, encoding="utf-8", errors="replace", capture_output=True, env=env)
@@ -155,6 +158,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--project", required=True)
     parser.add_argument("--notion")
+    parser.add_argument("--training-snapshot")
     parser.add_argument("--notion-mode", choices=("incremental", "full"))
     parser.add_argument("--backup-dir")
     parser.add_argument("--dry-run", action="store_true")
@@ -204,7 +208,7 @@ def main() -> None:
         receipt_root = backup_dir / "handoff-receipts"
         stamp = dt.datetime.now().astimezone().strftime("%Y%m%d-%H%M%S-%f")
         receipt_path = receipt_root / (stamp + "-workbench-refresh.json")
-        ok, _detail, receipt = refresh(project, args.notion, args.notion_mode, backup_dir, receipt_path)
+        ok, _detail, receipt = refresh(project, args.notion, args.notion_mode, args.training_snapshot, backup_dir, receipt_path)
         if not ok:
             for path, record in pending:
                 if record.get("requires", {}).get("refresh_workbench") and not record.get("requires", {}).get("merge_into_current_plan"):

@@ -210,6 +210,36 @@ test('training completion survives reload; archive correction, restore, and plan
   expect(sessions[0].revisions).toHaveLength(2);
 });
 
+test('completed local training prepares real review evidence without inventing an AI verdict', async ({page}) => {
+  await completeTraining(page);
+  const before=await page.evaluate(async()=>JSON.stringify(await window.__fitnessTest.offlineStore.all('session')));
+  await page.evaluate(()=>window.__fitnessTest.openTrainingArchive());
+  await expect(page.locator('#taRecordList button')).not.toHaveCount(0);
+  await page.locator('#taRecordList button').first().click();
+  await page.locator('#taReviewOpen').click();
+  await expect(page.locator('#docOverlay')).toBeVisible();
+  await expect(page.locator('#docBody')).toContainText('尚未生成 AI 判断');
+  await expect(page.locator('#docBody')).toContainText('实际 RPE');
+  await expect(page.locator('#docBody')).toContainText('20kg');
+  await expect(page.locator('#docBody')).toContainText('不能用计划休息替代');
+  expect(await page.evaluate(async()=>JSON.stringify(await window.__fitnessTest.offlineStore.all('session')))).toBe(before);
+  expect(await page.evaluate(()=>window.__fitnessTest.D.reviews.some(x=>String(x.workbench_title||'').includes('待复盘')))).toBe(false);
+});
+
+test('verified snapshots remain read-only and preserve unfinished status in the archive', async ({page}) => {
+  await page.evaluate(()=>{
+    const date=new Date(),today=date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
+    window.__fitnessTest.D.training={queried_at:new Date().toISOString(),records:[{id:'anonymous-snapshot',training_date:today,training_day:'推A',week_number:1,status:'draft',read_only_snapshot:true,exercises:[{actual_name:'测试卧推',planned_name:'测试卧推',sets:[{set_number:1,weight:20,reps:5,rpe:7,is_completed:true,note:'{"set_type":"work"}'}]}]}]};
+    window.__fitnessTest.openTrainingArchive();
+  });
+  await expect(page.locator('#taRecordList')).toContainText('推A');
+  await page.locator('#taRecordList button').first().click();
+  await expect(page.locator('#taDetailState')).toContainText('场次未正式结案');
+  await expect(page.locator('#taDetailBody')).toContainText('20kg');
+  await expect(page.locator('#taEditOpen')).toBeHidden();
+  expect(await page.evaluate(async()=>window.__fitnessTest.offlineStore.all('session'))).toEqual([]);
+});
+
 test('meals persist photos, distinguish candidates/confirmation, and keep served estimates after leftovers', async ({ page }) => {
   await newMeal(page, true);
   await page.reload(); await page.waitForFunction(() => !!window.__fitnessTest);

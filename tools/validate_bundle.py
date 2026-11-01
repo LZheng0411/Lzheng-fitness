@@ -520,6 +520,9 @@ def main() -> None:
     run([sys.executable, "-B", str(ROOT / "tools/test_video_learning.py")])
     run([sys.executable, "-B", str(ROOT / "tools/test_learning_outputs.py")])
     run([sys.executable, "-B", str(SKILLS_ROOT / "lzheng-fitness-workbench-builder/scripts/Test-FitnessWorkbenchUiUpgrade.py")])
+    run(["node", str(ROOT / "tools/sync_training_protocol.cjs"), "--check"])
+    for name in ("Test-FitnessWorkbenchTrainingSnapshot.py", "Test-FitnessWorkbenchCalendar.py", "Test-FitnessWorkbenchMainLiftRoles.py", "Test-FitnessWorkbenchOnboarding.py", "Test-FitnessWorkbenchIntakeRefresh.py"):
+        run([sys.executable, "-B", str(SKILLS_ROOT / "lzheng-fitness-workbench-builder/scripts" / name)])
     validate_beginner_guide()
     validate_repository_hygiene()
     platform_test = run([sys.executable, str(ROOT / "tools" / "test_validation_platform.py")])

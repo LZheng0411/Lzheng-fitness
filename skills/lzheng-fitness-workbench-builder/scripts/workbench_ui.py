@@ -6,7 +6,7 @@ import json
 import re
 from pathlib import Path
 
-UI_REVISION = "2026.09.10.2"
+UI_REVISION = "2026.11.01.1"
 HERE = Path(__file__).resolve().parent
 TEMPLATE = HERE.parent / "assets/workbench-template.html"
 DATA = re.compile(r'(<script id="workbench-data" type="application/json">)([\s\S]*?)(</script>)')
